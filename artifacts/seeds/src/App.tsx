@@ -4,23 +4,42 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 
-const queryClient = new QueryClient();
+import Home from "@/pages/home";
+import About from "@/pages/about";
+import Program from "@/pages/program";
+import Faq from "@/pages/faq";
+import Apply from "@/pages/apply";
+import ApplySuccess from "@/pages/apply-success";
 
-function Home() {
-  return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-gray-900">Replit Agent is building...</h1>
-        <p className="mt-2 text-sm text-gray-600">Your app will appear here once it's ready.</p>
-      </div>
-    </div>
-  );
-}
+import AdminLogin from "@/pages/admin/login";
+import AdminDashboard from "@/pages/admin/dashboard";
+import AdminApplications from "@/pages/admin/applications";
+import AdminApplicationDetail from "@/pages/admin/application-detail";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/about" component={About} />
+      <Route path="/program" component={Program} />
+      <Route path="/faq" component={Faq} />
+      <Route path="/apply" component={Apply} />
+      <Route path="/apply/success" component={ApplySuccess} />
+
+      <Route path="/admin/login" component={AdminLogin} />
+      <Route path="/admin" component={AdminDashboard} />
+      <Route path="/admin/applications" component={AdminApplications} />
+      <Route path="/admin/applications/:id" component={AdminApplicationDetail} />
+
       <Route component={NotFound} />
     </Switch>
   );
