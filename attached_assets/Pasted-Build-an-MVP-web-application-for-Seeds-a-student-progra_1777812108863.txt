@@ -1,0 +1,119 @@
+Build an MVP web application for “Seeds”, a student program operations platform.
+
+The MVP scope is:
+1. Public website for Seeds
+2. Recruitment information page
+3. Application form
+4. Admin dashboard to manage submitted applications
+
+Use:
+- Next.js
+- TypeScript
+- Tailwind CSS
+- Replit PostgreSQL Database
+- Prisma or Drizzle ORM, whichever is more stable in this environment
+
+Core pages:
+- /
+- /about
+- /program
+- /apply
+- /apply/success
+- /faq
+- /admin/login
+- /admin
+- /admin/applications
+- /admin/applications/[id]
+
+Public site requirements:
+- Modern, clean, minimal design
+- Korean-language UI
+- Responsive layout
+- Navigation header and footer
+- Clear CTA button: “지원하기”
+- Main sections:
+  - Hero section
+  - What is Seeds?
+  - Who should apply?
+  - Program flow
+  - Recruitment schedule
+  - FAQ
+  - Apply CTA
+
+Application form requirements:
+- Applicant name
+- Email
+- Phone number
+- School
+- Grade
+- Birth year
+- Interest area
+- Motivation
+- Relevant experience
+- Problem awareness
+- Expectations from Seeds
+- Privacy consent checkbox
+- Submit button
+- Success page after submission
+- Basic validation
+- Prevent empty required fields
+- Save submissions to the database
+
+Admin requirements:
+- Simple admin login
+- Use environment variables for ADMIN_EMAIL and ADMIN_PASSWORD
+- Protect all /admin routes
+- List all applications in a table
+- Show name, email, school, grade, status, submitted date
+- Search by name, email, or school
+- Filter by status
+- Application detail page
+- Allow admin to update application status
+- Allow admin to write and save internal admin note
+- Add CSV export for applications
+
+Application status values:
+- submitted
+- reviewing
+- interview
+- accepted
+- rejected
+- waitlisted
+- withdrawn
+
+Database requirements:
+Create an applications table with:
+- id
+- name
+- email
+- phone
+- school
+- grade
+- birth_year
+- interest_area
+- motivation
+- experience
+- problem_awareness
+- expectation
+- privacy_consent
+- status
+- admin_note
+- submitted_at
+- updated_at
+
+Design direction:
+- The site should feel trustworthy, educational, and selective.
+- Avoid childish design.
+- Use Korean copy.
+- Use clean cards, generous spacing, and a professional layout.
+
+Security:
+- Do not expose admin credentials to the client.
+- Validate form input on the server.
+- Sanitize user input where needed.
+- Admin routes must not be accessible without login.
+
+After implementation:
+- Explain how to run the app
+- Explain how to set environment variables
+- Explain how to initialize or migrate the database

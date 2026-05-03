@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Seeds"
+version = "1.0.0"
+id = "artifacts/seeds"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19260
+
+[services.development]
+run = "pnpm --filter @workspace/seeds run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/seeds", "run", "build" ]
+publicDir = "artifacts/seeds/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19260"
+BASE_PATH = "/"

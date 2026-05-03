@@ -3,20 +3,20 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Seeds API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
-    description: Health operations
+  - name: applications
+  - name: admin
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +24,222 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /applications:
+    post:
+      operationId: createApplication
+      tags: [applications]
+      summary: Submit a new application
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateApplicationBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateApplicationResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/login:
+    post:
+      operationId: adminLogin
+      tags: [admin]
+      summary: Admin login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminLoginBody"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSession"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/logout:
+    post:
+      operationId: adminLogout
+      tags: [admin]
+      summary: Admin logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+
+  /admin/me:
+    get:
+      operationId: adminMe
+      tags: [admin]
+      summary: Current admin session
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSession"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/applications:
+    get:
+      operationId: listApplications
+      tags: [admin]
+      summary: List applications (admin)
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+          description: Search by name, email, or school
+        - in: query
+          name: status
+          schema:
+            $ref: "#/components/schemas/ApplicationStatus"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationList"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/applications/stats:
+    get:
+      operationId: applicationStats
+      tags: [admin]
+      summary: Application stats by status
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationStats"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/applications/{id}:
+    get:
+      operationId: getApplication
+      tags: [admin]
+      summary: Get application detail
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateApplication
+      tags: [admin]
+      summary: Update application status / admin note
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateApplicationBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/applications/export:
+    get:
+      operationId: exportApplicationsCsv
+      tags: [admin]
+      summary: Export applications as CSV
+      responses:
+        "200":
+          description: CSV file
+          content:
+            text/csv:
+              schema:
+                type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +247,248 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    OkResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+      required: [ok]
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+    ApplicationStatus:
+      type: string
+      enum:
+        - submitted
+        - reviewing
+        - interview
+        - accepted
+        - rejected
+        - waitlisted
+        - withdrawn
+
+    CreateApplicationBody:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        email:
+          type: string
+          format: email
+          maxLength: 200
+        phone:
+          type: string
+          minLength: 1
+          maxLength: 30
+        school:
+          type: string
+          minLength: 1
+          maxLength: 200
+        grade:
+          type: string
+          minLength: 1
+          maxLength: 50
+        birthYear:
+          type: integer
+          minimum: 1950
+          maximum: 2025
+        interestArea:
+          type: string
+          minLength: 1
+          maxLength: 100
+        motivation:
+          type: string
+          minLength: 1
+          maxLength: 5000
+        experience:
+          type: string
+          minLength: 1
+          maxLength: 5000
+        problemAwareness:
+          type: string
+          minLength: 1
+          maxLength: 5000
+        expectation:
+          type: string
+          minLength: 1
+          maxLength: 5000
+        privacyConsent:
+          type: boolean
+          enum: [true]
+      required:
+        - name
+        - email
+        - phone
+        - school
+        - grade
+        - birthYear
+        - interestArea
+        - motivation
+        - experience
+        - problemAwareness
+        - expectation
+        - privacyConsent
+
+    CreateApplicationResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+      required: [id]
+
+    Application:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        school:
+          type: string
+        grade:
+          type: string
+        birthYear:
+          type: integer
+        interestArea:
+          type: string
+        motivation:
+          type: string
+        experience:
+          type: string
+        problemAwareness:
+          type: string
+        expectation:
+          type: string
+        privacyConsent:
+          type: boolean
+        status:
+          $ref: "#/components/schemas/ApplicationStatus"
+        adminNote:
+          type: string
+          nullable: true
+        submittedAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - email
+        - phone
+        - school
+        - grade
+        - birthYear
+        - interestArea
+        - motivation
+        - experience
+        - problemAwareness
+        - expectation
+        - privacyConsent
+        - status
+        - adminNote
+        - submittedAt
+        - updatedAt
+
+    ApplicationListItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        school:
+          type: string
+        grade:
+          type: string
+        interestArea:
+          type: string
+        status:
+          $ref: "#/components/schemas/ApplicationStatus"
+        submittedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - email
+        - school
+        - grade
+        - interestArea
+        - status
+        - submittedAt
+
+    ApplicationList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApplicationListItem"
+        total:
+          type: integer
+      required: [items, total]
+
+    ApplicationStatusCount:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApplicationStatus"
+        count:
+          type: integer
+      required: [status, count]
+
+    ApplicationStats:
+      type: object
+      properties:
+        total:
+          type: integer
+        byStatus:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApplicationStatusCount"
+      required: [total, byStatus]
+
+    UpdateApplicationBody:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApplicationStatus"
+        adminNote:
+          type: string
+          nullable: true
+          maxLength: 5000
+
+    AdminLoginBody:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 1
+      required: [email, password]
+
+    AdminSession:
+      type: object
+      properties:
+        email:
+          type: string
+      required: [email]
