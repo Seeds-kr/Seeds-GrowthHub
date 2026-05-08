@@ -1,0 +1,90 @@
+Do not add new features.
+
+You said MVP 2 implementation is complete. Now perform a strict verification pass.
+
+Your task is to verify whether MVP 2 is actually complete and whether MVP 1 still works.
+
+Perform:
+
+1. MVP 1 regression test
+2. MVP 2 acceptance test
+3. Database/schema verification
+4. Role-based access control verification
+5. Security verification
+6. Build and TypeScript verification
+
+MVP 1 regression test checklist:
+- Public pages still load
+- Application form still works
+- Application data is saved to the database
+- Admin login still works
+- Admin application list still works
+- Application detail page still works
+- Admin note saving still works
+- Status update still works
+- CSV export still works
+
+MVP 2 acceptance test checklist:
+- Admin can create evaluator account
+- Evaluator can log in
+- Admin can assign evaluator to application
+- Evaluator can only see assigned applications
+- Evaluator cannot see unassigned applications
+- Evaluator cannot access admin-only pages
+- Evaluator can submit document review evaluation
+- Admin can view document review evaluation result
+- Admin can select applicant for interview
+- Admin can create interview schedule
+- Interview status can be updated
+- Interview evaluation can be submitted
+- Admin can set final decision
+- Final decision requires a reason
+- Decision log is created when final decision changes
+- Decision log shows who changed the decision and when
+
+Database verification:
+- Confirm users table exists
+- Confirm evaluation_assignments table exists
+- Confirm evaluations table exists
+- Confirm interviews table exists
+- Confirm decision_logs table exists
+- Confirm applications table still preserves existing MVP 1 data
+- Confirm application_status and final_decision fields exist if implemented
+- Confirm no destructive migration was used
+
+Security verification:
+- Passwords are hashed
+- Plaintext passwords are not stored
+- Admin routes reject unauthenticated users
+- Admin APIs reject evaluator users
+- Evaluator routes reject unauthenticated users
+- Evaluators cannot access unassigned applications by changing URL IDs
+- Credentials are not exposed in client-side code
+
+Technical verification:
+- Run the app
+- Run build
+- Run TypeScript checks
+- Run lint if available
+- Run automated tests if available
+- Check server logs for errors
+- Check browser console for errors during main flows
+
+Important:
+If any issue is found:
+1. Identify the root cause
+2. Fix the issue
+3. Rerun the affected test
+4. Rerun MVP 1 regression tests if the fix touches shared code
+
+Final report format:
+1. Overall judgment: Ready / Not ready
+2. MVP 1 regression result
+3. MVP 2 acceptance result
+4. Database verification result
+5. Security verification result
+6. Bugs found
+7. Fixes applied
+8. Remaining risks
+9. Commands run
+10. How to manually verify the system
