@@ -1,0 +1,129 @@
+Perform a full MVP 1 system test for the Seeds Recruitment Platform.
+
+This is not only a code review. You must actually run the app, test the user flows, identify bugs, fix them, and rerun the tests until the MVP 1 acceptance criteria pass.
+
+MVP 1 scope:
+1. Public website
+2. Recruitment information
+3. Application form submission
+4. Admin login
+5. Admin application management
+6. Status update
+7. Admin note saving
+8. CSV export
+
+Use the following testing approach:
+
+1. Inspect the current app structure.
+2. Check that the app can install dependencies and run without errors.
+3. Check that database schema and migrations work.
+4. Create automated E2E tests using Playwright if possible.
+5. Run the tests.
+6. Fix any issues found.
+7. Rerun the tests.
+8. Produce a final test report.
+
+Important:
+- Do not delete existing non-test data.
+- Use test data with the prefix “[E2E_TEST]”.
+- Clean up only the test data created by this test run.
+- Do not expose admin credentials to the client.
+- Do not hardcode real secrets in source code.
+- Use environment variables for admin credentials.
+- If browser automation is not available in this Replit environment, explain the limitation and perform the closest possible automated and manual verification.
+
+Test environment:
+- Use ADMIN_EMAIL=admin@test.local
+- Use ADMIN_PASSWORD=TestPassword123!
+- Confirm that these are read from environment variables.
+- Confirm that admin routes are protected.
+
+Required test scenarios:
+
+A. Public site smoke test
+- / loads successfully
+- /about loads successfully
+- /program loads successfully
+- /faq loads successfully
+- /apply loads successfully
+- Header navigation works
+- Footer is visible
+- “지원하기” CTA leads to /apply
+- Pages are responsive on mobile width
+
+B. Application form validation
+- Empty required fields cannot be submitted
+- Invalid email is rejected
+- Privacy consent is required
+- Required long-answer fields are validated
+- Error messages are visible and understandable in Korean
+
+C. Application submission
+- Submit a valid test application
+- Redirect to /apply/success after successful submission
+- Confirm the application is saved in the database
+- Confirm saved fields match submitted values
+- Confirm default status is “submitted”
+- Confirm submitted_at and updated_at are created
+
+D. Admin authentication
+- /admin is not accessible without login
+- /admin/applications is not accessible without login
+- /admin/applications/[id] is not accessible without login
+- Wrong credentials are rejected
+- Correct credentials allow login
+- After login, admin can access dashboard
+
+E. Admin application list
+- Application list loads
+- Test application appears in the list
+- Table shows name, email, school, grade, status, and submitted date
+- Newest submissions appear first by default
+- Search works by name
+- Search works by email
+- Search works by school
+- Status filter works
+- Status badges display correctly
+
+F. Admin application detail
+- Detail page loads for a submitted application
+- All submitted fields are visible
+- Admin can change status from submitted to reviewing
+- Admin can change status to interview
+- Admin can change status to accepted
+- Admin can save an internal admin note
+- Reloading the page preserves status and admin note
+
+G. CSV export
+- CSV export button exists
+- CSV downloads successfully
+- CSV contains the test application
+- CSV includes key fields: name, email, phone, school, grade, status, submitted_at
+- CSV does not include sensitive admin credentials
+
+H. Security and robustness
+- Admin credentials are not present in client-side code
+- Server-side validation exists for application submission
+- Admin-only APIs reject unauthenticated requests
+- No obvious console errors during normal flows
+- No TypeScript errors
+- No build errors
+
+Acceptance criteria:
+- All required MVP 1 user flows pass
+- Automated tests pass, or limitations are clearly documented
+- The app builds successfully
+- The app runs successfully
+- Any discovered bugs are fixed
+- A final test report is provided
+
+Final report format:
+1. Summary
+2. Test environment
+3. Tests performed
+4. Passed items
+5. Failed items
+6. Bugs found and fixed
+7. Remaining risks
+8. Commands used
+9. How to rerun the tests
