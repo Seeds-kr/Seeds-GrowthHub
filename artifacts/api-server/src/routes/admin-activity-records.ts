@@ -24,7 +24,12 @@ const Body = z.object({
   sourceId: z.number().int().positive().nullable().optional(),
   title: z.string().trim().min(1).max(300),
   description: z.string().max(8000).nullable().optional(),
-  activityDate: z.string().datetime().optional(),
+  activityDate: z
+    .string()
+    .refine((s) => !Number.isNaN(Date.parse(s)), {
+      message: "Invalid date",
+    })
+    .optional(),
   visibility: z.enum(ACTIVITY_VISIBILITIES).optional(),
 });
 
