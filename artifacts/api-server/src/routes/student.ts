@@ -354,8 +354,14 @@ router.post(
       res.status(403).json({ error: "Not assigned" });
       return;
     }
+    if (a.status === "draft") {
+      res.status(403).json({ error: "Not yet published" });
+      return;
+    }
     if (a.status !== "published") {
-      res.status(403).json({ error: "Assignment not open for submission" });
+      // closed or any other non-open state — student has access but the
+      // assignment no longer accepts submissions
+      res.status(409).json({ error: "Assignment is closed for submissions" });
       return;
     }
     const now = new Date();
