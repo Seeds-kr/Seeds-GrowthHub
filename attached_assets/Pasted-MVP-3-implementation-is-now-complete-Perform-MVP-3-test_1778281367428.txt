@@ -1,0 +1,140 @@
+MVP 3 implementation is now complete.
+
+Perform MVP 3 testing and stabilization.
+
+Do not add new features.
+Only fix bugs, broken requirements, security gaps, or data integrity issues.
+
+Testing order:
+1. Static checks
+2. System testing against MVP 3 requirements
+3. MVP 1 and MVP 2 regression testing
+4. Bug fixes
+5. Rerun affected tests
+6. Final test report
+
+Static checks:
+- Install dependencies if needed
+- Run build
+- Run TypeScript checks
+- Run lint if available
+- Confirm app starts successfully
+
+MVP 3 system test checklist:
+
+A. Accepted applicant to student conversion
+- Admin can view accepted applications
+- Admin can convert accepted application into student
+- Student is linked to original application
+- Duplicate student is not created from the same application
+- Converted student appears in /admin/students
+
+B. Cohort management
+- Admin can create cohort
+- Admin can edit cohort
+- Admin can set cohort status
+- Admin can assign student to cohort
+- Cohort student list displays correctly
+
+C. Program / track management
+- Admin can create program/track
+- Admin can assign program to cohort
+- Admin can assign student to program
+- Program list and detail pages work
+
+D. Session management
+- Admin can create session
+- Admin can edit session
+- Admin can assign session to cohort or program
+- Admin can set scheduled time and location/link
+- Session list filters work if implemented
+- Cancelled/completed/scheduled statuses work
+
+E. Attendance management
+- Admin can mark attendance for a session
+- Attendance status values work:
+  - present
+  - late
+  - absent
+  - excused
+- Admin can update attendance
+- Attendance summary appears on student detail
+- Student can view own attendance summary
+- Student cannot edit attendance
+
+F. Assignment management
+- Admin can create assignment
+- Admin can publish assignment
+- Student can view assigned assignment
+- Student can submit assignment
+- Student can submit text and/or URL
+- Submission is saved to database
+- Admin can view submission
+- Admin can add feedback
+- Student can view own submission and feedback
+- Student cannot view another student’s submission
+
+G. Announcement management
+- Admin can create announcement
+- Admin can publish announcement
+- Student sees relevant announcement
+- Student does not see irrelevant targeted announcement
+
+H. Student authentication and authorization
+- Student can log in
+- Student can access student dashboard
+- Student cannot access admin routes
+- Student cannot access evaluator routes
+- Student cannot access another student’s data by changing URL IDs
+- Student APIs only return the logged-in student’s data
+
+MVP 1 regression checklist:
+- Public pages still load
+- Application form still works
+- New application is saved to DB
+- Admin can view application list
+- Admin can view application detail
+- Admin note still saves
+- Application status update still works
+- CSV export still works
+
+MVP 2 regression checklist:
+- Admin can create evaluator
+- Evaluator can log in
+- Admin can assign evaluator to application
+- Evaluator sees only assigned applications
+- Evaluator cannot access unassigned applications by URL or API
+- Evaluator can submit document review
+- Admin can view evaluation result
+- Admin can create interview schedule
+- Interview evaluation works
+- Admin can set final decision
+- Decision log is created
+
+Security checks:
+- Passwords are hashed
+- No plaintext passwords
+- No secrets exposed client-side
+- Admin APIs reject student and evaluator users
+- Evaluator APIs reject student users
+- Student APIs reject admin/evaluator cross-access where inappropriate
+- Direct URL/API access does not bypass role restrictions
+
+If issues are found:
+1. Identify the root cause
+2. Fix the issue
+3. Rerun the affected test
+4. Rerun relevant regression tests if shared code was touched
+
+Final report format:
+1. Overall result: Pass / Fail
+2. Static check results
+3. MVP 3 system test results
+4. MVP 1 regression results
+5. MVP 2 regression results
+6. Security test results
+7. Bugs found
+8. Fixes applied
+9. Remaining risks
+10. Commands run
+11. How to rerun tests
