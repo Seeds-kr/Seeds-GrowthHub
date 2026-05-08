@@ -74,7 +74,7 @@ export const AdminLoginResponse = zod.object({
   id: zod.number(),
   email: zod.string(),
   name: zod.string(),
-  role: zod.enum(["admin", "evaluator"]),
+  role: zod.enum(["admin", "evaluator", "student"]),
 });
 
 /**
@@ -91,7 +91,7 @@ export const AdminMeResponse = zod.object({
   id: zod.number(),
   email: zod.string(),
   name: zod.string(),
-  role: zod.enum(["admin", "evaluator"]),
+  role: zod.enum(["admin", "evaluator", "student"]),
 });
 
 /**
@@ -430,7 +430,7 @@ export const UpdateApplicationResponse = zod.object({
  * @summary List users (evaluators + admins)
  */
 export const ListUsersQueryParams = zod.object({
-  role: zod.enum(["admin", "evaluator"]).optional(),
+  role: zod.enum(["admin", "evaluator", "student"]).optional(),
 });
 
 export const ListUsersResponse = zod.object({
@@ -439,7 +439,7 @@ export const ListUsersResponse = zod.object({
       id: zod.number(),
       name: zod.string(),
       email: zod.string(),
-      role: zod.enum(["admin", "evaluator"]),
+      role: zod.enum(["admin", "evaluator", "student"]),
       isActive: zod.boolean(),
       createdAt: zod.coerce.date(),
       updatedAt: zod.coerce.date(),
@@ -467,7 +467,7 @@ export const CreateUserBody = zod.object({
     .string()
     .min(createUserBodyPasswordMin)
     .max(createUserBodyPasswordMax),
-  role: zod.enum(["admin", "evaluator"]),
+  role: zod.enum(["admin", "evaluator", "student"]),
 });
 
 /**
@@ -499,7 +499,7 @@ export const UpdateUserResponse = zod.object({
   id: zod.number(),
   name: zod.string(),
   email: zod.string(),
-  role: zod.enum(["admin", "evaluator"]),
+  role: zod.enum(["admin", "evaluator", "student"]),
   isActive: zod.boolean(),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),

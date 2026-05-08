@@ -1,6 +1,6 @@
 # Seeds — Student Program Operations Platform
 
-A Korean-language web platform for the **Seeds** student program: a public site to attract applicants, an application form that saves to PostgreSQL, an admin dashboard to triage submissions, and a selection management module (MVP 2) for evaluator assignment, document/interview evaluations, interview scheduling, and final decision tracking.
+A Korean-language web platform for the **Seeds** student program: public site + application form (MVP 1), evaluator selection workflow (MVP 2), and **activity operation management (MVP 3)** — students, cohorts, programs, sessions, attendance, assignments, submissions, announcements, and a student dashboard.
 
 ## Stack
 
@@ -34,6 +34,20 @@ The shared proxy at `localhost:80` routes `/api/*` to the API server and everyth
 - `/evaluator` — My assigned applications
 - `/evaluator/applications/:id` — Read application + submit evaluation form (per stage)
 
+### Admin MVP 3 (role=admin)
+- `/admin/students`, `/admin/students/:id` — Students list + detail (cohort/program assignments, attendance summary, submissions); convert accepted applicants → student
+- `/admin/cohorts`, `/admin/programs` — CRUD
+- `/admin/sessions`, `/admin/sessions/:id/attendance` — Sessions CRUD + per-session roster attendance editor
+- `/admin/assignments`, `/admin/assignments/:id` — Homework CRUD + submission review/feedback
+- `/admin/announcements` — Announcements CRUD (target = all / cohort / program), publish toggle
+
+### Student (session-protected, role=student)
+- `/student/login` — Reuses shared login form; role drives redirect
+- `/student` — Dashboard (cohort, upcoming sessions, active assignments, latest announcements)
+- `/student/sessions`, `/student/attendance`
+- `/student/assignments`, `/student/assignments/:id` — Submit / re-submit (text + URL); status auto-flips to `late` past the due date
+- `/student/announcements`
+
 ## API endpoints (`/api/...`)
 
 Public + auth:
@@ -59,6 +73,22 @@ Evaluator (role=evaluator via `requireEvaluator`):
 - `GET  /evaluator/applications/:id` — only if assigned; returns app + own assignments/evaluations
 - `POST /evaluator/applications/:id/evaluations` — upsert evaluation per (app, evaluator, stage); auto-marks assignment `completed`
 
+Admin MVP 3 (role=admin):
+- `GET/POST/PATCH /admin/cohorts[/:id]`, `GET/POST/PATCH /admin/programs[/:id]`
+- `GET/POST/PATCH /admin/students[/:id]`; `POST/DELETE /admin/students/:id/cohorts[/:cohortId]`; `POST/DELETE /admin/students/:id/programs[/:programId]`
+- `GET /admin/applications-accepted-pending` — finalDecision=accepted but not yet a student
+- `POST /admin/applications/:id/convert-to-student` — atomic: creates user(role=student) + students row; rejects if already converted (409) or not accepted (400)
+- `GET/POST/PATCH /admin/sessions[/:id]`; `GET/PUT /admin/sessions/:id/attendance` — bulk roster upsert
+- `GET/POST/PATCH /admin/assignments[/:id]` (MVP 3 homework); `PATCH /admin/submissions/:id` — feedback + status
+- `GET/POST/PATCH /admin/announcements[/:id]`
+
+Student (role=student via `requireStudent`):
+- `GET /student/me` — student profile + cohorts + programs
+- `GET /student/sessions`, `GET /student/attendance` — only sessions/records for my cohorts/programs
+- `GET /student/assignments`, `GET /student/assignments/:id` — only published/closed in my cohorts/programs; `mySubmission` populated
+- `POST /student/assignments/:id/submission` — upsert; status auto = `late` if past `dueAt`; rejected once assignment is `closed`
+- `GET /student/announcements` — published only; `target=all` OR (cohort/program in mine)
+
 ## Database schema
 
 - `applications` — MVP1 columns (incl. legacy `status` enum) + MVP2 `application_status` (lifecycle: submitted → document_review → interview → final_decision_made / withdrawn) and `final_decision` (pending | accepted | rejected | waitlisted | withdrawn).
@@ -68,7 +98,19 @@ Evaluator (role=evaluator via `requireEvaluator`):
 - `interviews` — (application_id) unique; scheduled_at, location_or_link, interviewer_note, status.
 - `decision_logs` — append-only audit trail of `final_decision` changes (previous, new, reason, changed_by, created_at).
 
-Legacy `applications.status` is preserved untouched so MVP 1 admin flows keep working.
+MVP 3 tables (additive, no destructive migrations):
+- `cohorts` (name, dates, status), `programs` (cohort_id, name, status)
+- `students` (user_id unique, application_id unique, profile cache, is_active)
+- `student_cohorts` (student_id, cohort_id) unique; `student_programs` (student_id, program_id) unique
+- `sessions` (cohort_id, program_id?, scheduled_at, duration, type, status)
+- `attendance_records` (session_id, student_id) unique; status (present | late | absent | excused), marked_by
+- `assignments` (cohort_id, program_id?, due_at, status: draft | published | closed, created_by) — homework table
+- `assignment_submissions` (assignment_id, student_id) unique; status (not_submitted | submitted | late | reviewed); content / file_url / external_url; feedback, reviewed_by
+- `announcements` (target_type: all | cohort | program, target_id, is_published, published_at, created_by)
+
+Note: `evaluation_assignments` (MVP 2 evaluator→app routing) and `assignments` (MVP 3 homework) are distinct tables with distinct routes (`admin-assignments.ts` vs `admin-tasks.ts`).
+
+`users.role` widened to `admin | evaluator | student` (text column, no enum widening). Legacy `applications.status` is preserved untouched so MVP 1 admin flows keep working.
 
 ## Required environment variables / secrets
 

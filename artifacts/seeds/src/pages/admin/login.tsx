@@ -43,6 +43,8 @@ export default function AdminLogin() {
           queryClient.invalidateQueries({ queryKey: getAdminMeQueryKey() });
           if (user.role === "evaluator") {
             setLocation("/evaluator");
+          } else if (user.role === "student") {
+            setLocation("/student");
           } else {
             setLocation("/admin");
           }

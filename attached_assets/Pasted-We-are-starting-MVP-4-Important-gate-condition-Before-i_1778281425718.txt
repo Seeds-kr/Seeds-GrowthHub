@@ -1,0 +1,336 @@
+We are starting MVP 4.
+
+Important gate condition:
+Before implementing MVP 4, confirm that MVP 3 release gate result is Go.
+If MVP 3 gate result is No-Go or unknown, stop and report that MVP 3 blockers must be resolved first.
+
+Current completed scope:
+- MVP 1: public website and application management
+- MVP 2: selection management
+- MVP 3: activity operation management
+
+MVP 4 goal:
+Build the student activity record and utilization module.
+
+MVP 4 should turn operational activity data into structured student growth records that can be used for:
+1. Student activity timeline
+2. Project records
+3. Artifact records
+4. Feedback records
+5. Skill/competency tags
+6. Student activity report
+7. Basic portfolio-style internal profile
+8. Cohort-level activity summary
+
+Important:
+- Do not make student records public by default.
+- Do not implement public sharing unless explicitly scoped.
+- Preserve MVP 1, MVP 2, and MVP 3 features.
+- Add migrations safely and non-destructively.
+- Keep Korean UI.
+- Prioritize evidence-based activity records over superficial badges.
+
+MVP 4 core concepts:
+
+1. Activity Record
+An activity record captures a meaningful student activity or event.
+
+It may be created from:
+- Session attendance
+- Assignment submission
+- Project work
+- Presentation
+- Mentor/admin feedback
+- Manual admin entry
+
+Fields:
+- id
+- student_id
+- cohort_id
+- program_id nullable
+- source_type: session | assignment | project | feedback | manual
+- source_id nullable
+- title
+- description
+- activity_date
+- visibility: private | student_visible | admin_only
+- created_by
+- created_at
+- updated_at
+
+2. Project
+A project represents individual or team work.
+
+Admin should be able to:
+- Create project
+- Assign students to project
+- Assign cohort/program
+- Add project description
+- Set project status
+- Link artifacts
+- Add feedback
+- Add skill tags
+
+Student should be able to:
+- View own projects
+- Add or edit limited project information if permitted
+- Add artifact links if permitted
+
+Project fields:
+- id
+- cohort_id
+- program_id nullable
+- title
+- description
+- problem_statement
+- solution_summary
+- status: ideation | in_progress | submitted | presented | completed | archived
+- started_at
+- ended_at nullable
+- created_at
+- updated_at
+
+Project membership fields:
+- id
+- project_id
+- student_id
+- role
+- contribution_summary nullable
+- created_at
+- updated_at
+
+3. Artifact
+An artifact is evidence of student work.
+
+Examples:
+- GitHub repository
+- presentation slides
+- demo video
+- document
+- prototype link
+- essay
+- report
+
+Fields:
+- id
+- student_id nullable
+- project_id nullable
+- assignment_submission_id nullable
+- title
+- description
+- artifact_type: link | document | presentation | video | code | image | report | other
+- url
+- visibility: private | student_visible | cohort_visible | admin_only
+- created_by
+- created_at
+- updated_at
+
+4. Feedback
+Feedback should be structured and tied to a student, project, assignment, session, or activity record.
+
+Admin should be able to:
+- Add feedback to student
+- Add feedback to project
+- Add feedback to assignment submission
+- Add feedback to activity record
+
+Student should be able to:
+- View feedback that is marked student-visible
+- Not view admin-only notes
+
+Fields:
+- id
+- target_type: student | project | assignment_submission | activity_record | session
+- target_id
+- student_id nullable
+- author_id
+- feedback_type: general | strength | improvement | review | mentor_note | admin_note
+- content
+- visibility: student_visible | admin_only
+- created_at
+- updated_at
+
+5. Skill / Competency Tags
+Use skill tags to describe evidence-based growth areas.
+
+Initial tags may include:
+- 문제정의
+- 실행력
+- 협업
+- 커뮤니케이션
+- 기술학습
+- 제품사고
+- 리서치
+- 발표
+- 리더십
+- 회고
+
+Admin should be able to:
+- Create skill tags
+- Attach skill tags to activity records, projects, artifacts, feedback, or students
+- View tag summary per student
+
+Fields:
+- id
+- name
+- description nullable
+- created_at
+- updated_at
+
+Tag mapping:
+- id
+- tag_id
+- target_type
+- target_id
+- created_by
+- created_at
+
+6. Student Activity Timeline
+Admin and student should be able to view timeline.
+
+Admin view:
+- All records for a student
+- Filter by cohort, program, source type, tag
+- Include admin-only records
+
+Student view:
+- Only records visible to student
+- View own projects, artifacts, feedback, attendance summary, assignment submissions
+
+7. Student Activity Report
+Generate a basic internal report for a student.
+
+Report should include:
+- Student profile
+- Cohort/program
+- Attendance summary
+- Assignment summary
+- Project summary
+- Artifacts
+- Feedback highlights
+- Skill tag summary
+- Activity timeline
+
+The report may be an HTML page first.
+PDF export is optional and can be deferred if complex.
+
+8. Cohort Activity Summary
+Admin should be able to see a cohort-level summary:
+- Number of students
+- Attendance overview
+- Assignment submission overview
+- Project count
+- Artifact count
+- Skill tag distribution
+- Students with missing activity records
+
+Admin UI requirements:
+Add or update routes:
+
+- /admin/activity-records
+  - list activity records
+  - filter by student/cohort/program/type/tag
+
+- /admin/students/[id]/timeline
+  - student activity timeline
+
+- /admin/students/[id]/report
+  - student activity report
+
+- /admin/projects
+  - list projects
+  - create project
+
+- /admin/projects/[id]
+  - project detail
+  - project members
+  - artifacts
+  - feedback
+  - tags
+
+- /admin/artifacts
+  - list artifacts
+
+- /admin/feedback
+  - list feedback
+
+- /admin/tags
+  - manage skill tags
+
+- /admin/cohorts/[id]/summary
+  - cohort activity summary
+
+Student UI requirements:
+Add or update:
+
+- /student/timeline
+  - own visible activity timeline
+
+- /student/projects
+  - own projects
+
+- /student/projects/[id]
+  - own project detail
+
+- /student/artifacts
+  - own artifacts
+
+- /student/report
+  - own activity report, excluding admin-only notes
+
+Permissions:
+Admin:
+- Full access to activity records, projects, artifacts, feedback, tags, reports
+
+Student:
+- Can view only own data
+- Can view only student-visible feedback and records
+- Cannot view admin-only notes
+- Cannot view other students’ private records
+- Can create artifact links for own project only if implemented safely
+
+Evaluator:
+- Should not gain access to MVP 4 student records unless explicitly assigned a mentor role.
+- Preserve existing evaluator restrictions.
+
+Security requirements:
+- All admin routes protected
+- All student routes protected
+- Student data access restricted by logged-in student ID
+- No public exposure of private student records
+- Admin-only notes never appear in student report
+- Direct URL/API ID manipulation must not expose other students’ records
+
+Data integration requirements:
+- Activity records may be generated or linked from MVP 3 data:
+  - attendance
+  - assignment submissions
+  - sessions
+- Do not duplicate data unnecessarily if linking is sufficient.
+- Preserve source references where possible.
+
+Implementation requirements:
+- Keep UI clear and operational.
+- Use Korean labels.
+- Use status badges and filters.
+- Do not overbuild analytics.
+- Do not implement recommendation letters yet.
+- Do not implement public portfolio sharing yet.
+- Do not implement complex privacy sharing controls beyond the visibility fields above.
+
+After implementation:
+- Run build
+- Run TypeScript checks
+- Run smoke tests for MVP 1, MVP 2, and MVP 3 critical flows
+- Provide implementation summary
+
+Final output:
+1. Summary of MVP 4 implementation
+2. Database migration summary
+3. New routes added
+4. New admin features
+5. New student features
+6. Permission/security changes
+7. Known limitations
+8. Commands run
+9. How to manually verify MVP 4

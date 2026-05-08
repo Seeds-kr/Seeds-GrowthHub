@@ -549,7 +549,7 @@ components:
 
     UserRole:
       type: string
-      enum: [admin, evaluator]
+      enum: [admin, evaluator, student]
 
     ApplicationStatus:
       type: string

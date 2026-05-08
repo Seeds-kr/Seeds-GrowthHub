@@ -16,9 +16,26 @@ import AdminDashboard from "@/pages/admin/dashboard";
 import AdminApplications from "@/pages/admin/applications";
 import AdminApplicationDetail from "@/pages/admin/application-detail";
 import AdminEvaluators from "@/pages/admin/evaluators";
+import AdminStudents from "@/pages/admin/students";
+import AdminStudentDetail from "@/pages/admin/student-detail";
+import AdminCohorts from "@/pages/admin/cohorts";
+import AdminPrograms from "@/pages/admin/programs";
+import AdminSessions from "@/pages/admin/sessions";
+import AdminSessionAttendance from "@/pages/admin/session-attendance";
+import AdminAssignments from "@/pages/admin/assignments";
+import AdminAssignmentDetail from "@/pages/admin/assignment-detail";
+import AdminAnnouncements from "@/pages/admin/announcements";
 
 import EvaluatorDashboard from "@/pages/evaluator/dashboard";
 import EvaluatorApplicationDetail from "@/pages/evaluator/application-detail";
+
+import StudentLogin from "@/pages/student/login";
+import StudentDashboard from "@/pages/student/dashboard";
+import StudentSessions from "@/pages/student/sessions";
+import StudentAssignments from "@/pages/student/assignments";
+import StudentAssignmentDetail from "@/pages/student/assignment-detail";
+import StudentAnnouncements from "@/pages/student/announcements";
+import StudentAttendance from "@/pages/student/attendance";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,9 +61,26 @@ function Router() {
       <Route path="/admin/applications" component={AdminApplications} />
       <Route path="/admin/applications/:id" component={AdminApplicationDetail} />
       <Route path="/admin/evaluators" component={AdminEvaluators} />
+      <Route path="/admin/students" component={AdminStudents} />
+      <Route path="/admin/students/:id" component={AdminStudentDetail} />
+      <Route path="/admin/cohorts" component={AdminCohorts} />
+      <Route path="/admin/programs" component={AdminPrograms} />
+      <Route path="/admin/sessions" component={AdminSessions} />
+      <Route path="/admin/sessions/:id/attendance" component={AdminSessionAttendance} />
+      <Route path="/admin/assignments" component={AdminAssignments} />
+      <Route path="/admin/assignments/:id" component={AdminAssignmentDetail} />
+      <Route path="/admin/announcements" component={AdminAnnouncements} />
 
       <Route path="/evaluator" component={EvaluatorDashboard} />
       <Route path="/evaluator/applications/:id" component={EvaluatorApplicationDetail} />
+
+      <Route path="/student/login" component={StudentLogin} />
+      <Route path="/student" component={StudentDashboard} />
+      <Route path="/student/sessions" component={StudentSessions} />
+      <Route path="/student/assignments" component={StudentAssignments} />
+      <Route path="/student/assignments/:id" component={StudentAssignmentDetail} />
+      <Route path="/student/announcements" component={StudentAnnouncements} />
+      <Route path="/student/attendance" component={StudentAttendance} />
 
       <Route component={NotFound} />
     </Switch>

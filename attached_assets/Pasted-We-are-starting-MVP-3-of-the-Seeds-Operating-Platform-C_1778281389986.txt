@@ -1,0 +1,322 @@
+We are starting MVP 3 of the Seeds Operating Platform.
+
+Current completed scope:
+- MVP 1: public website, application form, admin application management, CSV export
+- MVP 2: evaluator accounts, evaluator assignment, document review, interview management, final decision, decision logs
+
+MVP 3 goal:
+Build the activity operation management module for selected students.
+
+MVP 3 should support the operational workflow after students are accepted:
+1. Convert accepted applicants into students
+2. Manage cohorts
+3. Manage programs/tracks
+4. Manage sessions
+5. Manage attendance
+6. Manage assignments
+7. Manage assignment submissions
+8. Manage announcements
+9. Provide a basic student dashboard
+
+Important:
+- Do not remove or break MVP 1 or MVP 2 features.
+- Preserve all existing application, evaluation, interview, and decision data.
+- Add database migrations safely and non-destructively.
+- Keep the Korean UI.
+- Prioritize operational clarity over complex features.
+
+Roles:
+Existing roles:
+- admin
+- evaluator
+
+Add:
+- student
+
+Optional:
+- If the current architecture makes it simple, add mentor as a role.
+- If adding mentor would require large refactoring, defer mentor role to a later MVP and document it as a known limitation.
+
+MVP 3 core concepts:
+
+1. Student
+A student is created from an accepted application.
+Admin should be able to:
+- Convert an accepted application into a student
+- Link the student back to the original application
+- View student profile
+- Assign student to a cohort
+- Activate/deactivate student account
+
+2. Cohort
+A cohort represents an operating period, for example:
+- Seeds 2026 Spring
+- Seeds 1기
+
+Admin should be able to:
+- Create cohort
+- Edit cohort
+- Set cohort status
+- View students in cohort
+
+Cohort fields:
+- id
+- name
+- description
+- start_date
+- end_date
+- status: draft | active | completed | archived
+- created_at
+- updated_at
+
+3. Program / Track
+A program or track represents a structured activity path inside a cohort.
+
+Admin should be able to:
+- Create program/track
+- Assign it to a cohort
+- Add students to a program/track
+
+Program fields:
+- id
+- cohort_id
+- name
+- description
+- status: draft | active | completed | archived
+- created_at
+- updated_at
+
+4. Session
+A session is an individual activity, class, workshop, meeting, or event.
+
+Admin should be able to:
+- Create session
+- Edit session
+- Assign session to a cohort or program
+- Set session date/time
+- Set location or meeting link
+- View attendance for the session
+
+Session fields:
+- id
+- cohort_id
+- program_id nullable
+- title
+- description
+- scheduled_at
+- duration_minutes
+- location_or_link
+- session_type: orientation | workshop | mentoring | project_work | presentation | review | other
+- status: scheduled | completed | cancelled
+- created_at
+- updated_at
+
+5. Attendance
+Admin should be able to:
+- Mark attendance for students in a session
+- Update attendance status
+- Add attendance note
+- View attendance summary by student and by session
+
+Attendance fields:
+- id
+- session_id
+- student_id
+- status: present | late | absent | excused
+- note
+- marked_by
+- marked_at
+- updated_at
+
+6. Assignment
+An assignment represents work requested from students.
+
+Admin should be able to:
+- Create assignment
+- Assign it to cohort, program, or selected students
+- Set due date
+- View submission status
+
+Assignment fields:
+- id
+- cohort_id
+- program_id nullable
+- title
+- description
+- due_at
+- status: draft | published | closed
+- created_by
+- created_at
+- updated_at
+
+7. Assignment Submission
+Students should be able to:
+- View assignments assigned to them
+- Submit text and/or URL
+- Update submission before deadline if allowed
+
+Admin should be able to:
+- View submissions
+- Mark submission status
+- Add admin feedback
+
+Submission fields:
+- id
+- assignment_id
+- student_id
+- content
+- file_url nullable
+- external_url nullable
+- status: not_submitted | submitted | late | reviewed
+- submitted_at
+- reviewed_by nullable
+- feedback nullable
+- updated_at
+
+8. Announcement
+Admin should be able to:
+- Create announcement
+- Publish announcement to all students, a cohort, or a program
+- Students should see relevant announcements in their dashboard
+
+Announcement fields:
+- id
+- title
+- content
+- target_type: all | cohort | program
+- target_id nullable
+- is_published
+- published_at
+- created_by
+- created_at
+- updated_at
+
+Student UI requirements:
+Add student login and basic student dashboard.
+
+Student should be able to:
+- Log in
+- View own dashboard
+- View assigned cohort/program
+- View upcoming sessions
+- View announcements
+- View assignments
+- Submit assignments
+- View own attendance summary
+- View own submission history
+
+Student must not be able to:
+- View other students’ private data
+- Access admin pages
+- Access evaluator pages
+- Modify attendance
+- Modify sessions
+- Modify cohort or program data
+
+Admin UI requirements:
+Add or update admin pages:
+
+- /admin/students
+  - student list
+  - search by name/email/school
+  - filter by cohort/status
+  - convert accepted applicant to student if not already converted
+
+- /admin/students/[id]
+  - student profile
+  - linked application
+  - cohort/program membership
+  - attendance summary
+  - assignment submissions
+
+- /admin/cohorts
+  - list cohorts
+  - create/edit cohort
+  - view cohort students
+
+- /admin/programs
+  - list programs/tracks
+  - create/edit program
+  - assign to cohort
+
+- /admin/sessions
+  - list sessions
+  - create/edit session
+  - filter by cohort/program/status/date
+
+- /admin/sessions/[id]/attendance
+  - mark attendance
+  - update attendance
+  - show attendance summary
+
+- /admin/assignments
+  - list assignments
+  - create/edit assignment
+  - publish/close assignment
+
+- /admin/assignments/[id]
+  - view assignment detail
+  - view submissions
+  - add feedback to submissions
+
+- /admin/announcements
+  - create/list/edit/publish announcements
+
+Student routes:
+- /student/login
+- /student
+- /student/sessions
+- /student/assignments
+- /student/assignments/[id]
+- /student/announcements
+- /student/attendance
+
+Security requirements:
+- Passwords must be hashed.
+- No plaintext passwords.
+- Admin routes require admin role.
+- Student routes require student role.
+- Student APIs must only return data belonging to the logged-in student.
+- Students must not access other students’ submissions by changing URL IDs.
+- Existing evaluator restrictions from MVP 2 must remain intact.
+- Existing admin restrictions must remain intact.
+
+Database requirements:
+Add new tables as needed:
+- students
+- cohorts
+- programs
+- cohort_memberships or student_cohorts
+- program_memberships or student_programs
+- sessions
+- attendance_records
+- assignments
+- assignment_targets if needed
+- assignment_submissions
+- announcements
+
+Implementation requirements:
+- Use existing project architecture.
+- Reuse existing authentication patterns where appropriate.
+- Add migrations safely.
+- Seed sample data only if useful for testing.
+- Use clear Korean labels and status badges.
+- Avoid unnecessary complexity.
+- Do not implement public portfolio or advanced activity analytics yet. Those belong to MVP 4.
+
+After implementation:
+- Run build
+- Run TypeScript checks
+- Run existing MVP 1 and MVP 2 smoke checks if available
+- Provide implementation summary
+
+Final output:
+1. Summary of MVP 3 implementation
+2. Database migration summary
+3. New routes added
+4. New admin features
+5. New student features
+6. Security changes
+7. Known limitations
+8. Commands run
+9. How to manually verify MVP 3

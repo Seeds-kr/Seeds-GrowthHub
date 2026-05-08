@@ -21,8 +21,10 @@ export function AdminLayout({ children }: { children: ReactNode }) {
     if (isLoading) return;
     if (isError || !admin) {
       setLocation("/admin/login");
-    } else if (admin.role !== "admin") {
+    } else if (admin.role === "evaluator") {
       setLocation("/evaluator");
+    } else if (admin.role === "student") {
+      setLocation("/student");
     }
   }, [isLoading, isError, admin, setLocation]);
 
@@ -56,10 +58,28 @@ export function AdminLayout({ children }: { children: ReactNode }) {
                 대시보드
               </Link>
               <Link href="/admin/applications" className="text-sm font-medium text-muted-foreground hover:text-primary">
-                지원서 관리
+                지원서
+              </Link>
+              <Link href="/admin/students" className="text-sm font-medium text-muted-foreground hover:text-primary">
+                학생
+              </Link>
+              <Link href="/admin/cohorts" className="text-sm font-medium text-muted-foreground hover:text-primary">
+                기수
+              </Link>
+              <Link href="/admin/programs" className="text-sm font-medium text-muted-foreground hover:text-primary">
+                프로그램
+              </Link>
+              <Link href="/admin/sessions" className="text-sm font-medium text-muted-foreground hover:text-primary">
+                세션
+              </Link>
+              <Link href="/admin/assignments" className="text-sm font-medium text-muted-foreground hover:text-primary">
+                과제
+              </Link>
+              <Link href="/admin/announcements" className="text-sm font-medium text-muted-foreground hover:text-primary">
+                공지
               </Link>
               <Link href="/admin/evaluators" className="text-sm font-medium text-muted-foreground hover:text-primary">
-                평가자 관리
+                평가자
               </Link>
             </nav>
           </div>

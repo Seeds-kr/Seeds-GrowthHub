@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import bcrypt from "bcryptjs";
 import type { Request, Response, NextFunction, RequestHandler } from "express";
 import { eq } from "drizzle-orm";
-import { db, usersTable, type User, type UserRole } from "@workspace/db";
+import { db, usersTable, USER_ROLES, type User, type UserRole } from "@workspace/db";
 import { logger } from "./logger";
 
 const COOKIE_NAME = "seeds_admin";
@@ -61,13 +61,14 @@ export function verifySessionToken(
     ) as { userId?: number; role?: UserRole; exp?: number };
     if (
       typeof payload.userId !== "number" ||
-      (payload.role !== "admin" && payload.role !== "evaluator") ||
+      typeof payload.role !== "string" ||
+      !(USER_ROLES as readonly string[]).includes(payload.role) ||
       typeof payload.exp !== "number" ||
       payload.exp < Date.now()
     ) {
       return null;
     }
-    return { userId: payload.userId, role: payload.role };
+    return { userId: payload.userId, role: payload.role as UserRole };
   } catch {
     return null;
   }
@@ -162,9 +163,14 @@ function makeRequireRole(allowed: UserRole[]): RequestHandler {
   };
 }
 
-export const requireAuth: RequestHandler = makeRequireRole(["admin", "evaluator"]);
+export const requireAuth: RequestHandler = makeRequireRole([
+  "admin",
+  "evaluator",
+  "student",
+]);
 export const requireAdmin: RequestHandler = makeRequireRole(["admin"]);
 export const requireEvaluator: RequestHandler = makeRequireRole(["evaluator"]);
+export const requireStudent: RequestHandler = makeRequireRole(["student"]);
 
 /**
  * Bootstrap an admin user from ADMIN_EMAIL / ADMIN_PASSWORD env vars on startup.

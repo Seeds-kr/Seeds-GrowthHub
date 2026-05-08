@@ -1,0 +1,88 @@
+Perform the MVP 3 release gate check.
+
+Do not add new features.
+
+Your task:
+Decide whether MVP 3 is ready to proceed to MVP 4.
+
+Use the following severity levels:
+
+P0 blocker:
+- Data loss
+- App cannot build or run
+- Login broken
+- Admin cannot operate core workflows
+- Student data privacy violation
+- Unauthorized access to admin/evaluator/student data
+- Existing MVP 1 or MVP 2 critical workflow broken
+
+P1 blocker:
+- Accepted applicant cannot be converted to student
+- Cohort assignment broken
+- Session creation or attendance marking broken
+- Assignment submission broken
+- Student dashboard unusable
+- MVP 2 decision/evaluation flow broken
+- CSV export broken
+
+P2 deferrable:
+- UI inconvenience
+- Missing filter or sorting improvement
+- Minor Korean copy issue
+- Non-critical layout issue
+- Manual workaround exists
+
+P3 deferrable:
+- Visual polish
+- Nice-to-have automation
+- Advanced analytics
+- Advanced notification features
+
+Release gate checklist:
+
+1. MVP 3 critical operational flow
+- Accepted applicant can become student
+- Student can be assigned to cohort
+- Admin can create session
+- Admin can mark attendance
+- Admin can create assignment
+- Student can submit assignment
+- Admin can view submission
+- Admin can create announcement
+- Student can view relevant announcement
+
+2. Permission checks
+- Student cannot access admin pages
+- Student cannot access evaluator pages
+- Student cannot access another student’s data
+- Evaluator restrictions from MVP 2 still work
+- Admin-only APIs are protected
+
+3. Data integrity
+- Existing MVP 1 application data preserved
+- Existing MVP 2 evaluation/interview/decision data preserved
+- Migrations are non-destructive
+- Student records link to accepted applications
+
+4. Regression
+- MVP 1 core flows still work
+- MVP 2 core flows still work
+
+If any P0 or P1 issue exists:
+- Fix it
+- Rerun the relevant test
+- Report No-Go until fixed
+
+If only P2 or P3 issues remain:
+- Document them
+- Report Go for MVP 4
+
+Final output:
+1. Go / No-Go judgment for MVP 4
+2. P0/P1 blockers found
+3. P0/P1 fixes applied
+4. P2/P3 deferred issues
+5. Evidence that MVP 1 regression passed
+6. Evidence that MVP 2 regression passed
+7. Evidence that MVP 3 critical flow passed
+8. Remaining risks

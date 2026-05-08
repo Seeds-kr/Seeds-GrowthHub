@@ -7,7 +7,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
-export const USER_ROLES = ["admin", "evaluator"] as const;
+export const USER_ROLES = ["admin", "evaluator", "student"] as const;
 export type UserRole = (typeof USER_ROLES)[number];
 
 export const usersTable = pgTable(

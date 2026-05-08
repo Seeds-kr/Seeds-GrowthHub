@@ -22,6 +22,7 @@ export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 export const UserRole = {
   admin: "admin",
   evaluator: "evaluator",
+  student: "student",
 } as const;
 
 export type ApplicationStatus =

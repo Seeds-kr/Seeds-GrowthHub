@@ -1,0 +1,146 @@
+MVP 4 implementation is now complete.
+
+Perform MVP 4 testing and stabilization.
+
+Do not add new features.
+Only fix bugs, broken requirements, security gaps, or data integrity issues.
+
+Testing order:
+1. Static checks
+2. MVP 4 system testing
+3. MVP 1, MVP 2, and MVP 3 regression testing
+4. Security and privacy testing
+5. Bug fixes
+6. Rerun affected tests
+7. Final test report
+
+Static checks:
+- Run build
+- Run TypeScript checks
+- Run lint if available
+- Confirm app starts successfully
+- Confirm migrations work
+- Confirm existing data is preserved
+
+MVP 4 system test checklist:
+
+A. Activity records
+- Admin can create activity record for student
+- Activity record appears in admin student timeline
+- Student-visible record appears in student timeline
+- Admin-only record does not appear in student timeline
+- Activity record can link to source if implemented
+
+B. Project records
+- Admin can create project
+- Admin can assign student to project
+- Student can view own project
+- Student cannot view another student’s private project
+- Admin can update project status
+- Project appears in student report
+
+C. Artifacts
+- Admin can add artifact to student or project
+- Artifact appears in admin view
+- Student-visible artifact appears in student view
+- Admin-only artifact does not appear in student view
+- Student cannot access other students’ private artifacts by changing URL/API ID
+
+D. Feedback
+- Admin can create feedback for student/project/submission/activity record
+- Student-visible feedback appears to student
+- Admin-only feedback is hidden from student
+- Feedback appears in admin report
+- Feedback visibility rules are enforced by server/API
+
+E. Skill tags
+- Admin can create skill tag
+- Admin can attach tag to activity record/project/artifact/feedback/student
+- Student tag summary appears in admin student report
+- Cohort tag summary appears in cohort summary if implemented
+
+F. Student timeline
+- Admin can view full student timeline
+- Student can view own visible timeline
+- Timeline includes relevant activities, projects, artifacts, and feedback
+- Filters work if implemented
+
+G. Student activity report
+- Admin can view student activity report
+- Student can view own report
+- Report includes:
+  - profile
+  - cohort/program
+  - attendance summary
+  - assignment summary
+  - project summary
+  - artifacts
+  - feedback highlights
+  - skill tag summary
+  - activity timeline
+- Admin-only notes are excluded from student report
+
+H. Cohort activity summary
+- Admin can view cohort summary
+- Summary includes students, attendance, assignments, projects, artifacts, and tags where implemented
+- Summary does not expose private data to unauthorized users
+
+Security and privacy testing:
+- Student cannot access another student’s timeline
+- Student cannot access another student’s report
+- Student cannot access another student’s artifacts
+- Student cannot access admin-only feedback
+- Student cannot access admin-only activity records
+- Evaluator cannot access student records unless explicitly allowed
+- Unauthenticated user cannot access student/admin routes
+- Private records are not exposed through API responses
+- Admin-only notes are never included in student-facing views
+
+MVP 1 regression checklist:
+- Public pages still load
+- Application form still works
+- Application data saves to DB
+- Admin application list works
+- Application detail works
+- Admin note works
+- CSV export works
+
+MVP 2 regression checklist:
+- Evaluator login works
+- Evaluator assignment works
+- Evaluator can only see assigned applications
+- Document review works
+- Interview management works
+- Final decision works
+- Decision logs still work
+
+MVP 3 regression checklist:
+- Accepted applicant to student conversion works
+- Cohort management works
+- Program management works
+- Session management works
+- Attendance works
+- Assignment creation works
+- Assignment submission works
+- Announcements work
+- Student dashboard works
+
+If issues are found:
+1. Identify root cause
+2. Fix issue
+3. Rerun affected test
+4. Rerun relevant regression tests if shared code was touched
+
+Final report format:
+1. Overall result: Pass / Fail
+2. Static check results
+3. MVP 4 system test results
+4. MVP 1 regression result
+5. MVP 2 regression result
+6. MVP 3 regression result
+7. Security/privacy test result
+8. Bugs found
+9. Fixes applied
+10. Remaining risks
+11. Commands run
+12. How to rerun tests

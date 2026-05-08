@@ -9,3 +9,9 @@ export {
   type DecisionLog,
   type InsertDecisionLog,
 } from "./decision-logs";
+export * from "./cohorts";
+export * from "./programs";
+export * from "./students";
+export * from "./sessions";
+export * from "./assignments";
+export * from "./announcements";
