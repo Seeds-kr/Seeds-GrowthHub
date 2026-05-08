@@ -1,6 +1,6 @@
 # Seeds — Student Program Operations Platform
 
-A Korean-language web platform for the **Seeds** student program: public site + application form (MVP 1), evaluator selection workflow (MVP 2), and **activity operation management (MVP 3)** — students, cohorts, programs, sessions, attendance, assignments, submissions, announcements, and a student dashboard.
+A Korean-language web platform for the **Seeds** student program: public site + application form (MVP 1), evaluator selection workflow (MVP 2), activity operation management (MVP 3), and **student activity record & utilization (MVP 4)** — activity timeline, projects, artifacts, feedback, and skill-tag-driven reports.
 
 ## Stack
 
@@ -48,6 +48,22 @@ The shared proxy at `localhost:80` routes `/api/*` to the API server and everyth
 - `/student/assignments`, `/student/assignments/:id` — Submit / re-submit (text + URL); status auto-flips to `late` past the due date
 - `/student/announcements`
 
+### Admin MVP 4 (role=admin)
+- `/admin/activity-records` — searchable/filterable manual activity log (student/cohort/program/source/tag); CRUD + tag mappings
+- `/admin/projects`, `/admin/projects/:id` — CRUD; per-project members, artifacts, feedback, tag mappings, and status updates from one screen
+- `/admin/artifacts` — site-wide artifact CRUD (any type, any visibility, project- or student-scoped)
+- `/admin/feedback` — site-wide feedback CRUD (target = student / project / submission / activity / session; visibility = student_visible | admin_only)
+- `/admin/tags` — skill-tag CRUD (used to characterise activity records, projects, artifacts, feedback, and students)
+- `/admin/students/:id/timeline` — admin view of a student's full activity stream with inline tag attach/detach
+- `/admin/students/:id/report` — printable per-student report (cohorts, attendance, submissions, projects, artifacts, feedback highlights, tag summary, timeline)
+- `/admin/cohorts/:id/summary` — cohort-level analytics (counts, attendance distribution, submission distribution, tag distribution, students missing activity)
+
+### Student MVP 4 (role=student)
+- `/student/timeline` — own activity stream (`studentId = me` AND `visibility = student_visible`)
+- `/student/projects`, `/student/projects/:id` — projects I'm a member of, with members, artifacts, feedback, tags, and my role
+- `/student/artifacts` — artifacts visible to me (own non-admin_only ∪ project-member with `student_visible`/`cohort_visible` ∪ same-cohort projects with `cohort_visible`)
+- `/student/report` — printable own activity report (same shape as admin report but scoped to me; admin_only feedback excluded)
+
 ## API endpoints (`/api/...`)
 
 Public + auth:
@@ -89,6 +105,25 @@ Student (role=student via `requireStudent`):
 - `POST /student/assignments/:id/submission` — upsert; status auto = `late` if past `dueAt`; rejected once assignment is `closed`
 - `GET /student/announcements` — published only; `target=all` OR (cohort/program in mine)
 
+Admin MVP 4 (role=admin):
+- `GET/POST/PATCH/DELETE /admin/activity-records[/:id]` — filters: studentId, cohortId, programId, sourceType, tagId
+- `GET/POST/PATCH/DELETE /admin/projects[/:id]`; `GET /admin/projects/:id` returns project + members + artifacts + feedback + tags
+- `POST/DELETE /admin/projects/:id/members[/:memberId]` — `(project_id, student_id)` unique → 409
+- `GET/POST/PATCH/DELETE /admin/artifacts[/:id]` — DB table is `artifacts`; route is `/admin/artifacts`; the file is `admin-mvp4-artifacts.ts` and the Drizzle export is `mvp4ArtifactsTable` to avoid the monorepo `artifacts/` directory clash
+- `GET/POST/PATCH/DELETE /admin/feedback[/:id]` — visibility: `student_visible | admin_only`
+- `GET/POST/PATCH/DELETE /admin/tags[/:id]` — unique tag name → 409 (matches pg `23505` or message contains `duplicate`)
+- `GET/POST/DELETE /admin/tag-mappings[?targetType=&targetId=][/:id]` — `(tag_id, target_type, target_id)` unique → 409
+- `GET /admin/students/:id/timeline` — full activity stream with tags joined
+- `GET /admin/students/:id/report` — student profile, cohorts, programs, attendance summary, submissions, projects (+ my role), artifacts, feedback highlights, tag counts, full timeline
+- `GET /admin/cohorts/:id/summary` — cohort, studentCount, attendanceOverview, submissionOverview, project/artifact counts, tag distribution, students missing activity
+
+Student MVP 4 (role=student via `requireStudent`):
+- `GET /student/timeline` — own records (`studentId = me`) with `visibility = student_visible` only; tags joined. `private` and `admin_only` records are not exposed to the student (admins flip visibility to `student_visible` to share)
+- `GET /student/projects` — projects I'm a member of (via `project_members`)
+- `GET /student/projects/:id` — only if I'm a member; returns project + members + my membership + artifacts (visibility ≠ admin_only) + feedback (visibility=student_visible) + tags
+- `GET /student/artifacts` — own non-admin_only ∪ project-member with `student_visible`/`cohort_visible` ∪ same-cohort projects with `cohort_visible`
+- `GET /student/report` — same shape as admin report but scoped to me; admin_only feedback excluded
+
 ## Database schema
 
 - `applications` — MVP1 columns (incl. legacy `status` enum) + MVP2 `application_status` (lifecycle: submitted → document_review → interview → final_decision_made / withdrawn) and `final_decision` (pending | accepted | rejected | waitlisted | withdrawn).
@@ -109,6 +144,21 @@ MVP 3 tables (additive, no destructive migrations):
 - `announcements` (target_type: all | cohort | program, target_id, is_published, published_at, created_by)
 
 Note: `evaluation_assignments` (MVP 2 evaluator→app routing) and `assignments` (MVP 3 homework) are distinct tables with distinct routes (`admin-assignments.ts` vs `admin-tasks.ts`).
+
+MVP 4 tables (additive, non-destructive):
+- `activity_records` — student_id, cohort_id, program_id?, source_type (session | assignment | project | feedback | manual), source_id?, title, description, activity_date, visibility (private | student_visible | admin_only — default `admin_only`).
+- `projects` — cohort_id, program_id?, title, description, problem_statement, solution_summary, status (ideation | in_progress | submitted | presented | completed | archived), started_at, ended_at.
+- `project_members` — (project_id, student_id) unique; role, contribution_summary.
+- `artifacts` (Drizzle export `mvp4ArtifactsTable`, file `lib/db/src/schema/mvp4-artifacts.ts`) — student_id?, project_id?, assignment_submission_id?, title, description, artifact_type (link | document | presentation | video | code | image | report | other), url, visibility (private | student_visible | cohort_visible | admin_only — default `student_visible`).
+- `feedback` — target_type (student | project | assignment_submission | activity_record | session), target_id, student_id?, author_id, feedback_type (general | strength | improvement | review | mentor_note | admin_note), content, visibility (student_visible | admin_only — default `admin_only`).
+- `skill_tags` — name unique, description.
+- `tag_mappings` — (tag_id, target_type, target_id) unique; target_type ∈ {activity_record, project, artifact, feedback, student}.
+
+Student-side visibility rules in code:
+- `student/timeline` = `studentId = me` AND `visibility = student_visible`.
+- `student/artifacts` = own (any except admin_only) ∪ project-member with visibility ∈ {student_visible, cohort_visible} ∪ same-cohort projects with cohort_visible.
+- `student/projects/:id` artifacts: own (any except admin_only) ∪ other members' (student_visible | cohort_visible). Never expose another member's `private` artifact.
+- `student/report.feedbackHighlights` filters `visibility = student_visible` and `studentId = me`.
 
 `users.role` widened to `admin | evaluator | student` (text column, no enum widening). Legacy `applications.status` is preserved untouched so MVP 1 admin flows keep working.
 

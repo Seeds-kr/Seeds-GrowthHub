@@ -15,3 +15,8 @@ export * from "./students";
 export * from "./sessions";
 export * from "./assignments";
 export * from "./announcements";
+export * from "./activity-records";
+export * from "./projects";
+export * from "./mvp4-artifacts";
+export * from "./feedback";
+export * from "./skill-tags";

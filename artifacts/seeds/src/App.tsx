@@ -25,6 +25,15 @@ import AdminSessionAttendance from "@/pages/admin/session-attendance";
 import AdminAssignments from "@/pages/admin/assignments";
 import AdminAssignmentDetail from "@/pages/admin/assignment-detail";
 import AdminAnnouncements from "@/pages/admin/announcements";
+import AdminActivityRecords from "@/pages/admin/activity-records";
+import AdminProjects from "@/pages/admin/projects";
+import AdminProjectDetail from "@/pages/admin/project-detail";
+import AdminArtifacts from "@/pages/admin/artifacts";
+import AdminFeedback from "@/pages/admin/feedback";
+import AdminTags from "@/pages/admin/tags";
+import AdminStudentTimeline from "@/pages/admin/student-timeline";
+import AdminStudentReport from "@/pages/admin/student-report";
+import AdminCohortSummary from "@/pages/admin/cohort-summary";
 
 import EvaluatorDashboard from "@/pages/evaluator/dashboard";
 import EvaluatorApplicationDetail from "@/pages/evaluator/application-detail";
@@ -36,6 +45,11 @@ import StudentAssignments from "@/pages/student/assignments";
 import StudentAssignmentDetail from "@/pages/student/assignment-detail";
 import StudentAnnouncements from "@/pages/student/announcements";
 import StudentAttendance from "@/pages/student/attendance";
+import StudentTimeline from "@/pages/student/timeline";
+import StudentProjects from "@/pages/student/projects";
+import StudentProjectDetail from "@/pages/student/project-detail";
+import StudentArtifacts from "@/pages/student/artifacts";
+import StudentReportPage from "@/pages/student/report";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -70,6 +84,15 @@ function Router() {
       <Route path="/admin/assignments" component={AdminAssignments} />
       <Route path="/admin/assignments/:id" component={AdminAssignmentDetail} />
       <Route path="/admin/announcements" component={AdminAnnouncements} />
+      <Route path="/admin/activity-records" component={AdminActivityRecords} />
+      <Route path="/admin/projects" component={AdminProjects} />
+      <Route path="/admin/projects/:id" component={AdminProjectDetail} />
+      <Route path="/admin/artifacts" component={AdminArtifacts} />
+      <Route path="/admin/feedback" component={AdminFeedback} />
+      <Route path="/admin/tags" component={AdminTags} />
+      <Route path="/admin/students/:id/timeline" component={AdminStudentTimeline} />
+      <Route path="/admin/students/:id/report" component={AdminStudentReport} />
+      <Route path="/admin/cohorts/:id/summary" component={AdminCohortSummary} />
 
       <Route path="/evaluator" component={EvaluatorDashboard} />
       <Route path="/evaluator/applications/:id" component={EvaluatorApplicationDetail} />
@@ -81,6 +104,11 @@ function Router() {
       <Route path="/student/assignments/:id" component={StudentAssignmentDetail} />
       <Route path="/student/announcements" component={StudentAnnouncements} />
       <Route path="/student/attendance" component={StudentAttendance} />
+      <Route path="/student/timeline" component={StudentTimeline} />
+      <Route path="/student/projects" component={StudentProjects} />
+      <Route path="/student/projects/:id" component={StudentProjectDetail} />
+      <Route path="/student/artifacts" component={StudentArtifacts} />
+      <Route path="/student/report" component={StudentReportPage} />
 
       <Route component={NotFound} />
     </Switch>

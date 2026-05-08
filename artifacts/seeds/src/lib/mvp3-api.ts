@@ -122,3 +122,187 @@ export type Announcement = {
   createdAt: string;
   updatedAt: string;
 };
+
+// ── MVP 4 ────────────────────────────────────────────────────────────────────
+
+export const ACTIVITY_SOURCES = [
+  "session", "assignment", "project", "feedback", "manual",
+] as const;
+export type ActivitySource = (typeof ACTIVITY_SOURCES)[number];
+export const ACTIVITY_SOURCE_LABEL: Record<ActivitySource, string> = {
+  session: "세션", assignment: "과제", project: "프로젝트",
+  feedback: "피드백", manual: "수동 기록",
+};
+
+export const ACTIVITY_VISIBILITIES = ["private", "student_visible", "admin_only"] as const;
+export type ActivityVisibility = (typeof ACTIVITY_VISIBILITIES)[number];
+export const ACTIVITY_VISIBILITY_LABEL: Record<ActivityVisibility, string> = {
+  private: "비공개", student_visible: "학생 공개", admin_only: "관리자 전용",
+};
+
+export type ActivityRecord = {
+  id: number;
+  studentId: number;
+  cohortId: number;
+  programId: number | null;
+  sourceType: ActivitySource;
+  sourceId: number | null;
+  title: string;
+  description: string | null;
+  activityDate: string;
+  visibility: ActivityVisibility;
+  createdBy: number | null;
+  createdAt: string;
+  updatedAt: string;
+  studentName?: string | null;
+  cohortName?: string | null;
+  programName?: string | null;
+  tags?: { id: number; name: string }[];
+};
+
+export const PROJECT_STATUSES = [
+  "ideation", "in_progress", "submitted", "presented", "completed", "archived",
+] as const;
+export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
+export const PROJECT_STATUS_LABEL: Record<ProjectStatus, string> = {
+  ideation: "기획", in_progress: "진행 중", submitted: "제출",
+  presented: "발표", completed: "완료", archived: "보관",
+};
+
+export type Project = {
+  id: number;
+  cohortId: number;
+  programId: number | null;
+  title: string;
+  description: string | null;
+  problemStatement: string | null;
+  solutionSummary: string | null;
+  status: ProjectStatus;
+  startedAt: string | null;
+  endedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  cohortName?: string | null;
+  programName?: string | null;
+};
+
+export type ProjectMember = {
+  id: number;
+  studentId: number;
+  studentName?: string;
+  role: string | null;
+  contributionSummary?: string | null;
+};
+
+export const ARTIFACT_TYPES = [
+  "link", "document", "presentation", "video", "code", "image", "report", "other",
+] as const;
+export type ArtifactType = (typeof ARTIFACT_TYPES)[number];
+export const ARTIFACT_TYPE_LABEL: Record<ArtifactType, string> = {
+  link: "링크", document: "문서", presentation: "발표자료", video: "영상",
+  code: "코드", image: "이미지", report: "보고서", other: "기타",
+};
+
+export const ARTIFACT_VISIBILITIES = [
+  "private", "student_visible", "cohort_visible", "admin_only",
+] as const;
+export type ArtifactVisibility = (typeof ARTIFACT_VISIBILITIES)[number];
+export const ARTIFACT_VISIBILITY_LABEL: Record<ArtifactVisibility, string> = {
+  private: "비공개", student_visible: "학생 공개",
+  cohort_visible: "기수 공개", admin_only: "관리자 전용",
+};
+
+export type Mvp4Artifact = {
+  id: number;
+  studentId: number | null;
+  studentName?: string | null;
+  projectId: number | null;
+  projectTitle?: string | null;
+  assignmentSubmissionId: number | null;
+  title: string;
+  description: string | null;
+  artifactType: ArtifactType;
+  url: string;
+  visibility: ArtifactVisibility;
+  createdBy: number | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export const FEEDBACK_TARGETS = [
+  "student", "project", "assignment_submission", "activity_record", "session",
+] as const;
+export type FeedbackTarget = (typeof FEEDBACK_TARGETS)[number];
+export const FEEDBACK_TARGET_LABEL: Record<FeedbackTarget, string> = {
+  student: "학생", project: "프로젝트", assignment_submission: "과제 제출",
+  activity_record: "활동 기록", session: "세션",
+};
+
+export const FEEDBACK_TYPES = [
+  "general", "strength", "improvement", "review", "mentor_note", "admin_note",
+] as const;
+export type FeedbackType = (typeof FEEDBACK_TYPES)[number];
+export const FEEDBACK_TYPE_LABEL: Record<FeedbackType, string> = {
+  general: "일반", strength: "강점", improvement: "개선점",
+  review: "리뷰", mentor_note: "멘토 메모", admin_note: "관리자 메모",
+};
+
+export const FEEDBACK_VISIBILITIES = ["student_visible", "admin_only"] as const;
+export type FeedbackVisibility = (typeof FEEDBACK_VISIBILITIES)[number];
+export const FEEDBACK_VISIBILITY_LABEL: Record<FeedbackVisibility, string> = {
+  student_visible: "학생 공개", admin_only: "관리자 전용",
+};
+
+export type FeedbackItem = {
+  id: number;
+  targetType: FeedbackTarget;
+  targetId: number;
+  studentId: number | null;
+  studentName?: string | null;
+  authorId: number | null;
+  authorName?: string | null;
+  feedbackType: FeedbackType;
+  content: string;
+  visibility: FeedbackVisibility;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export const TAG_TARGETS = [
+  "activity_record", "project", "artifact", "feedback", "student",
+] as const;
+export type TagTarget = (typeof TAG_TARGETS)[number];
+
+export type SkillTag = {
+  id: number;
+  name: string;
+  description: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TagMapping = { mappingId: number; tagId: number; name: string };
+
+export type StudentReport = {
+  student: { id: number; name: string; email: string; school: string | null; isActive?: boolean };
+  cohorts: { id: number; name: string }[];
+  programs: { id: number; name: string }[];
+  attendanceSummary: { present: number; late: number; absent: number; excused: number; total: number };
+  submissions: { id: number; assignmentId: number; title: string; status: string; submittedAt: string | null; feedback: string | null }[];
+  projects: { id: number; title: string; status: ProjectStatus; role: string | null; contributionSummary?: string | null }[];
+  artifacts: { id: number; title: string; url: string; artifactType: ArtifactType; visibility: ArtifactVisibility; createdAt: string }[];
+  feedbackHighlights: { id: number; feedbackType: FeedbackType; content: string; createdAt: string }[];
+  timeline: { id: number; sourceType: ActivitySource; title: string; description: string | null; activityDate: string }[];
+  skillTags: { tagId: number; name: string; count: number }[];
+};
+
+export type CohortSummary = {
+  cohort: { id: number; name: string; status: string };
+  studentCount: number;
+  attendanceOverview: { present: number; late: number; absent: number; excused: number; total: number };
+  submissionOverview: { status: string; count: number }[];
+  projectCount: number;
+  artifactCount: number;
+  skillTagDistribution: { tagId: number; name: string; count: number }[];
+  studentsMissingActivity: { id: number; name: string }[];
+};

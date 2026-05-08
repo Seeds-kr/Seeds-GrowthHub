@@ -14,6 +14,13 @@ import adminSessionsRouter from "./admin-sessions";
 import adminTasksRouter from "./admin-tasks";
 import adminAnnouncementsRouter from "./admin-announcements";
 import studentRouter from "./student";
+import adminActivityRecordsRouter from "./admin-activity-records";
+import adminProjectsRouter from "./admin-projects";
+import adminMvp4ArtifactsRouter from "./admin-mvp4-artifacts";
+import adminFeedbackRouter from "./admin-feedback";
+import adminTagsRouter from "./admin-tags";
+import adminReportsRouter from "./admin-reports";
+import studentMvp4Router from "./student-mvp4";
 
 const router: IRouter = Router();
 
@@ -32,5 +39,12 @@ router.use(adminSessionsRouter);
 router.use(adminTasksRouter);
 router.use(adminAnnouncementsRouter);
 router.use(studentRouter);
+router.use(adminActivityRecordsRouter);
+router.use(adminProjectsRouter);
+router.use(adminMvp4ArtifactsRouter);
+router.use(adminFeedbackRouter);
+router.use(adminTagsRouter);
+router.use(adminReportsRouter);
+router.use(studentMvp4Router);
 
 export default router;

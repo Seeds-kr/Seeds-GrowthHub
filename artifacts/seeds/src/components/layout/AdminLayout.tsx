@@ -78,6 +78,21 @@ export function AdminLayout({ children }: { children: ReactNode }) {
               <Link href="/admin/announcements" className="text-sm font-medium text-muted-foreground hover:text-primary">
                 공지
               </Link>
+              <Link href="/admin/activity-records" className="text-sm font-medium text-muted-foreground hover:text-primary">
+                활동기록
+              </Link>
+              <Link href="/admin/projects" className="text-sm font-medium text-muted-foreground hover:text-primary">
+                프로젝트
+              </Link>
+              <Link href="/admin/artifacts" className="text-sm font-medium text-muted-foreground hover:text-primary">
+                아티팩트
+              </Link>
+              <Link href="/admin/feedback" className="text-sm font-medium text-muted-foreground hover:text-primary">
+                피드백
+              </Link>
+              <Link href="/admin/tags" className="text-sm font-medium text-muted-foreground hover:text-primary">
+                태그
+              </Link>
               <Link href="/admin/evaluators" className="text-sm font-medium text-muted-foreground hover:text-primary">
                 평가자
               </Link>
