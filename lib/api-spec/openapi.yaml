@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
-  version: 0.1.0
+  version: 0.2.0
   description: Seeds API
 servers:
   - url: /api
@@ -11,6 +11,7 @@ tags:
   - name: health
   - name: applications
   - name: admin
+  - name: evaluator
 paths:
   /healthz:
     get:
@@ -67,7 +68,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AdminSession"
+                $ref: "#/components/schemas/SessionUser"
         "401":
           description: Unauthorized
           content:
@@ -79,7 +80,7 @@ paths:
     post:
       operationId: adminLogout
       tags: [admin]
-      summary: Admin logout
+      summary: Logout
       responses:
         "200":
           description: Logged out
@@ -92,14 +93,14 @@ paths:
     get:
       operationId: adminMe
       tags: [admin]
-      summary: Current admin session
+      summary: Current session
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AdminSession"
+                $ref: "#/components/schemas/SessionUser"
         "401":
           description: Unauthorized
           content:
@@ -115,13 +116,28 @@ paths:
       parameters:
         - in: query
           name: q
-          schema:
-            type: string
-          description: Search by name, email, or school
+          schema: { type: string }
         - in: query
           name: status
           schema:
             $ref: "#/components/schemas/ApplicationStatus"
+        - in: query
+          name: applicationStatus
+          schema:
+            $ref: "#/components/schemas/ApplicationLifecycleStatus"
+        - in: query
+          name: finalDecision
+          schema:
+            $ref: "#/components/schemas/FinalDecision"
+        - in: query
+          name: evaluationCompletion
+          schema:
+            type: string
+            enum: [any, none, partial, complete]
+        - in: query
+          name: interviewStatus
+          schema:
+            $ref: "#/components/schemas/InterviewStatus"
       responses:
         "200":
           description: OK
@@ -148,31 +164,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApplicationStats"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
 
   /admin/applications/{id}:
     get:
       operationId: getApplication
       tags: [admin]
-      summary: Get application detail
+      summary: Get application detail (admin) — includes assignments, evaluations, interview, decision logs
       parameters:
         - in: path
           name: id
           required: true
-          schema:
-            type: integer
+          schema: { type: integer }
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Application"
+                $ref: "#/components/schemas/ApplicationDetail"
         "401":
           description: Unauthorized
           content:
@@ -188,13 +197,12 @@ paths:
     patch:
       operationId: updateApplication
       tags: [admin]
-      summary: Update application status / admin note
+      summary: Update application status / admin note (legacy MVP1)
       parameters:
         - in: path
           name: id
           required: true
-          schema:
-            type: integer
+          schema: { type: integer }
       requestBody:
         required: true
         content:
@@ -231,10 +239,289 @@ paths:
           description: CSV file
           content:
             text/csv:
+              schema: { type: string }
+
+  /admin/users:
+    get:
+      operationId: listUsers
+      tags: [admin]
+      summary: List users (evaluators + admins)
+      parameters:
+        - in: query
+          name: role
+          schema:
+            $ref: "#/components/schemas/UserRole"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
               schema:
-                type: string
+                $ref: "#/components/schemas/UserList"
+    post:
+      operationId: createUser
+      tags: [admin]
+      summary: Create a user (typically an evaluator)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Email already in use
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/users/{id}:
+    patch:
+      operationId: updateUser
+      tags: [admin]
+      summary: Update a user (name/email/isActive/password)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/applications/{id}/assignments:
+    post:
+      operationId: createAssignment
+      tags: [admin]
+      summary: Assign an evaluator to an application
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAssignmentBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvaluationAssignment"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Already assigned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/applications/{appId}/assignments/{assignmentId}:
+    delete:
+      operationId: deleteAssignment
+      tags: [admin]
+      summary: Remove an evaluator assignment
+      parameters:
+        - in: path
+          name: appId
+          required: true
+          schema: { type: integer }
+        - in: path
+          name: assignmentId
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/applications/{id}/interview:
+    put:
+      operationId: upsertInterview
+      tags: [admin]
+      summary: Create or update interview details
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpsertInterviewBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Interview"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/applications/{id}/final-decision:
+    patch:
+      operationId: setFinalDecision
+      tags: [admin]
+      summary: Set final decision for an application (and append a decision log)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetFinalDecisionBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /evaluator/assignments:
+    get:
+      operationId: listMyAssignments
+      tags: [evaluator]
+      summary: List the current evaluator's assignments
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvaluatorAssignmentList"
         "401":
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /evaluator/applications/{id}:
+    get:
+      operationId: getEvaluatorApplication
+      tags: [evaluator]
+      summary: Get an application the current evaluator is assigned to (with own evaluation only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvaluatorApplicationDetail"
+        "403":
+          description: Not assigned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /evaluator/applications/{id}/evaluations:
+    post:
+      operationId: submitEvaluation
+      tags: [evaluator]
+      summary: Submit or update the current evaluator's evaluation for the given stage
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitEvaluationBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Evaluation"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Not assigned
           content:
             application/json:
               schema:
@@ -245,23 +532,24 @@ components:
     HealthStatus:
       type: object
       properties:
-        status:
-          type: string
+        status: { type: string }
       required: [status]
 
     OkResponse:
       type: object
       properties:
-        ok:
-          type: boolean
+        ok: { type: boolean }
       required: [ok]
 
     ErrorResponse:
       type: object
       properties:
-        error:
-          type: string
+        error: { type: string }
       required: [error]
+
+    UserRole:
+      type: string
+      enum: [admin, evaluator]
 
     ApplicationStatus:
       type: string
@@ -274,53 +562,52 @@ components:
         - waitlisted
         - withdrawn
 
+    ApplicationLifecycleStatus:
+      type: string
+      enum:
+        - submitted
+        - document_review
+        - document_review_completed
+        - interview
+        - interview_scheduled
+        - interview_completed
+        - final_decision_made
+        - withdrawn
+
+    FinalDecision:
+      type: string
+      enum: [pending, accepted, rejected, waitlisted, withdrawn]
+
+    EvaluationStage:
+      type: string
+      enum: [document_review, interview]
+
+    AssignmentStatus:
+      type: string
+      enum: [assigned, in_progress, completed]
+
+    InterviewStatus:
+      type: string
+      enum: [not_scheduled, scheduled, completed, no_show, cancelled]
+
+    Recommendation:
+      type: string
+      enum: [strong_accept, accept, hold, reject, strong_reject]
+
     CreateApplicationBody:
       type: object
       properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-        email:
-          type: string
-          format: email
-          maxLength: 200
-        phone:
-          type: string
-          minLength: 1
-          maxLength: 30
-        school:
-          type: string
-          minLength: 1
-          maxLength: 200
-        grade:
-          type: string
-          minLength: 1
-          maxLength: 50
-        birthYear:
-          type: integer
-          minimum: 1950
-          maximum: 2025
-        interestArea:
-          type: string
-          minLength: 1
-          maxLength: 100
-        motivation:
-          type: string
-          minLength: 1
-          maxLength: 5000
-        experience:
-          type: string
-          minLength: 1
-          maxLength: 5000
-        problemAwareness:
-          type: string
-          minLength: 1
-          maxLength: 5000
-        expectation:
-          type: string
-          minLength: 1
-          maxLength: 5000
+        name: { type: string, minLength: 1, maxLength: 100 }
+        email: { type: string, format: email, maxLength: 200 }
+        phone: { type: string, minLength: 1, maxLength: 30 }
+        school: { type: string, minLength: 1, maxLength: 200 }
+        grade: { type: string, minLength: 1, maxLength: 50 }
+        birthYear: { type: integer, minimum: 1950, maximum: 2025 }
+        interestArea: { type: string, minLength: 1, maxLength: 100 }
+        motivation: { type: string, minLength: 1, maxLength: 5000 }
+        experience: { type: string, minLength: 1, maxLength: 5000 }
+        problemAwareness: { type: string, minLength: 1, maxLength: 5000 }
+        expectation: { type: string, minLength: 1, maxLength: 5000 }
         privacyConsent:
           type: boolean
           enum: [true]
@@ -341,50 +628,36 @@ components:
     CreateApplicationResponse:
       type: object
       properties:
-        id:
-          type: integer
+        id: { type: integer }
       required: [id]
 
     Application:
       type: object
       properties:
-        id:
-          type: integer
-        name:
-          type: string
-        email:
-          type: string
-        phone:
-          type: string
-        school:
-          type: string
-        grade:
-          type: string
-        birthYear:
-          type: integer
-        interestArea:
-          type: string
-        motivation:
-          type: string
-        experience:
-          type: string
-        problemAwareness:
-          type: string
-        expectation:
-          type: string
-        privacyConsent:
-          type: boolean
+        id: { type: integer }
+        name: { type: string }
+        email: { type: string }
+        phone: { type: string }
+        school: { type: string }
+        grade: { type: string }
+        birthYear: { type: integer }
+        interestArea: { type: string }
+        motivation: { type: string }
+        experience: { type: string }
+        problemAwareness: { type: string }
+        expectation: { type: string }
+        privacyConsent: { type: boolean }
         status:
           $ref: "#/components/schemas/ApplicationStatus"
+        applicationStatus:
+          $ref: "#/components/schemas/ApplicationLifecycleStatus"
+        finalDecision:
+          $ref: "#/components/schemas/FinalDecision"
         adminNote:
           type: string
           nullable: true
-        submittedAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
+        submittedAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
       required:
         - id
         - name
@@ -400,6 +673,8 @@ components:
         - expectation
         - privacyConsent
         - status
+        - applicationStatus
+        - finalDecision
         - adminNote
         - submittedAt
         - updatedAt
@@ -407,23 +682,26 @@ components:
     ApplicationListItem:
       type: object
       properties:
-        id:
-          type: integer
-        name:
-          type: string
-        email:
-          type: string
-        school:
-          type: string
-        grade:
-          type: string
-        interestArea:
-          type: string
+        id: { type: integer }
+        name: { type: string }
+        email: { type: string }
+        school: { type: string }
+        grade: { type: string }
+        interestArea: { type: string }
         status:
           $ref: "#/components/schemas/ApplicationStatus"
-        submittedAt:
-          type: string
-          format: date-time
+        applicationStatus:
+          $ref: "#/components/schemas/ApplicationLifecycleStatus"
+        finalDecision:
+          $ref: "#/components/schemas/FinalDecision"
+        avgDocReviewScore:
+          type: number
+          nullable: true
+        evaluationsAssigned: { type: integer }
+        evaluationsCompleted: { type: integer }
+        interviewStatus:
+          $ref: "#/components/schemas/InterviewStatus"
+        submittedAt: { type: string, format: date-time }
       required:
         - id
         - name
@@ -432,6 +710,12 @@ components:
         - grade
         - interestArea
         - status
+        - applicationStatus
+        - finalDecision
+        - avgDocReviewScore
+        - evaluationsAssigned
+        - evaluationsCompleted
+        - interviewStatus
         - submittedAt
 
     ApplicationList:
@@ -441,8 +725,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ApplicationListItem"
-        total:
-          type: integer
+        total: { type: integer }
       required: [items, total]
 
     ApplicationStatusCount:
@@ -450,15 +733,13 @@ components:
       properties:
         status:
           $ref: "#/components/schemas/ApplicationStatus"
-        count:
-          type: integer
+        count: { type: integer }
       required: [status, count]
 
     ApplicationStats:
       type: object
       properties:
-        total:
-          type: integer
+        total: { type: integer }
         byStatus:
           type: array
           items:
@@ -470,6 +751,8 @@ components:
       properties:
         status:
           $ref: "#/components/schemas/ApplicationStatus"
+        applicationStatus:
+          $ref: "#/components/schemas/ApplicationLifecycleStatus"
         adminNote:
           type: string
           nullable: true
@@ -478,17 +761,276 @@ components:
     AdminLoginBody:
       type: object
       properties:
-        email:
-          type: string
-          format: email
-        password:
-          type: string
-          minLength: 1
+        email: { type: string, format: email }
+        password: { type: string, minLength: 1 }
       required: [email, password]
 
-    AdminSession:
+    SessionUser:
       type: object
       properties:
-        email:
+        id: { type: integer }
+        email: { type: string }
+        name: { type: string }
+        role:
+          $ref: "#/components/schemas/UserRole"
+      required: [id, email, name, role]
+
+    User:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        email: { type: string }
+        role:
+          $ref: "#/components/schemas/UserRole"
+        isActive: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        assignedCount: { type: integer }
+        completedCount: { type: integer }
+      required: [id, name, email, role, isActive, createdAt, updatedAt, assignedCount, completedCount]
+
+    UserList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+        total: { type: integer }
+      required: [items, total]
+
+    CreateUserBody:
+      type: object
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100 }
+        email: { type: string, format: email, maxLength: 200 }
+        password: { type: string, minLength: 8, maxLength: 200 }
+        role:
+          $ref: "#/components/schemas/UserRole"
+      required: [name, email, password, role]
+
+    UpdateUserBody:
+      type: object
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100 }
+        email: { type: string, format: email, maxLength: 200 }
+        password: { type: string, minLength: 8, maxLength: 200 }
+        isActive: { type: boolean }
+
+    EvaluationAssignment:
+      type: object
+      properties:
+        id: { type: integer }
+        applicationId: { type: integer }
+        evaluatorId: { type: integer }
+        evaluatorName: { type: string }
+        evaluatorEmail: { type: string }
+        stage:
+          $ref: "#/components/schemas/EvaluationStage"
+        status:
+          $ref: "#/components/schemas/AssignmentStatus"
+        assignedAt: { type: string, format: date-time }
+      required: [id, applicationId, evaluatorId, evaluatorName, evaluatorEmail, stage, status, assignedAt]
+
+    CreateAssignmentBody:
+      type: object
+      properties:
+        evaluatorId: { type: integer }
+        stage:
+          $ref: "#/components/schemas/EvaluationStage"
+      required: [evaluatorId, stage]
+
+    Evaluation:
+      type: object
+      properties:
+        id: { type: integer }
+        applicationId: { type: integer }
+        evaluatorId: { type: integer }
+        evaluatorName: { type: string }
+        stage:
+          $ref: "#/components/schemas/EvaluationStage"
+        motivationScore: { type: integer, nullable: true }
+        problemAwarenessScore: { type: integer, nullable: true }
+        initiativeScore: { type: integer, nullable: true }
+        collaborationScore: { type: integer, nullable: true }
+        fitScore: { type: integer, nullable: true }
+        overallScore: { type: integer }
+        recommendation:
+          $ref: "#/components/schemas/Recommendation"
+        comment:
           type: string
-      required: [email]
+          nullable: true
+        submittedAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required:
+        - id
+        - applicationId
+        - evaluatorId
+        - evaluatorName
+        - stage
+        - motivationScore
+        - problemAwarenessScore
+        - initiativeScore
+        - collaborationScore
+        - fitScore
+        - overallScore
+        - recommendation
+        - comment
+        - submittedAt
+        - updatedAt
+
+    SubmitEvaluationBody:
+      type: object
+      properties:
+        stage:
+          $ref: "#/components/schemas/EvaluationStage"
+        motivationScore: { type: integer, minimum: 1, maximum: 5, nullable: true }
+        problemAwarenessScore: { type: integer, minimum: 1, maximum: 5, nullable: true }
+        initiativeScore: { type: integer, minimum: 1, maximum: 5, nullable: true }
+        collaborationScore: { type: integer, minimum: 1, maximum: 5, nullable: true }
+        fitScore: { type: integer, minimum: 1, maximum: 5, nullable: true }
+        overallScore: { type: integer, minimum: 1, maximum: 5 }
+        recommendation:
+          $ref: "#/components/schemas/Recommendation"
+        comment:
+          type: string
+          nullable: true
+          maxLength: 5000
+      required: [stage, overallScore, recommendation]
+
+    Interview:
+      type: object
+      properties:
+        id: { type: integer }
+        applicationId: { type: integer }
+        scheduledAt:
+          type: string
+          format: date-time
+          nullable: true
+        locationOrLink:
+          type: string
+          nullable: true
+        interviewerNote:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/InterviewStatus"
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [id, applicationId, scheduledAt, locationOrLink, interviewerNote, status, createdAt, updatedAt]
+
+    UpsertInterviewBody:
+      type: object
+      properties:
+        scheduledAt:
+          type: string
+          format: date-time
+          nullable: true
+        locationOrLink:
+          type: string
+          nullable: true
+          maxLength: 500
+        interviewerNote:
+          type: string
+          nullable: true
+          maxLength: 5000
+        status:
+          $ref: "#/components/schemas/InterviewStatus"
+
+    DecisionLog:
+      type: object
+      properties:
+        id: { type: integer }
+        applicationId: { type: integer }
+        previousDecision:
+          allOf:
+            - $ref: "#/components/schemas/FinalDecision"
+          nullable: true
+        newDecision:
+          $ref: "#/components/schemas/FinalDecision"
+        changedBy:
+          type: integer
+          nullable: true
+        changedByName:
+          type: string
+          nullable: true
+        reason:
+          type: string
+          nullable: true
+        createdAt: { type: string, format: date-time }
+      required: [id, applicationId, previousDecision, newDecision, changedBy, changedByName, reason, createdAt]
+
+    SetFinalDecisionBody:
+      type: object
+      properties:
+        finalDecision:
+          $ref: "#/components/schemas/FinalDecision"
+        reason: { type: string, maxLength: 5000 }
+      required: [finalDecision, reason]
+
+    ApplicationDetail:
+      allOf:
+        - $ref: "#/components/schemas/Application"
+        - type: object
+          properties:
+            assignments:
+              type: array
+              items:
+                $ref: "#/components/schemas/EvaluationAssignment"
+            evaluations:
+              type: array
+              items:
+                $ref: "#/components/schemas/Evaluation"
+            interview:
+              oneOf:
+                - $ref: "#/components/schemas/Interview"
+                - type: "null"
+            decisionLogs:
+              type: array
+              items:
+                $ref: "#/components/schemas/DecisionLog"
+            avgDocReviewScore:
+              type: number
+              nullable: true
+          required: [assignments, evaluations, interview, decisionLogs, avgDocReviewScore]
+
+    EvaluatorAssignmentItem:
+      type: object
+      properties:
+        assignmentId: { type: integer }
+        applicationId: { type: integer }
+        applicantName: { type: string }
+        applicantSchool: { type: string }
+        stage:
+          $ref: "#/components/schemas/EvaluationStage"
+        assignmentStatus:
+          $ref: "#/components/schemas/AssignmentStatus"
+        hasEvaluation: { type: boolean }
+        assignedAt: { type: string, format: date-time }
+      required: [assignmentId, applicationId, applicantName, applicantSchool, stage, assignmentStatus, hasEvaluation, assignedAt]
+
+    EvaluatorAssignmentList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/EvaluatorAssignmentItem"
+        total: { type: integer }
+      required: [items, total]
+
+    EvaluatorApplicationDetail:
+      type: object
+      properties:
+        application:
+          $ref: "#/components/schemas/Application"
+        myAssignments:
+          type: array
+          items:
+            $ref: "#/components/schemas/EvaluationAssignment"
+        myEvaluations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Evaluation"
+      required: [application, myAssignments, myEvaluations]

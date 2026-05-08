@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Api
  * Seeds API
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 export interface HealthStatus {
   status: string;
@@ -17,6 +17,13 @@ export interface ErrorResponse {
   error: string;
 }
 
+export type UserRole = (typeof UserRole)[keyof typeof UserRole];
+
+export const UserRole = {
+  admin: "admin",
+  evaluator: "evaluator",
+} as const;
+
 export type ApplicationStatus =
   (typeof ApplicationStatus)[keyof typeof ApplicationStatus];
 
@@ -28,6 +35,69 @@ export const ApplicationStatus = {
   rejected: "rejected",
   waitlisted: "waitlisted",
   withdrawn: "withdrawn",
+} as const;
+
+export type ApplicationLifecycleStatus =
+  (typeof ApplicationLifecycleStatus)[keyof typeof ApplicationLifecycleStatus];
+
+export const ApplicationLifecycleStatus = {
+  submitted: "submitted",
+  document_review: "document_review",
+  document_review_completed: "document_review_completed",
+  interview: "interview",
+  interview_scheduled: "interview_scheduled",
+  interview_completed: "interview_completed",
+  final_decision_made: "final_decision_made",
+  withdrawn: "withdrawn",
+} as const;
+
+export type FinalDecision = (typeof FinalDecision)[keyof typeof FinalDecision];
+
+export const FinalDecision = {
+  pending: "pending",
+  accepted: "accepted",
+  rejected: "rejected",
+  waitlisted: "waitlisted",
+  withdrawn: "withdrawn",
+} as const;
+
+export type EvaluationStage =
+  (typeof EvaluationStage)[keyof typeof EvaluationStage];
+
+export const EvaluationStage = {
+  document_review: "document_review",
+  interview: "interview",
+} as const;
+
+export type AssignmentStatus =
+  (typeof AssignmentStatus)[keyof typeof AssignmentStatus];
+
+export const AssignmentStatus = {
+  assigned: "assigned",
+  in_progress: "in_progress",
+  completed: "completed",
+} as const;
+
+export type InterviewStatus =
+  (typeof InterviewStatus)[keyof typeof InterviewStatus];
+
+export const InterviewStatus = {
+  not_scheduled: "not_scheduled",
+  scheduled: "scheduled",
+  completed: "completed",
+  no_show: "no_show",
+  cancelled: "cancelled",
+} as const;
+
+export type Recommendation =
+  (typeof Recommendation)[keyof typeof Recommendation];
+
+export const Recommendation = {
+  strong_accept: "strong_accept",
+  accept: "accept",
+  hold: "hold",
+  reject: "reject",
+  strong_reject: "strong_reject",
 } as const;
 
 export interface CreateApplicationBody {
@@ -105,6 +175,8 @@ export interface Application {
   expectation: string;
   privacyConsent: boolean;
   status: ApplicationStatus;
+  applicationStatus: ApplicationLifecycleStatus;
+  finalDecision: FinalDecision;
   adminNote: string | null;
   submittedAt: string;
   updatedAt: string;
@@ -118,6 +190,12 @@ export interface ApplicationListItem {
   grade: string;
   interestArea: string;
   status: ApplicationStatus;
+  applicationStatus: ApplicationLifecycleStatus;
+  finalDecision: FinalDecision;
+  avgDocReviewScore: number | null;
+  evaluationsAssigned: number;
+  evaluationsCompleted: number;
+  interviewStatus: InterviewStatus;
   submittedAt: string;
 }
 
@@ -138,6 +216,7 @@ export interface ApplicationStats {
 
 export interface UpdateApplicationBody {
   status?: ApplicationStatus;
+  applicationStatus?: ApplicationLifecycleStatus;
   /** @maxLength 5000 */
   adminNote?: string | null;
 }
@@ -148,14 +227,219 @@ export interface AdminLoginBody {
   password: string;
 }
 
-export interface AdminSession {
+export interface SessionUser {
+  id: number;
   email: string;
+  name: string;
+  role: UserRole;
+}
+
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: UserRole;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  assignedCount: number;
+  completedCount: number;
+}
+
+export interface UserList {
+  items: User[];
+  total: number;
+}
+
+export interface CreateUserBody {
+  /**
+   * @minLength 1
+   * @maxLength 100
+   */
+  name: string;
+  /** @maxLength 200 */
+  email: string;
+  /**
+   * @minLength 8
+   * @maxLength 200
+   */
+  password: string;
+  role: UserRole;
+}
+
+export interface UpdateUserBody {
+  /**
+   * @minLength 1
+   * @maxLength 100
+   */
+  name?: string;
+  /** @maxLength 200 */
+  email?: string;
+  /**
+   * @minLength 8
+   * @maxLength 200
+   */
+  password?: string;
+  isActive?: boolean;
+}
+
+export interface EvaluationAssignment {
+  id: number;
+  applicationId: number;
+  evaluatorId: number;
+  evaluatorName: string;
+  evaluatorEmail: string;
+  stage: EvaluationStage;
+  status: AssignmentStatus;
+  assignedAt: string;
+}
+
+export interface CreateAssignmentBody {
+  evaluatorId: number;
+  stage: EvaluationStage;
+}
+
+export interface Evaluation {
+  id: number;
+  applicationId: number;
+  evaluatorId: number;
+  evaluatorName: string;
+  stage: EvaluationStage;
+  motivationScore: number | null;
+  problemAwarenessScore: number | null;
+  initiativeScore: number | null;
+  collaborationScore: number | null;
+  fitScore: number | null;
+  overallScore: number;
+  recommendation: Recommendation;
+  comment: string | null;
+  submittedAt: string;
+  updatedAt: string;
+}
+
+export interface SubmitEvaluationBody {
+  stage: EvaluationStage;
+  /**
+   * @minimum 1
+   * @maximum 5
+   */
+  motivationScore?: number | null;
+  /**
+   * @minimum 1
+   * @maximum 5
+   */
+  problemAwarenessScore?: number | null;
+  /**
+   * @minimum 1
+   * @maximum 5
+   */
+  initiativeScore?: number | null;
+  /**
+   * @minimum 1
+   * @maximum 5
+   */
+  collaborationScore?: number | null;
+  /**
+   * @minimum 1
+   * @maximum 5
+   */
+  fitScore?: number | null;
+  /**
+   * @minimum 1
+   * @maximum 5
+   */
+  overallScore: number;
+  recommendation: Recommendation;
+  /** @maxLength 5000 */
+  comment?: string | null;
+}
+
+export interface Interview {
+  id: number;
+  applicationId: number;
+  scheduledAt: string | null;
+  locationOrLink: string | null;
+  interviewerNote: string | null;
+  status: InterviewStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpsertInterviewBody {
+  scheduledAt?: string | null;
+  /** @maxLength 500 */
+  locationOrLink?: string | null;
+  /** @maxLength 5000 */
+  interviewerNote?: string | null;
+  status?: InterviewStatus;
+}
+
+export interface DecisionLog {
+  id: number;
+  applicationId: number;
+  previousDecision: FinalDecision | null;
+  newDecision: FinalDecision;
+  changedBy: number | null;
+  changedByName: string | null;
+  reason: string | null;
+  createdAt: string;
+}
+
+export interface SetFinalDecisionBody {
+  finalDecision: FinalDecision;
+  /** @maxLength 5000 */
+  reason: string;
+}
+
+export type ApplicationDetail = Application & {
+  assignments: EvaluationAssignment[];
+  evaluations: Evaluation[];
+  interview: Interview | null;
+  decisionLogs: DecisionLog[];
+  avgDocReviewScore: number | null;
+};
+
+export interface EvaluatorAssignmentItem {
+  assignmentId: number;
+  applicationId: number;
+  applicantName: string;
+  applicantSchool: string;
+  stage: EvaluationStage;
+  assignmentStatus: AssignmentStatus;
+  hasEvaluation: boolean;
+  assignedAt: string;
+}
+
+export interface EvaluatorAssignmentList {
+  items: EvaluatorAssignmentItem[];
+  total: number;
+}
+
+export interface EvaluatorApplicationDetail {
+  application: Application;
+  myAssignments: EvaluationAssignment[];
+  myEvaluations: Evaluation[];
 }
 
 export type ListApplicationsParams = {
-  /**
-   * Search by name, email, or school
-   */
   q?: string;
   status?: ApplicationStatus;
+  applicationStatus?: ApplicationLifecycleStatus;
+  finalDecision?: FinalDecision;
+  evaluationCompletion?: ListApplicationsEvaluationCompletion;
+  interviewStatus?: InterviewStatus;
+};
+
+export type ListApplicationsEvaluationCompletion =
+  (typeof ListApplicationsEvaluationCompletion)[keyof typeof ListApplicationsEvaluationCompletion];
+
+export const ListApplicationsEvaluationCompletion = {
+  any: "any",
+  none: "none",
+  partial: "partial",
+  complete: "complete",
+} as const;
+
+export type ListUsersParams = {
+  role?: UserRole;
 };

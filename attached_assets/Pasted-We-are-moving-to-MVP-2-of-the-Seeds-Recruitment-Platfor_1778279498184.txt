@@ -1,0 +1,263 @@
+We are moving to MVP 2 of the Seeds Recruitment Platform.
+
+MVP 1 already includes:
+- Public website
+- Application form
+- Application database
+- Admin login
+- Admin application list
+- Application detail page
+- Status update
+- Admin note
+- CSV export
+
+MVP 2 goal:
+Build the selection management module.
+
+The goal is to support the selection process after applications are submitted:
+1. Evaluator accounts
+2. Evaluator assignment
+3. Document review evaluation
+4. Interview management
+5. Interview evaluation
+6. Final decision management
+7. Decision change logs
+8. Admin and evaluator role-based access control
+
+Important:
+Do not remove or break any MVP 1 features.
+Keep all existing application data.
+Add database migrations safely.
+After implementation, run regression tests for MVP 1 flows.
+
+Required roles:
+- admin
+- evaluator
+
+Admin capabilities:
+- View all applications
+- Create, edit, and deactivate evaluator accounts
+- Assign evaluators to applications
+- View evaluation completion status
+- View evaluation scores and comments
+- Select applicants for interview
+- Create and edit interview schedule information
+- View interview evaluation results
+- Set final decision:
+  - pending
+  - accepted
+  - rejected
+  - waitlisted
+  - withdrawn
+- Write decision reason
+- View decision change logs
+
+Evaluator capabilities:
+- Login as evaluator
+- View only applications assigned to them
+- Open assigned application detail
+- Read submitted application content
+- Submit document review evaluation
+- Submit interview evaluation if assigned
+- Edit their own evaluation
+- Cannot view other evaluators’ evaluations
+- Cannot change application status
+- Cannot set final decision
+- Cannot access admin-only pages
+
+Database changes:
+Add or update the schema with the following entities.
+
+1. users
+- id
+- name
+- email
+- password_hash
+- role: admin | evaluator
+- is_active
+- created_at
+- updated_at
+
+2. evaluation_assignments
+- id
+- application_id
+- evaluator_id
+- stage: document_review | interview
+- assigned_by
+- assigned_at
+- status: assigned | in_progress | completed
+
+3. evaluations
+- id
+- application_id
+- evaluator_id
+- stage: document_review | interview
+- motivation_score
+- problem_awareness_score
+- initiative_score
+- collaboration_score
+- fit_score
+- overall_score
+- recommendation: strong_accept | accept | hold | reject | strong_reject
+- comment
+- submitted_at
+- updated_at
+
+4. interviews
+- id
+- application_id
+- scheduled_at
+- location_or_link
+- interviewer_note
+- status: not_scheduled | scheduled | completed | no_show | cancelled
+- created_at
+- updated_at
+
+5. decision_logs
+- id
+- application_id
+- previous_decision
+- new_decision
+- changed_by
+- reason
+- created_at
+
+Application model updates:
+Add if missing:
+- application_status
+- final_decision
+
+Recommended application_status values:
+- submitted
+- document_review
+- document_review_completed
+- interview
+- interview_scheduled
+- interview_completed
+- final_decision_made
+- withdrawn
+
+Recommended final_decision values:
+- pending
+- accepted
+- rejected
+- waitlisted
+- withdrawn
+
+Admin UI requirements:
+1. Applications list
+- Show application status
+- Show final decision
+- Show average document review score
+- Show evaluation completion count
+- Add filters:
+  - application_status
+  - final_decision
+  - evaluation completion
+  - interview status
+
+2. Application detail page
+Add sections:
+- Submitted application content
+- Evaluator assignments
+- Document review evaluations
+- Interview schedule
+- Interview evaluations
+- Final decision
+- Decision logs
+- Admin note
+
+3. Evaluator management
+- List evaluators
+- Create evaluator
+- Edit evaluator name/email
+- Activate/deactivate evaluator
+- Show number of assigned evaluations
+- Show number of completed evaluations
+
+4. Assignment management
+- Assign one or more evaluators to an application for document review
+- Assign one or more evaluators for interview evaluation
+- Show assignment status
+
+5. Interview management
+- Set scheduled date/time
+- Set location or meeting link
+- Set interview status
+- Add interviewer note
+
+6. Final decision management
+- Set final decision
+- Require decision reason when final decision changes
+- Save decision change log
+- Show decision log history
+
+Evaluator UI requirements:
+1. Evaluator login
+2. Evaluator dashboard
+- Show assigned applications
+- Show stage
+- Show completion status
+3. Evaluation form
+- Show submitted application content
+- Allow score input from 1 to 5
+- Require overall_score
+- Require recommendation
+- Allow comment
+- Save evaluation
+- Allow evaluator to edit their own evaluation
+
+Security requirements:
+- Use secure password hashing
+- Do not store plaintext passwords
+- Do not expose credentials to the client
+- Protect admin routes
+- Protect evaluator routes
+- Evaluators must only access assigned applications
+- Admin-only APIs must reject evaluator access
+- Unauthenticated users must be redirected to login
+
+Testing requirements:
+After implementation:
+1. Run build
+2. Run TypeScript checks
+3. Run MVP 1 regression tests
+4. Run MVP 2 acceptance tests
+
+MVP 2 acceptance tests:
+- Admin can create evaluator
+- Evaluator can log in
+- Admin can assign evaluator to application
+- Evaluator sees only assigned application
+- Evaluator can submit document review evaluation
+- Admin can see evaluation result
+- Admin can mark applicant for interview
+- Admin can create interview schedule
+- Evaluator or admin can submit interview evaluation
+- Admin can set final decision
+- Decision log is created
+- Evaluator cannot access admin pages
+- Evaluator cannot access unassigned applications
+- Existing MVP 1 application submission still works
+- Existing CSV export still works
+
+Design requirements:
+- Keep Korean UI
+- Keep clean, professional Seeds design
+- Use clear status badges
+- Make the admin workflow easy to scan
+- Avoid overly complex UI
+- Prioritize operational clarity
+
+Final output:
+Provide:
+1. Summary of implementation
+2. Database migration summary
+3. New routes added
+4. New admin features
+5. New evaluator features
+6. Security checks
+7. Test results
+8. Known limitations
+9. How to run the app
+10. How to create the first admin/evaluator account

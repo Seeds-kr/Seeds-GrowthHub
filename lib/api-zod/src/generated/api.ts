@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Api
  * Seeds API
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 import * as zod from "zod";
 
@@ -71,31 +71,34 @@ export const AdminLoginBody = zod.object({
 });
 
 export const AdminLoginResponse = zod.object({
+  id: zod.number(),
   email: zod.string(),
+  name: zod.string(),
+  role: zod.enum(["admin", "evaluator"]),
 });
 
 /**
- * @summary Admin logout
+ * @summary Logout
  */
 export const AdminLogoutResponse = zod.object({
   ok: zod.boolean(),
 });
 
 /**
- * @summary Current admin session
+ * @summary Current session
  */
 export const AdminMeResponse = zod.object({
+  id: zod.number(),
   email: zod.string(),
+  name: zod.string(),
+  role: zod.enum(["admin", "evaluator"]),
 });
 
 /**
  * @summary List applications (admin)
  */
 export const ListApplicationsQueryParams = zod.object({
-  q: zod.coerce
-    .string()
-    .optional()
-    .describe("Search by name, email, or school"),
+  q: zod.coerce.string().optional(),
   status: zod
     .enum([
       "submitted",
@@ -106,6 +109,27 @@ export const ListApplicationsQueryParams = zod.object({
       "waitlisted",
       "withdrawn",
     ])
+    .optional(),
+  applicationStatus: zod
+    .enum([
+      "submitted",
+      "document_review",
+      "document_review_completed",
+      "interview",
+      "interview_scheduled",
+      "interview_completed",
+      "final_decision_made",
+      "withdrawn",
+    ])
+    .optional(),
+  finalDecision: zod
+    .enum(["pending", "accepted", "rejected", "waitlisted", "withdrawn"])
+    .optional(),
+  evaluationCompletion: zod
+    .enum(["any", "none", "partial", "complete"])
+    .optional(),
+  interviewStatus: zod
+    .enum(["not_scheduled", "scheduled", "completed", "no_show", "cancelled"])
     .optional(),
 });
 
@@ -126,6 +150,33 @@ export const ListApplicationsResponse = zod.object({
         "rejected",
         "waitlisted",
         "withdrawn",
+      ]),
+      applicationStatus: zod.enum([
+        "submitted",
+        "document_review",
+        "document_review_completed",
+        "interview",
+        "interview_scheduled",
+        "interview_completed",
+        "final_decision_made",
+        "withdrawn",
+      ]),
+      finalDecision: zod.enum([
+        "pending",
+        "accepted",
+        "rejected",
+        "waitlisted",
+        "withdrawn",
+      ]),
+      avgDocReviewScore: zod.number().nullable(),
+      evaluationsAssigned: zod.number(),
+      evaluationsCompleted: zod.number(),
+      interviewStatus: zod.enum([
+        "not_scheduled",
+        "scheduled",
+        "completed",
+        "no_show",
+        "cancelled",
       ]),
       submittedAt: zod.coerce.date(),
     }),
@@ -155,42 +206,147 @@ export const ApplicationStatsResponse = zod.object({
 });
 
 /**
- * @summary Get application detail
+ * @summary Get application detail (admin) — includes assignments, evaluations, interview, decision logs
  */
 export const GetApplicationParams = zod.object({
   id: zod.coerce.number(),
 });
 
-export const GetApplicationResponse = zod.object({
-  id: zod.number(),
-  name: zod.string(),
-  email: zod.string(),
-  phone: zod.string(),
-  school: zod.string(),
-  grade: zod.string(),
-  birthYear: zod.number(),
-  interestArea: zod.string(),
-  motivation: zod.string(),
-  experience: zod.string(),
-  problemAwareness: zod.string(),
-  expectation: zod.string(),
-  privacyConsent: zod.boolean(),
-  status: zod.enum([
-    "submitted",
-    "reviewing",
-    "interview",
-    "accepted",
-    "rejected",
-    "waitlisted",
-    "withdrawn",
-  ]),
-  adminNote: zod.string().nullable(),
-  submittedAt: zod.coerce.date(),
-  updatedAt: zod.coerce.date(),
-});
+export const GetApplicationResponse = zod
+  .object({
+    id: zod.number(),
+    name: zod.string(),
+    email: zod.string(),
+    phone: zod.string(),
+    school: zod.string(),
+    grade: zod.string(),
+    birthYear: zod.number(),
+    interestArea: zod.string(),
+    motivation: zod.string(),
+    experience: zod.string(),
+    problemAwareness: zod.string(),
+    expectation: zod.string(),
+    privacyConsent: zod.boolean(),
+    status: zod.enum([
+      "submitted",
+      "reviewing",
+      "interview",
+      "accepted",
+      "rejected",
+      "waitlisted",
+      "withdrawn",
+    ]),
+    applicationStatus: zod.enum([
+      "submitted",
+      "document_review",
+      "document_review_completed",
+      "interview",
+      "interview_scheduled",
+      "interview_completed",
+      "final_decision_made",
+      "withdrawn",
+    ]),
+    finalDecision: zod.enum([
+      "pending",
+      "accepted",
+      "rejected",
+      "waitlisted",
+      "withdrawn",
+    ]),
+    adminNote: zod.string().nullable(),
+    submittedAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  })
+  .and(
+    zod.object({
+      assignments: zod.array(
+        zod.object({
+          id: zod.number(),
+          applicationId: zod.number(),
+          evaluatorId: zod.number(),
+          evaluatorName: zod.string(),
+          evaluatorEmail: zod.string(),
+          stage: zod.enum(["document_review", "interview"]),
+          status: zod.enum(["assigned", "in_progress", "completed"]),
+          assignedAt: zod.coerce.date(),
+        }),
+      ),
+      evaluations: zod.array(
+        zod.object({
+          id: zod.number(),
+          applicationId: zod.number(),
+          evaluatorId: zod.number(),
+          evaluatorName: zod.string(),
+          stage: zod.enum(["document_review", "interview"]),
+          motivationScore: zod.number().nullable(),
+          problemAwarenessScore: zod.number().nullable(),
+          initiativeScore: zod.number().nullable(),
+          collaborationScore: zod.number().nullable(),
+          fitScore: zod.number().nullable(),
+          overallScore: zod.number(),
+          recommendation: zod.enum([
+            "strong_accept",
+            "accept",
+            "hold",
+            "reject",
+            "strong_reject",
+          ]),
+          comment: zod.string().nullable(),
+          submittedAt: zod.coerce.date(),
+          updatedAt: zod.coerce.date(),
+        }),
+      ),
+      interview: zod.union([
+        zod.object({
+          id: zod.number(),
+          applicationId: zod.number(),
+          scheduledAt: zod.coerce.date().nullable(),
+          locationOrLink: zod.string().nullable(),
+          interviewerNote: zod.string().nullable(),
+          status: zod.enum([
+            "not_scheduled",
+            "scheduled",
+            "completed",
+            "no_show",
+            "cancelled",
+          ]),
+          createdAt: zod.coerce.date(),
+          updatedAt: zod.coerce.date(),
+        }),
+        zod.null(),
+      ]),
+      decisionLogs: zod.array(
+        zod.object({
+          id: zod.number(),
+          applicationId: zod.number(),
+          previousDecision: zod
+            .enum([
+              "pending",
+              "accepted",
+              "rejected",
+              "waitlisted",
+              "withdrawn",
+            ])
+            .nullable(),
+          newDecision: zod.enum([
+            "pending",
+            "accepted",
+            "rejected",
+            "waitlisted",
+            "withdrawn",
+          ]),
+          changedBy: zod.number().nullable(),
+          changedByName: zod.string().nullable(),
+          reason: zod.string().nullable(),
+          createdAt: zod.coerce.date(),
+        }),
+      ),
+      avgDocReviewScore: zod.number().nullable(),
+    }),
+  );
 
 /**
- * @summary Update application status / admin note
+ * @summary Update application status / admin note (legacy MVP1)
  */
 export const UpdateApplicationParams = zod.object({
   id: zod.coerce.number(),
@@ -207,6 +363,18 @@ export const UpdateApplicationBody = zod.object({
       "accepted",
       "rejected",
       "waitlisted",
+      "withdrawn",
+    ])
+    .optional(),
+  applicationStatus: zod
+    .enum([
+      "submitted",
+      "document_review",
+      "document_review_completed",
+      "interview",
+      "interview_scheduled",
+      "interview_completed",
+      "final_decision_made",
       "withdrawn",
     ])
     .optional(),
@@ -236,7 +404,426 @@ export const UpdateApplicationResponse = zod.object({
     "waitlisted",
     "withdrawn",
   ]),
+  applicationStatus: zod.enum([
+    "submitted",
+    "document_review",
+    "document_review_completed",
+    "interview",
+    "interview_scheduled",
+    "interview_completed",
+    "final_decision_made",
+    "withdrawn",
+  ]),
+  finalDecision: zod.enum([
+    "pending",
+    "accepted",
+    "rejected",
+    "waitlisted",
+    "withdrawn",
+  ]),
   adminNote: zod.string().nullable(),
+  submittedAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary List users (evaluators + admins)
+ */
+export const ListUsersQueryParams = zod.object({
+  role: zod.enum(["admin", "evaluator"]).optional(),
+});
+
+export const ListUsersResponse = zod.object({
+  items: zod.array(
+    zod.object({
+      id: zod.number(),
+      name: zod.string(),
+      email: zod.string(),
+      role: zod.enum(["admin", "evaluator"]),
+      isActive: zod.boolean(),
+      createdAt: zod.coerce.date(),
+      updatedAt: zod.coerce.date(),
+      assignedCount: zod.number(),
+      completedCount: zod.number(),
+    }),
+  ),
+  total: zod.number(),
+});
+
+/**
+ * @summary Create a user (typically an evaluator)
+ */
+export const createUserBodyNameMax = 100;
+
+export const createUserBodyEmailMax = 200;
+
+export const createUserBodyPasswordMin = 8;
+export const createUserBodyPasswordMax = 200;
+
+export const CreateUserBody = zod.object({
+  name: zod.string().min(1).max(createUserBodyNameMax),
+  email: zod.string().email().max(createUserBodyEmailMax),
+  password: zod
+    .string()
+    .min(createUserBodyPasswordMin)
+    .max(createUserBodyPasswordMax),
+  role: zod.enum(["admin", "evaluator"]),
+});
+
+/**
+ * @summary Update a user (name/email/isActive/password)
+ */
+export const UpdateUserParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const updateUserBodyNameMax = 100;
+
+export const updateUserBodyEmailMax = 200;
+
+export const updateUserBodyPasswordMin = 8;
+export const updateUserBodyPasswordMax = 200;
+
+export const UpdateUserBody = zod.object({
+  name: zod.string().min(1).max(updateUserBodyNameMax).optional(),
+  email: zod.string().email().max(updateUserBodyEmailMax).optional(),
+  password: zod
+    .string()
+    .min(updateUserBodyPasswordMin)
+    .max(updateUserBodyPasswordMax)
+    .optional(),
+  isActive: zod.boolean().optional(),
+});
+
+export const UpdateUserResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  email: zod.string(),
+  role: zod.enum(["admin", "evaluator"]),
+  isActive: zod.boolean(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+  assignedCount: zod.number(),
+  completedCount: zod.number(),
+});
+
+/**
+ * @summary Assign an evaluator to an application
+ */
+export const CreateAssignmentParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const CreateAssignmentBody = zod.object({
+  evaluatorId: zod.number(),
+  stage: zod.enum(["document_review", "interview"]),
+});
+
+/**
+ * @summary Remove an evaluator assignment
+ */
+export const DeleteAssignmentParams = zod.object({
+  appId: zod.coerce.number(),
+  assignmentId: zod.coerce.number(),
+});
+
+export const DeleteAssignmentResponse = zod.object({
+  ok: zod.boolean(),
+});
+
+/**
+ * @summary Create or update interview details
+ */
+export const UpsertInterviewParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const upsertInterviewBodyLocationOrLinkMax = 500;
+
+export const upsertInterviewBodyInterviewerNoteMax = 5000;
+
+export const UpsertInterviewBody = zod.object({
+  scheduledAt: zod.coerce.date().nullish(),
+  locationOrLink: zod
+    .string()
+    .max(upsertInterviewBodyLocationOrLinkMax)
+    .nullish(),
+  interviewerNote: zod
+    .string()
+    .max(upsertInterviewBodyInterviewerNoteMax)
+    .nullish(),
+  status: zod
+    .enum(["not_scheduled", "scheduled", "completed", "no_show", "cancelled"])
+    .optional(),
+});
+
+export const UpsertInterviewResponse = zod.object({
+  id: zod.number(),
+  applicationId: zod.number(),
+  scheduledAt: zod.coerce.date().nullable(),
+  locationOrLink: zod.string().nullable(),
+  interviewerNote: zod.string().nullable(),
+  status: zod.enum([
+    "not_scheduled",
+    "scheduled",
+    "completed",
+    "no_show",
+    "cancelled",
+  ]),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Set final decision for an application (and append a decision log)
+ */
+export const SetFinalDecisionParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const setFinalDecisionBodyReasonMax = 5000;
+
+export const SetFinalDecisionBody = zod.object({
+  finalDecision: zod.enum([
+    "pending",
+    "accepted",
+    "rejected",
+    "waitlisted",
+    "withdrawn",
+  ]),
+  reason: zod.string().max(setFinalDecisionBodyReasonMax),
+});
+
+export const SetFinalDecisionResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  email: zod.string(),
+  phone: zod.string(),
+  school: zod.string(),
+  grade: zod.string(),
+  birthYear: zod.number(),
+  interestArea: zod.string(),
+  motivation: zod.string(),
+  experience: zod.string(),
+  problemAwareness: zod.string(),
+  expectation: zod.string(),
+  privacyConsent: zod.boolean(),
+  status: zod.enum([
+    "submitted",
+    "reviewing",
+    "interview",
+    "accepted",
+    "rejected",
+    "waitlisted",
+    "withdrawn",
+  ]),
+  applicationStatus: zod.enum([
+    "submitted",
+    "document_review",
+    "document_review_completed",
+    "interview",
+    "interview_scheduled",
+    "interview_completed",
+    "final_decision_made",
+    "withdrawn",
+  ]),
+  finalDecision: zod.enum([
+    "pending",
+    "accepted",
+    "rejected",
+    "waitlisted",
+    "withdrawn",
+  ]),
+  adminNote: zod.string().nullable(),
+  submittedAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary List the current evaluator's assignments
+ */
+export const ListMyAssignmentsResponse = zod.object({
+  items: zod.array(
+    zod.object({
+      assignmentId: zod.number(),
+      applicationId: zod.number(),
+      applicantName: zod.string(),
+      applicantSchool: zod.string(),
+      stage: zod.enum(["document_review", "interview"]),
+      assignmentStatus: zod.enum(["assigned", "in_progress", "completed"]),
+      hasEvaluation: zod.boolean(),
+      assignedAt: zod.coerce.date(),
+    }),
+  ),
+  total: zod.number(),
+});
+
+/**
+ * @summary Get an application the current evaluator is assigned to (with own evaluation only)
+ */
+export const GetEvaluatorApplicationParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetEvaluatorApplicationResponse = zod.object({
+  application: zod.object({
+    id: zod.number(),
+    name: zod.string(),
+    email: zod.string(),
+    phone: zod.string(),
+    school: zod.string(),
+    grade: zod.string(),
+    birthYear: zod.number(),
+    interestArea: zod.string(),
+    motivation: zod.string(),
+    experience: zod.string(),
+    problemAwareness: zod.string(),
+    expectation: zod.string(),
+    privacyConsent: zod.boolean(),
+    status: zod.enum([
+      "submitted",
+      "reviewing",
+      "interview",
+      "accepted",
+      "rejected",
+      "waitlisted",
+      "withdrawn",
+    ]),
+    applicationStatus: zod.enum([
+      "submitted",
+      "document_review",
+      "document_review_completed",
+      "interview",
+      "interview_scheduled",
+      "interview_completed",
+      "final_decision_made",
+      "withdrawn",
+    ]),
+    finalDecision: zod.enum([
+      "pending",
+      "accepted",
+      "rejected",
+      "waitlisted",
+      "withdrawn",
+    ]),
+    adminNote: zod.string().nullable(),
+    submittedAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  }),
+  myAssignments: zod.array(
+    zod.object({
+      id: zod.number(),
+      applicationId: zod.number(),
+      evaluatorId: zod.number(),
+      evaluatorName: zod.string(),
+      evaluatorEmail: zod.string(),
+      stage: zod.enum(["document_review", "interview"]),
+      status: zod.enum(["assigned", "in_progress", "completed"]),
+      assignedAt: zod.coerce.date(),
+    }),
+  ),
+  myEvaluations: zod.array(
+    zod.object({
+      id: zod.number(),
+      applicationId: zod.number(),
+      evaluatorId: zod.number(),
+      evaluatorName: zod.string(),
+      stage: zod.enum(["document_review", "interview"]),
+      motivationScore: zod.number().nullable(),
+      problemAwarenessScore: zod.number().nullable(),
+      initiativeScore: zod.number().nullable(),
+      collaborationScore: zod.number().nullable(),
+      fitScore: zod.number().nullable(),
+      overallScore: zod.number(),
+      recommendation: zod.enum([
+        "strong_accept",
+        "accept",
+        "hold",
+        "reject",
+        "strong_reject",
+      ]),
+      comment: zod.string().nullable(),
+      submittedAt: zod.coerce.date(),
+      updatedAt: zod.coerce.date(),
+    }),
+  ),
+});
+
+/**
+ * @summary Submit or update the current evaluator's evaluation for the given stage
+ */
+export const SubmitEvaluationParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const submitEvaluationBodyMotivationScoreMax = 5;
+
+export const submitEvaluationBodyProblemAwarenessScoreMax = 5;
+
+export const submitEvaluationBodyInitiativeScoreMax = 5;
+
+export const submitEvaluationBodyCollaborationScoreMax = 5;
+
+export const submitEvaluationBodyFitScoreMax = 5;
+
+export const submitEvaluationBodyOverallScoreMax = 5;
+
+export const submitEvaluationBodyCommentMax = 5000;
+
+export const SubmitEvaluationBody = zod.object({
+  stage: zod.enum(["document_review", "interview"]),
+  motivationScore: zod
+    .number()
+    .min(1)
+    .max(submitEvaluationBodyMotivationScoreMax)
+    .nullish(),
+  problemAwarenessScore: zod
+    .number()
+    .min(1)
+    .max(submitEvaluationBodyProblemAwarenessScoreMax)
+    .nullish(),
+  initiativeScore: zod
+    .number()
+    .min(1)
+    .max(submitEvaluationBodyInitiativeScoreMax)
+    .nullish(),
+  collaborationScore: zod
+    .number()
+    .min(1)
+    .max(submitEvaluationBodyCollaborationScoreMax)
+    .nullish(),
+  fitScore: zod.number().min(1).max(submitEvaluationBodyFitScoreMax).nullish(),
+  overallScore: zod.number().min(1).max(submitEvaluationBodyOverallScoreMax),
+  recommendation: zod.enum([
+    "strong_accept",
+    "accept",
+    "hold",
+    "reject",
+    "strong_reject",
+  ]),
+  comment: zod.string().max(submitEvaluationBodyCommentMax).nullish(),
+});
+
+export const SubmitEvaluationResponse = zod.object({
+  id: zod.number(),
+  applicationId: zod.number(),
+  evaluatorId: zod.number(),
+  evaluatorName: zod.string(),
+  stage: zod.enum(["document_review", "interview"]),
+  motivationScore: zod.number().nullable(),
+  problemAwarenessScore: zod.number().nullable(),
+  initiativeScore: zod.number().nullable(),
+  collaborationScore: zod.number().nullable(),
+  fitScore: zod.number().nullable(),
+  overallScore: zod.number(),
+  recommendation: zod.enum([
+    "strong_accept",
+    "accept",
+    "hold",
+    "reject",
+    "strong_reject",
+  ]),
+  comment: zod.string().nullable(),
   submittedAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });

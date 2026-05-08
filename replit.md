@@ -1,6 +1,6 @@
 # Seeds — Student Program Operations Platform
 
-A Korean-language web platform for the **Seeds** student program: a public site to attract applicants, an application form that saves to PostgreSQL, and an admin dashboard to triage submissions.
+A Korean-language web platform for the **Seeds** student program: a public site to attract applicants, an application form that saves to PostgreSQL, an admin dashboard to triage submissions, and a selection management module (MVP 2) for evaluator assignment, document/interview evaluations, interview scheduling, and final decision tracking.
 
 ## Stack
 
@@ -23,38 +23,58 @@ The shared proxy at `localhost:80` routes `/api/*` to the API server and everyth
 - `/apply` — Application form (zod-validated, calls `POST /api/applications`)
 - `/apply/success` — Success page
 
-### Admin (session-protected)
-- `/admin/login` — Email + password login
+### Admin (session-protected, role=admin)
+- `/admin/login` — Shared login for admin & evaluator (login redirects by role)
 - `/admin` — Stats dashboard
 - `/admin/applications` — Searchable, filterable applications table + CSV export
-- `/admin/applications/:id` — Detail view with editable status + admin note
+- `/admin/applications/:id` — Detail view: assignments, evaluations (avg), interview upsert, final decision + decision log timeline
+- `/admin/evaluators` — Evaluator CRUD (create with bcrypt password, toggle active)
+
+### Evaluator (session-protected, role=evaluator)
+- `/evaluator` — My assigned applications
+- `/evaluator/applications/:id` — Read application + submit evaluation form (per stage)
 
 ## API endpoints (`/api/...`)
 
+Public + auth:
 - `GET  /healthz`
 - `POST /applications` — public submission
-- `POST /admin/login` — checks `ADMIN_EMAIL` / `ADMIN_PASSWORD`, sets `seeds_admin` cookie
+- `POST /admin/login` — bcrypt-verified against `users` table; sets `seeds_admin` cookie
 - `POST /admin/logout` — clears cookie
-- `GET  /admin/me` — current session
-- `GET  /admin/applications?q=&status=` — list (search + filter)
-- `GET  /admin/applications/stats` — counts per status
-- `GET  /admin/applications/export` — CSV download
-- `GET  /admin/applications/:id`
-- `PATCH /admin/applications/:id` — update status / adminNote
+- `GET  /admin/me` — current session (returns role)
+
+Admin (role=admin via `requireAdmin`):
+- `GET  /admin/applications?q=&status=&applicationStatus=&finalDecision=&interviewStatus=&evaluationCompletion=`
+- `GET  /admin/applications/stats`
+- `GET  /admin/applications/export` — CSV (now includes MVP2 columns)
+- `GET  /admin/applications/:id` — joins assignments, evaluations, interview, decisionLogs, avgDocReviewScore
+- `PATCH /admin/applications/:id` — legacy status / adminNote (MVP1 compatible)
+- `POST  /admin/applications/:id/assignments` + `DELETE /:appId/assignments/:assignmentId`
+- `PUT   /admin/applications/:id/interview` — upsert (one per app)
+- `PATCH /admin/applications/:id/final-decision` — writes a `decision_logs` row, sets `applicationStatus`
+- `GET   /admin/users?role=` · `POST /admin/users` · `PATCH /admin/users/:id`
+
+Evaluator (role=evaluator via `requireEvaluator`):
+- `GET  /evaluator/assignments` — own assigned applications + completion flag
+- `GET  /evaluator/applications/:id` — only if assigned; returns app + own assignments/evaluations
+- `POST /evaluator/applications/:id/evaluations` — upsert evaluation per (app, evaluator, stage); auto-marks assignment `completed`
 
 ## Database schema
 
-`applications` table (`lib/db/src/schema/applications.ts`):
-`id`, `name`, `email`, `phone`, `school`, `grade`, `birth_year`, `interest_area`, `motivation`, `experience`, `problem_awareness`, `expectation`, `privacy_consent`, `status`, `admin_note`, `submitted_at`, `updated_at`.
+- `applications` — MVP1 columns (incl. legacy `status` enum) + MVP2 `application_status` (lifecycle: submitted → document_review → interview → final_decision_made / withdrawn) and `final_decision` (pending | accepted | rejected | waitlisted | withdrawn).
+- `users` — id, email (unique), name, password_hash (bcrypt), role (admin | evaluator), is_active, timestamps. Admin user is bootstrapped from `ADMIN_EMAIL` / `ADMIN_PASSWORD` on server startup (`bootstrapAdminFromEnv`).
+- `evaluation_assignments` — (application_id, evaluator_id, stage) unique; status (assigned | in_progress | completed); assigned_by, assigned_at.
+- `evaluations` — (application_id, evaluator_id, stage) unique; sub-scores (motivation, problem awareness, initiative, collaboration, fit) + overall_score (1-5) + recommendation + comment.
+- `interviews` — (application_id) unique; scheduled_at, location_or_link, interviewer_note, status.
+- `decision_logs` — append-only audit trail of `final_decision` changes (previous, new, reason, changed_by, created_at).
 
-Status enum: `submitted | reviewing | interview | accepted | rejected | waitlisted | withdrawn`.
+Legacy `applications.status` is preserved untouched so MVP 1 admin flows keep working.
 
 ## Required environment variables / secrets
 
 - `DATABASE_URL` — provisioned automatically by Replit
-- `SESSION_SECRET` — used to sign the admin session cookie
-- `ADMIN_EMAIL` — the only email allowed to log in to /admin
-- `ADMIN_PASSWORD` — the only password accepted
+- `SESSION_SECRET` — signs the `seeds_admin` HMAC session cookie (`{userId, role, exp}`, 7d TTL)
+- `ADMIN_EMAIL` / `ADMIN_PASSWORD` — bootstraps/refreshes the admin user in the `users` table on every server start
 - `NODE_ENV` — `production` makes the session cookie `Secure`
 
 ## How to run locally
@@ -92,8 +112,8 @@ When ready, suggest deploy. The `deployment` skill handles building both artifac
 
 ## Security notes
 
-- Admin credentials are read from `ADMIN_EMAIL` / `ADMIN_PASSWORD` env vars; never hardcoded or sent to the client.
-- `verifyAdminCredentials` uses `crypto.timingSafeEqual` to avoid timing leaks.
-- All `/api/admin/*` routes (except `login` and `logout`) require a valid session via `requireAdmin` middleware.
-- Public form input is validated server-side with the generated `CreateApplicationBody` Zod schema and trimmed before insert.
-- Session cookie is `httpOnly`, `sameSite=lax`, and `Secure` in production.
+- Passwords are stored as bcrypt hashes in the `users` table; the bootstrapped admin user comes from `ADMIN_EMAIL` / `ADMIN_PASSWORD`.
+- `requireAdmin`, `requireEvaluator`, and `requireAuth` middleware gate every protected route. Evaluator endpoints additionally check that the caller is actually assigned to the requested application.
+- The session cookie is HMAC-signed via `SESSION_SECRET`, `httpOnly`, `sameSite=lax`, and `Secure` in production. Payload contains `{userId, role, exp}` only.
+- All public form input is validated server-side with generated Zod schemas and trimmed before insert.
+- Final decision changes are append-only in `decision_logs` with the changing user recorded; CSV export still applies the formula-injection guard.

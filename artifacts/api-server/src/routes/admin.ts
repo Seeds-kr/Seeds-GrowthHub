@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, or, sql, inArray } from "drizzle-orm";
 import {
   AdminLoginBody,
   UpdateApplicationBody,
@@ -8,31 +8,42 @@ import {
   db,
   applicationsTable,
   APPLICATION_STATUSES,
+  APPLICATION_LIFECYCLE_STATUSES,
+  FINAL_DECISIONS,
   type ApplicationStatus,
+  type ApplicationLifecycleStatus,
+  type FinalDecision,
+  evaluationAssignmentsTable,
+  evaluationsTable,
+  interviewsTable,
+  INTERVIEW_STATUSES,
+  type InterviewStatus,
+  decisionLogsTable,
+  usersTable,
 } from "@workspace/db";
 import {
+  authenticateUser,
   clearSessionCookie,
-  getSession,
+  getCurrentUser,
   requireAdmin,
   setSessionCookie,
-  verifyAdminCredentials,
 } from "../lib/auth";
 
 const router: IRouter = Router();
 
-router.post("/admin/login", (req, res) => {
+router.post("/admin/login", async (req, res) => {
   const parsed = AdminLoginBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(401).json({ error: "Invalid credentials" });
     return;
   }
-  const { email, password } = parsed.data;
-  if (!verifyAdminCredentials(email, password)) {
+  const user = await authenticateUser(parsed.data.email, parsed.data.password);
+  if (!user) {
     res.status(401).json({ error: "Invalid credentials" });
     return;
   }
-  setSessionCookie(res, email);
-  res.json({ email });
+  setSessionCookie(res, { userId: user.id, role: user.role });
+  res.json({ id: user.id, email: user.email, name: user.name, role: user.role });
 });
 
 router.post("/admin/logout", (_req, res) => {
@@ -40,13 +51,13 @@ router.post("/admin/logout", (_req, res) => {
   res.json({ ok: true });
 });
 
-router.get("/admin/me", (req, res) => {
-  const session = getSession(req);
-  if (!session) {
+router.get("/admin/me", async (req, res) => {
+  const user = await getCurrentUser(req);
+  if (!user) {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
-  res.json({ email: session.email });
+  res.json({ id: user.id, email: user.email, name: user.name, role: user.role });
 });
 
 function isApplicationStatus(value: unknown): value is ApplicationStatus {
@@ -54,6 +65,18 @@ function isApplicationStatus(value: unknown): value is ApplicationStatus {
     typeof value === "string" &&
     (APPLICATION_STATUSES as readonly string[]).includes(value)
   );
+}
+function isLifecycleStatus(v: unknown): v is ApplicationLifecycleStatus {
+  return (
+    typeof v === "string" &&
+    (APPLICATION_LIFECYCLE_STATUSES as readonly string[]).includes(v)
+  );
+}
+function isFinalDecision(v: unknown): v is FinalDecision {
+  return typeof v === "string" && (FINAL_DECISIONS as readonly string[]).includes(v);
+}
+function isInterviewStatus(v: unknown): v is InterviewStatus {
+  return typeof v === "string" && (INTERVIEW_STATUSES as readonly string[]).includes(v);
 }
 
 router.get("/admin/applications/stats", requireAdmin, async (_req, res) => {
@@ -77,8 +100,6 @@ router.get("/admin/applications/stats", requireAdmin, async (_req, res) => {
 function csvEscape(value: unknown): string {
   if (value === null || value === undefined) return "";
   let str = String(value).replace(/\r?\n/g, " ");
-  // Prevent CSV formula injection in spreadsheet apps by prefixing
-  // any value starting with =, +, -, @, or a tab/CR with a single quote.
   if (str.length > 0 && /^[=+\-@\t\r]/.test(str)) {
     str = `'${str}`;
   }
@@ -108,6 +129,8 @@ router.get("/admin/applications/export", requireAdmin, async (_req, res) => {
     "expectation",
     "privacy_consent",
     "status",
+    "application_status",
+    "final_decision",
     "admin_note",
     "submitted_at",
     "updated_at",
@@ -130,6 +153,8 @@ router.get("/admin/applications/export", requireAdmin, async (_req, res) => {
         r.expectation,
         r.privacyConsent,
         r.status,
+        r.applicationStatus,
+        r.finalDecision,
         r.adminNote ?? "",
         r.submittedAt.toISOString(),
         r.updatedAt.toISOString(),
@@ -151,7 +176,6 @@ router.get("/admin/applications/export", requireAdmin, async (_req, res) => {
 
 router.get("/admin/applications", requireAdmin, async (req, res) => {
   const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
-  const statusParam = req.query.status;
   const filters = [] as ReturnType<typeof eq>[];
   if (q.length > 0) {
     const like = `%${q}%`;
@@ -162,35 +186,233 @@ router.get("/admin/applications", requireAdmin, async (req, res) => {
     );
     if (orFilter) filters.push(orFilter);
   }
-  if (isApplicationStatus(statusParam)) {
-    filters.push(eq(applicationsTable.status, statusParam));
+  if (isApplicationStatus(req.query.status)) {
+    filters.push(eq(applicationsTable.status, req.query.status));
+  }
+  if (isLifecycleStatus(req.query.applicationStatus)) {
+    filters.push(eq(applicationsTable.applicationStatus, req.query.applicationStatus));
+  }
+  if (isFinalDecision(req.query.finalDecision)) {
+    filters.push(eq(applicationsTable.finalDecision, req.query.finalDecision));
   }
   const where = filters.length > 0 ? and(...filters) : undefined;
 
-  const items = await db
-    .select({
-      id: applicationsTable.id,
-      name: applicationsTable.name,
-      email: applicationsTable.email,
-      school: applicationsTable.school,
-      grade: applicationsTable.grade,
-      interestArea: applicationsTable.interestArea,
-      status: applicationsTable.status,
-      submittedAt: applicationsTable.submittedAt,
-    })
+  const apps = await db
+    .select()
     .from(applicationsTable)
     .where(where)
     .orderBy(desc(applicationsTable.submittedAt))
     .limit(500);
 
-  res.json({
-    items: items.map((i) => ({
-      ...i,
-      submittedAt: i.submittedAt.toISOString(),
-    })),
-    total: items.length,
+  const ids = apps.map((a) => a.id);
+  const docStage = "document_review" as const;
+
+  // Aggregate doc-review evals per app
+  type Agg = { applicationId: number; avgScore: number | null; completed: number };
+  let evalAgg: Map<number, Agg> = new Map();
+  if (ids.length > 0) {
+    const aggRows = await db
+      .select({
+        applicationId: evaluationsTable.applicationId,
+        avgScore: sql<number | null>`avg(${evaluationsTable.overallScore})::float`,
+        completed: sql<number>`count(*)::int`,
+      })
+      .from(evaluationsTable)
+      .where(
+        and(
+          inArray(evaluationsTable.applicationId, ids),
+          eq(evaluationsTable.stage, docStage),
+        ),
+      )
+      .groupBy(evaluationsTable.applicationId);
+    evalAgg = new Map(
+      aggRows.map((r) => [
+        r.applicationId,
+        { applicationId: r.applicationId, avgScore: r.avgScore, completed: Number(r.completed) },
+      ]),
+    );
+  }
+
+  // Aggregate doc-review assignments per app
+  let assignedAgg: Map<number, number> = new Map();
+  if (ids.length > 0) {
+    const aRows = await db
+      .select({
+        applicationId: evaluationAssignmentsTable.applicationId,
+        assigned: sql<number>`count(*)::int`,
+      })
+      .from(evaluationAssignmentsTable)
+      .where(
+        and(
+          inArray(evaluationAssignmentsTable.applicationId, ids),
+          eq(evaluationAssignmentsTable.stage, docStage),
+        ),
+      )
+      .groupBy(evaluationAssignmentsTable.applicationId);
+    assignedAgg = new Map(aRows.map((r) => [r.applicationId, Number(r.assigned)]));
+  }
+
+  // Interview status per app
+  let interviewMap: Map<number, InterviewStatus> = new Map();
+  if (ids.length > 0) {
+    const iRows = await db
+      .select({
+        applicationId: interviewsTable.applicationId,
+        status: interviewsTable.status,
+      })
+      .from(interviewsTable)
+      .where(inArray(interviewsTable.applicationId, ids));
+    interviewMap = new Map(iRows.map((r) => [r.applicationId, r.status]));
+  }
+
+  let items = apps.map((a) => {
+    const ev = evalAgg.get(a.id);
+    const assignedCount = assignedAgg.get(a.id) ?? 0;
+    const completedCount = ev?.completed ?? 0;
+    return {
+      id: a.id,
+      name: a.name,
+      email: a.email,
+      school: a.school,
+      grade: a.grade,
+      interestArea: a.interestArea,
+      status: a.status,
+      applicationStatus: a.applicationStatus,
+      finalDecision: a.finalDecision,
+      avgDocReviewScore: ev?.avgScore ?? null,
+      evaluationsAssigned: assignedCount,
+      evaluationsCompleted: completedCount,
+      interviewStatus: interviewMap.get(a.id) ?? ("not_scheduled" as InterviewStatus),
+      submittedAt: a.submittedAt.toISOString(),
+    };
   });
+
+  // evaluationCompletion filter
+  const ec = req.query.evaluationCompletion;
+  if (ec === "none") {
+    items = items.filter((i) => i.evaluationsCompleted === 0);
+  } else if (ec === "partial") {
+    items = items.filter(
+      (i) => i.evaluationsCompleted > 0 && i.evaluationsCompleted < i.evaluationsAssigned,
+    );
+  } else if (ec === "complete") {
+    items = items.filter(
+      (i) => i.evaluationsAssigned > 0 && i.evaluationsCompleted >= i.evaluationsAssigned,
+    );
+  }
+  // interviewStatus filter
+  if (isInterviewStatus(req.query.interviewStatus)) {
+    items = items.filter((i) => i.interviewStatus === req.query.interviewStatus);
+  }
+
+  res.json({ items, total: items.length });
 });
+
+async function loadApplicationDetail(id: number) {
+  const [app] = await db
+    .select()
+    .from(applicationsTable)
+    .where(eq(applicationsTable.id, id))
+    .limit(1);
+  if (!app) return null;
+
+  const assignments = await db
+    .select({
+      id: evaluationAssignmentsTable.id,
+      applicationId: evaluationAssignmentsTable.applicationId,
+      evaluatorId: evaluationAssignmentsTable.evaluatorId,
+      evaluatorName: usersTable.name,
+      evaluatorEmail: usersTable.email,
+      stage: evaluationAssignmentsTable.stage,
+      status: evaluationAssignmentsTable.status,
+      assignedAt: evaluationAssignmentsTable.assignedAt,
+    })
+    .from(evaluationAssignmentsTable)
+    .innerJoin(usersTable, eq(evaluationAssignmentsTable.evaluatorId, usersTable.id))
+    .where(eq(evaluationAssignmentsTable.applicationId, id))
+    .orderBy(asc(evaluationAssignmentsTable.id));
+
+  const evaluations = await db
+    .select({
+      id: evaluationsTable.id,
+      applicationId: evaluationsTable.applicationId,
+      evaluatorId: evaluationsTable.evaluatorId,
+      evaluatorName: usersTable.name,
+      stage: evaluationsTable.stage,
+      motivationScore: evaluationsTable.motivationScore,
+      problemAwarenessScore: evaluationsTable.problemAwarenessScore,
+      initiativeScore: evaluationsTable.initiativeScore,
+      collaborationScore: evaluationsTable.collaborationScore,
+      fitScore: evaluationsTable.fitScore,
+      overallScore: evaluationsTable.overallScore,
+      recommendation: evaluationsTable.recommendation,
+      comment: evaluationsTable.comment,
+      submittedAt: evaluationsTable.submittedAt,
+      updatedAt: evaluationsTable.updatedAt,
+    })
+    .from(evaluationsTable)
+    .innerJoin(usersTable, eq(evaluationsTable.evaluatorId, usersTable.id))
+    .where(eq(evaluationsTable.applicationId, id))
+    .orderBy(asc(evaluationsTable.id));
+
+  const [interview] = await db
+    .select()
+    .from(interviewsTable)
+    .where(eq(interviewsTable.applicationId, id))
+    .limit(1);
+
+  const logs = await db
+    .select({
+      id: decisionLogsTable.id,
+      applicationId: decisionLogsTable.applicationId,
+      previousDecision: decisionLogsTable.previousDecision,
+      newDecision: decisionLogsTable.newDecision,
+      changedBy: decisionLogsTable.changedBy,
+      changedByName: usersTable.name,
+      reason: decisionLogsTable.reason,
+      createdAt: decisionLogsTable.createdAt,
+    })
+    .from(decisionLogsTable)
+    .leftJoin(usersTable, eq(decisionLogsTable.changedBy, usersTable.id))
+    .where(eq(decisionLogsTable.applicationId, id))
+    .orderBy(desc(decisionLogsTable.createdAt));
+
+  const docEvals = evaluations.filter((e) => e.stage === "document_review");
+  const avgDocReviewScore =
+    docEvals.length > 0
+      ? docEvals.reduce((s, e) => s + e.overallScore, 0) / docEvals.length
+      : null;
+
+  return {
+    ...app,
+    submittedAt: app.submittedAt.toISOString(),
+    updatedAt: app.updatedAt.toISOString(),
+    assignments: assignments.map((a) => ({
+      ...a,
+      assignedAt: a.assignedAt.toISOString(),
+    })),
+    evaluations: evaluations.map((e) => ({
+      ...e,
+      submittedAt: e.submittedAt.toISOString(),
+      updatedAt: e.updatedAt.toISOString(),
+    })),
+    interview: interview
+      ? {
+          ...interview,
+          scheduledAt: interview.scheduledAt
+            ? interview.scheduledAt.toISOString()
+            : null,
+          createdAt: interview.createdAt.toISOString(),
+          updatedAt: interview.updatedAt.toISOString(),
+        }
+      : null,
+    decisionLogs: logs.map((l) => ({
+      ...l,
+      createdAt: l.createdAt.toISOString(),
+    })),
+    avgDocReviewScore,
+  };
+}
 
 router.get("/admin/applications/:id", requireAdmin, async (req, res) => {
   const id = Number(req.params.id);
@@ -198,20 +420,12 @@ router.get("/admin/applications/:id", requireAdmin, async (req, res) => {
     res.status(404).json({ error: "Not found" });
     return;
   }
-  const [row] = await db
-    .select()
-    .from(applicationsTable)
-    .where(eq(applicationsTable.id, id))
-    .limit(1);
-  if (!row) {
+  const detail = await loadApplicationDetail(id);
+  if (!detail) {
     res.status(404).json({ error: "Not found" });
     return;
   }
-  res.json({
-    ...row,
-    submittedAt: row.submittedAt.toISOString(),
-    updatedAt: row.updatedAt.toISOString(),
-  });
+  res.json(detail);
 });
 
 router.patch("/admin/applications/:id", requireAdmin, async (req, res) => {
@@ -227,8 +441,9 @@ router.patch("/admin/applications/:id", requireAdmin, async (req, res) => {
   }
   const update: Record<string, unknown> = { updatedAt: new Date() };
   if (parsed.data.status !== undefined) update.status = parsed.data.status;
-  if (parsed.data.adminNote !== undefined)
-    update.adminNote = parsed.data.adminNote;
+  if (parsed.data.applicationStatus !== undefined)
+    update.applicationStatus = parsed.data.applicationStatus;
+  if (parsed.data.adminNote !== undefined) update.adminNote = parsed.data.adminNote;
   const [row] = await db
     .update(applicationsTable)
     .set(update)

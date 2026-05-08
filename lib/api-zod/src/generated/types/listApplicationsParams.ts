@@ -3,14 +3,19 @@
  * Do not edit manually.
  * Api
  * Seeds API
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
+import type { ApplicationLifecycleStatus } from "./applicationLifecycleStatus";
 import type { ApplicationStatus } from "./applicationStatus";
+import type { FinalDecision } from "./finalDecision";
+import type { InterviewStatus } from "./interviewStatus";
+import type { ListApplicationsEvaluationCompletion } from "./listApplicationsEvaluationCompletion";
 
 export type ListApplicationsParams = {
-  /**
-   * Search by name, email, or school
-   */
   q?: string;
   status?: ApplicationStatus;
+  applicationStatus?: ApplicationLifecycleStatus;
+  finalDecision?: FinalDecision;
+  evaluationCompletion?: ListApplicationsEvaluationCompletion;
+  interviewStatus?: InterviewStatus;
 };

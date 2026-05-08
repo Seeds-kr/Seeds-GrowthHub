@@ -36,27 +36,34 @@ export default function AdminLogin() {
 
   const onSubmit = (data: LoginFormValues) => {
     setErrorMsg("");
-    loginMutation.mutate({ data }, {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getAdminMeQueryKey() });
-        setLocation("/admin");
+    loginMutation.mutate(
+      { data },
+      {
+        onSuccess: (user) => {
+          queryClient.invalidateQueries({ queryKey: getAdminMeQueryKey() });
+          if (user.role === "evaluator") {
+            setLocation("/evaluator");
+          } else {
+            setLocation("/admin");
+          }
+        },
+        onError: (err: any) => {
+          if (err.status === 401) {
+            setErrorMsg("이메일 또는 비밀번호가 올바르지 않습니다.");
+          } else {
+            setErrorMsg("로그인 중 오류가 발생했습니다.");
+          }
+        },
       },
-      onError: (err: any) => {
-        if (err.status === 401) {
-          setErrorMsg("이메일 또는 비밀번호가 올바르지 않습니다.");
-        } else {
-          setErrorMsg("로그인 중 오류가 발생했습니다.");
-        }
-      }
-    });
+    );
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md bg-card border border-border p-8 shadow-sm">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-serif font-bold text-primary mb-2">Seeds Admin</h1>
-          <p className="text-muted-foreground text-sm">관리자 계정으로 로그인하세요.</p>
+          <h1 className="text-2xl font-serif font-bold text-primary mb-2">Seeds</h1>
+          <p className="text-muted-foreground text-sm">관리자 또는 평가자 계정으로 로그인하세요.</p>
         </div>
 
         {errorMsg && (
@@ -74,7 +81,7 @@ export default function AdminLogin() {
                 <FormItem>
                   <FormLabel>이메일</FormLabel>
                   <FormControl>
-                    <Input placeholder="admin@example.com" className="rounded-none" {...field} />
+                    <Input placeholder="you@example.com" className="rounded-none" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

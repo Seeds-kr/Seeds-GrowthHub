@@ -18,12 +18,15 @@ export function AdminLayout({ children }: { children: ReactNode }) {
   const logout = useAdminLogout();
 
   useEffect(() => {
-    if (!isLoading && (isError || !admin)) {
+    if (isLoading) return;
+    if (isError || !admin) {
       setLocation("/admin/login");
+    } else if (admin.role !== "admin") {
+      setLocation("/evaluator");
     }
   }, [isLoading, isError, admin, setLocation]);
 
-  if (isLoading || isError || !admin) {
+  if (isLoading || isError || !admin || admin.role !== "admin") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -55,6 +58,9 @@ export function AdminLayout({ children }: { children: ReactNode }) {
               <Link href="/admin/applications" className="text-sm font-medium text-muted-foreground hover:text-primary">
                 지원서 관리
               </Link>
+              <Link href="/admin/evaluators" className="text-sm font-medium text-muted-foreground hover:text-primary">
+                평가자 관리
+              </Link>
             </nav>
           </div>
           <div className="flex items-center gap-4">
@@ -66,9 +72,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
       </header>
-      <main className="flex-1 container mx-auto px-4 py-8">
-        {children}
-      </main>
+      <main className="flex-1 container mx-auto px-4 py-8">{children}</main>
     </div>
   );
 }

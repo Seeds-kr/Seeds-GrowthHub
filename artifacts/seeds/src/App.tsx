@@ -15,6 +15,10 @@ import AdminLogin from "@/pages/admin/login";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminApplications from "@/pages/admin/applications";
 import AdminApplicationDetail from "@/pages/admin/application-detail";
+import AdminEvaluators from "@/pages/admin/evaluators";
+
+import EvaluatorDashboard from "@/pages/evaluator/dashboard";
+import EvaluatorApplicationDetail from "@/pages/evaluator/application-detail";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,6 +43,10 @@ function Router() {
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/admin/applications" component={AdminApplications} />
       <Route path="/admin/applications/:id" component={AdminApplicationDetail} />
+      <Route path="/admin/evaluators" component={AdminEvaluators} />
+
+      <Route path="/evaluator" component={EvaluatorDashboard} />
+      <Route path="/evaluator/applications/:id" component={EvaluatorApplicationDetail} />
 
       <Route component={NotFound} />
     </Switch>

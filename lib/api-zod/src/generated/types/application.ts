@@ -3,9 +3,11 @@
  * Do not edit manually.
  * Api
  * Seeds API
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
+import type { ApplicationLifecycleStatus } from "./applicationLifecycleStatus";
 import type { ApplicationStatus } from "./applicationStatus";
+import type { FinalDecision } from "./finalDecision";
 
 export interface Application {
   id: number;
@@ -22,6 +24,8 @@ export interface Application {
   expectation: string;
   privacyConsent: boolean;
   status: ApplicationStatus;
+  applicationStatus: ApplicationLifecycleStatus;
+  finalDecision: FinalDecision;
   adminNote: string | null;
   submittedAt: Date;
   updatedAt: Date;

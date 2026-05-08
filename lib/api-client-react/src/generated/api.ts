@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Api
  * Seeds API
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
@@ -18,17 +18,32 @@ import type {
 
 import type {
   AdminLoginBody,
-  AdminSession,
   Application,
+  ApplicationDetail,
   ApplicationList,
   ApplicationStats,
   CreateApplicationBody,
   CreateApplicationResponse,
+  CreateAssignmentBody,
+  CreateUserBody,
   ErrorResponse,
+  Evaluation,
+  EvaluationAssignment,
+  EvaluatorApplicationDetail,
+  EvaluatorAssignmentList,
   HealthStatus,
+  Interview,
   ListApplicationsParams,
+  ListUsersParams,
   OkResponse,
+  SessionUser,
+  SetFinalDecisionBody,
+  SubmitEvaluationBody,
   UpdateApplicationBody,
+  UpdateUserBody,
+  UpsertInterviewBody,
+  User,
+  UserList,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -211,8 +226,8 @@ export const getAdminLoginUrl = () => {
 export const adminLogin = async (
   adminLoginBody: AdminLoginBody,
   options?: RequestInit,
-): Promise<AdminSession> => {
-  return customFetch<AdminSession>(getAdminLoginUrl(), {
+): Promise<SessionUser> => {
+  return customFetch<SessionUser>(getAdminLoginUrl(), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
@@ -288,7 +303,7 @@ export const useAdminLogin = <
 };
 
 /**
- * @summary Admin logout
+ * @summary Logout
  */
 export const getAdminLogoutUrl = () => {
   return `/api/admin/logout`;
@@ -346,7 +361,7 @@ export type AdminLogoutMutationResult = NonNullable<
 export type AdminLogoutMutationError = ErrorType<unknown>;
 
 /**
- * @summary Admin logout
+ * @summary Logout
  */
 export const useAdminLogout = <
   TError = ErrorType<unknown>,
@@ -369,14 +384,14 @@ export const useAdminLogout = <
 };
 
 /**
- * @summary Current admin session
+ * @summary Current session
  */
 export const getAdminMeUrl = () => {
   return `/api/admin/me`;
 };
 
-export const adminMe = async (options?: RequestInit): Promise<AdminSession> => {
-  return customFetch<AdminSession>(getAdminMeUrl(), {
+export const adminMe = async (options?: RequestInit): Promise<SessionUser> => {
+  return customFetch<SessionUser>(getAdminMeUrl(), {
     ...options,
     method: "GET",
   });
@@ -414,7 +429,7 @@ export type AdminMeQueryResult = NonNullable<
 export type AdminMeQueryError = ErrorType<ErrorResponse>;
 
 /**
- * @summary Current admin session
+ * @summary Current session
  */
 
 export function useAdminMe<
@@ -552,7 +567,7 @@ export const getApplicationStatsQueryKey = () => {
 
 export const getApplicationStatsQueryOptions = <
   TData = Awaited<ReturnType<typeof applicationStats>>,
-  TError = ErrorType<ErrorResponse>,
+  TError = ErrorType<unknown>,
 >(options?: {
   query?: UseQueryOptions<
     Awaited<ReturnType<typeof applicationStats>>,
@@ -579,7 +594,7 @@ export const getApplicationStatsQueryOptions = <
 export type ApplicationStatsQueryResult = NonNullable<
   Awaited<ReturnType<typeof applicationStats>>
 >;
-export type ApplicationStatsQueryError = ErrorType<ErrorResponse>;
+export type ApplicationStatsQueryError = ErrorType<unknown>;
 
 /**
  * @summary Application stats by status
@@ -587,7 +602,7 @@ export type ApplicationStatsQueryError = ErrorType<ErrorResponse>;
 
 export function useApplicationStats<
   TData = Awaited<ReturnType<typeof applicationStats>>,
-  TError = ErrorType<ErrorResponse>,
+  TError = ErrorType<unknown>,
 >(options?: {
   query?: UseQueryOptions<
     Awaited<ReturnType<typeof applicationStats>>,
@@ -606,7 +621,7 @@ export function useApplicationStats<
 }
 
 /**
- * @summary Get application detail
+ * @summary Get application detail (admin) — includes assignments, evaluations, interview, decision logs
  */
 export const getGetApplicationUrl = (id: number) => {
   return `/api/admin/applications/${id}`;
@@ -615,8 +630,8 @@ export const getGetApplicationUrl = (id: number) => {
 export const getApplication = async (
   id: number,
   options?: RequestInit,
-): Promise<Application> => {
-  return customFetch<Application>(getGetApplicationUrl(id), {
+): Promise<ApplicationDetail> => {
+  return customFetch<ApplicationDetail>(getGetApplicationUrl(id), {
     ...options,
     method: "GET",
   });
@@ -666,7 +681,7 @@ export type GetApplicationQueryResult = NonNullable<
 export type GetApplicationQueryError = ErrorType<ErrorResponse>;
 
 /**
- * @summary Get application detail
+ * @summary Get application detail (admin) — includes assignments, evaluations, interview, decision logs
  */
 
 export function useGetApplication<
@@ -693,7 +708,7 @@ export function useGetApplication<
 }
 
 /**
- * @summary Update application status / admin note
+ * @summary Update application status / admin note (legacy MVP1)
  */
 export const getUpdateApplicationUrl = (id: number) => {
   return `/api/admin/applications/${id}`;
@@ -757,7 +772,7 @@ export type UpdateApplicationMutationBody = BodyType<UpdateApplicationBody>;
 export type UpdateApplicationMutationError = ErrorType<ErrorResponse>;
 
 /**
- * @summary Update application status / admin note
+ * @summary Update application status / admin note (legacy MVP1)
  */
 export const useUpdateApplication = <
   TError = ErrorType<ErrorResponse>,
@@ -801,7 +816,7 @@ export const getExportApplicationsCsvQueryKey = () => {
 
 export const getExportApplicationsCsvQueryOptions = <
   TData = Awaited<ReturnType<typeof exportApplicationsCsv>>,
-  TError = ErrorType<ErrorResponse>,
+  TError = ErrorType<unknown>,
 >(options?: {
   query?: UseQueryOptions<
     Awaited<ReturnType<typeof exportApplicationsCsv>>,
@@ -828,7 +843,7 @@ export const getExportApplicationsCsvQueryOptions = <
 export type ExportApplicationsCsvQueryResult = NonNullable<
   Awaited<ReturnType<typeof exportApplicationsCsv>>
 >;
-export type ExportApplicationsCsvQueryError = ErrorType<ErrorResponse>;
+export type ExportApplicationsCsvQueryError = ErrorType<unknown>;
 
 /**
  * @summary Export applications as CSV
@@ -836,7 +851,7 @@ export type ExportApplicationsCsvQueryError = ErrorType<ErrorResponse>;
 
 export function useExportApplicationsCsv<
   TData = Awaited<ReturnType<typeof exportApplicationsCsv>>,
-  TError = ErrorType<ErrorResponse>,
+  TError = ErrorType<unknown>,
 >(options?: {
   query?: UseQueryOptions<
     Awaited<ReturnType<typeof exportApplicationsCsv>>,
@@ -853,3 +868,870 @@ export function useExportApplicationsCsv<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary List users (evaluators + admins)
+ */
+export const getListUsersUrl = (params?: ListUsersParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/admin/users?${stringifiedParams}`
+    : `/api/admin/users`;
+};
+
+export const listUsers = async (
+  params?: ListUsersParams,
+  options?: RequestInit,
+): Promise<UserList> => {
+  return customFetch<UserList>(getListUsersUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListUsersQueryKey = (params?: ListUsersParams) => {
+  return [`/api/admin/users`, ...(params ? [params] : [])] as const;
+};
+
+export const getListUsersQueryOptions = <
+  TData = Awaited<ReturnType<typeof listUsers>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListUsersParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listUsers>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListUsersQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listUsers>>> = ({
+    signal,
+  }) => listUsers(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listUsers>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListUsersQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listUsers>>
+>;
+export type ListUsersQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List users (evaluators + admins)
+ */
+
+export function useListUsers<
+  TData = Awaited<ReturnType<typeof listUsers>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListUsersParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listUsers>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListUsersQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create a user (typically an evaluator)
+ */
+export const getCreateUserUrl = () => {
+  return `/api/admin/users`;
+};
+
+export const createUser = async (
+  createUserBody: CreateUserBody,
+  options?: RequestInit,
+): Promise<User> => {
+  return customFetch<User>(getCreateUserUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createUserBody),
+  });
+};
+
+export const getCreateUserMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createUser>>,
+    TError,
+    { data: BodyType<CreateUserBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createUser>>,
+  TError,
+  { data: BodyType<CreateUserBody> },
+  TContext
+> => {
+  const mutationKey = ["createUser"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createUser>>,
+    { data: BodyType<CreateUserBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createUser(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateUserMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createUser>>
+>;
+export type CreateUserMutationBody = BodyType<CreateUserBody>;
+export type CreateUserMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Create a user (typically an evaluator)
+ */
+export const useCreateUser = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createUser>>,
+    TError,
+    { data: BodyType<CreateUserBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createUser>>,
+  TError,
+  { data: BodyType<CreateUserBody> },
+  TContext
+> => {
+  return useMutation(getCreateUserMutationOptions(options));
+};
+
+/**
+ * @summary Update a user (name/email/isActive/password)
+ */
+export const getUpdateUserUrl = (id: number) => {
+  return `/api/admin/users/${id}`;
+};
+
+export const updateUser = async (
+  id: number,
+  updateUserBody: UpdateUserBody,
+  options?: RequestInit,
+): Promise<User> => {
+  return customFetch<User>(getUpdateUserUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateUserBody),
+  });
+};
+
+export const getUpdateUserMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateUser>>,
+    TError,
+    { id: number; data: BodyType<UpdateUserBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateUser>>,
+  TError,
+  { id: number; data: BodyType<UpdateUserBody> },
+  TContext
+> => {
+  const mutationKey = ["updateUser"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateUser>>,
+    { id: number; data: BodyType<UpdateUserBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateUser(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateUserMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateUser>>
+>;
+export type UpdateUserMutationBody = BodyType<UpdateUserBody>;
+export type UpdateUserMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Update a user (name/email/isActive/password)
+ */
+export const useUpdateUser = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateUser>>,
+    TError,
+    { id: number; data: BodyType<UpdateUserBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateUser>>,
+  TError,
+  { id: number; data: BodyType<UpdateUserBody> },
+  TContext
+> => {
+  return useMutation(getUpdateUserMutationOptions(options));
+};
+
+/**
+ * @summary Assign an evaluator to an application
+ */
+export const getCreateAssignmentUrl = (id: number) => {
+  return `/api/admin/applications/${id}/assignments`;
+};
+
+export const createAssignment = async (
+  id: number,
+  createAssignmentBody: CreateAssignmentBody,
+  options?: RequestInit,
+): Promise<EvaluationAssignment> => {
+  return customFetch<EvaluationAssignment>(getCreateAssignmentUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createAssignmentBody),
+  });
+};
+
+export const getCreateAssignmentMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createAssignment>>,
+    TError,
+    { id: number; data: BodyType<CreateAssignmentBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createAssignment>>,
+  TError,
+  { id: number; data: BodyType<CreateAssignmentBody> },
+  TContext
+> => {
+  const mutationKey = ["createAssignment"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createAssignment>>,
+    { id: number; data: BodyType<CreateAssignmentBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return createAssignment(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateAssignmentMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createAssignment>>
+>;
+export type CreateAssignmentMutationBody = BodyType<CreateAssignmentBody>;
+export type CreateAssignmentMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Assign an evaluator to an application
+ */
+export const useCreateAssignment = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createAssignment>>,
+    TError,
+    { id: number; data: BodyType<CreateAssignmentBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createAssignment>>,
+  TError,
+  { id: number; data: BodyType<CreateAssignmentBody> },
+  TContext
+> => {
+  return useMutation(getCreateAssignmentMutationOptions(options));
+};
+
+/**
+ * @summary Remove an evaluator assignment
+ */
+export const getDeleteAssignmentUrl = (appId: number, assignmentId: number) => {
+  return `/api/admin/applications/${appId}/assignments/${assignmentId}`;
+};
+
+export const deleteAssignment = async (
+  appId: number,
+  assignmentId: number,
+  options?: RequestInit,
+): Promise<OkResponse> => {
+  return customFetch<OkResponse>(getDeleteAssignmentUrl(appId, assignmentId), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteAssignmentMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteAssignment>>,
+    TError,
+    { appId: number; assignmentId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteAssignment>>,
+  TError,
+  { appId: number; assignmentId: number },
+  TContext
+> => {
+  const mutationKey = ["deleteAssignment"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteAssignment>>,
+    { appId: number; assignmentId: number }
+  > = (props) => {
+    const { appId, assignmentId } = props ?? {};
+
+    return deleteAssignment(appId, assignmentId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteAssignmentMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteAssignment>>
+>;
+
+export type DeleteAssignmentMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Remove an evaluator assignment
+ */
+export const useDeleteAssignment = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteAssignment>>,
+    TError,
+    { appId: number; assignmentId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteAssignment>>,
+  TError,
+  { appId: number; assignmentId: number },
+  TContext
+> => {
+  return useMutation(getDeleteAssignmentMutationOptions(options));
+};
+
+/**
+ * @summary Create or update interview details
+ */
+export const getUpsertInterviewUrl = (id: number) => {
+  return `/api/admin/applications/${id}/interview`;
+};
+
+export const upsertInterview = async (
+  id: number,
+  upsertInterviewBody: UpsertInterviewBody,
+  options?: RequestInit,
+): Promise<Interview> => {
+  return customFetch<Interview>(getUpsertInterviewUrl(id), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(upsertInterviewBody),
+  });
+};
+
+export const getUpsertInterviewMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof upsertInterview>>,
+    TError,
+    { id: number; data: BodyType<UpsertInterviewBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof upsertInterview>>,
+  TError,
+  { id: number; data: BodyType<UpsertInterviewBody> },
+  TContext
+> => {
+  const mutationKey = ["upsertInterview"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof upsertInterview>>,
+    { id: number; data: BodyType<UpsertInterviewBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return upsertInterview(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpsertInterviewMutationResult = NonNullable<
+  Awaited<ReturnType<typeof upsertInterview>>
+>;
+export type UpsertInterviewMutationBody = BodyType<UpsertInterviewBody>;
+export type UpsertInterviewMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Create or update interview details
+ */
+export const useUpsertInterview = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof upsertInterview>>,
+    TError,
+    { id: number; data: BodyType<UpsertInterviewBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof upsertInterview>>,
+  TError,
+  { id: number; data: BodyType<UpsertInterviewBody> },
+  TContext
+> => {
+  return useMutation(getUpsertInterviewMutationOptions(options));
+};
+
+/**
+ * @summary Set final decision for an application (and append a decision log)
+ */
+export const getSetFinalDecisionUrl = (id: number) => {
+  return `/api/admin/applications/${id}/final-decision`;
+};
+
+export const setFinalDecision = async (
+  id: number,
+  setFinalDecisionBody: SetFinalDecisionBody,
+  options?: RequestInit,
+): Promise<Application> => {
+  return customFetch<Application>(getSetFinalDecisionUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(setFinalDecisionBody),
+  });
+};
+
+export const getSetFinalDecisionMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof setFinalDecision>>,
+    TError,
+    { id: number; data: BodyType<SetFinalDecisionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof setFinalDecision>>,
+  TError,
+  { id: number; data: BodyType<SetFinalDecisionBody> },
+  TContext
+> => {
+  const mutationKey = ["setFinalDecision"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof setFinalDecision>>,
+    { id: number; data: BodyType<SetFinalDecisionBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return setFinalDecision(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SetFinalDecisionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof setFinalDecision>>
+>;
+export type SetFinalDecisionMutationBody = BodyType<SetFinalDecisionBody>;
+export type SetFinalDecisionMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Set final decision for an application (and append a decision log)
+ */
+export const useSetFinalDecision = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof setFinalDecision>>,
+    TError,
+    { id: number; data: BodyType<SetFinalDecisionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof setFinalDecision>>,
+  TError,
+  { id: number; data: BodyType<SetFinalDecisionBody> },
+  TContext
+> => {
+  return useMutation(getSetFinalDecisionMutationOptions(options));
+};
+
+/**
+ * @summary List the current evaluator's assignments
+ */
+export const getListMyAssignmentsUrl = () => {
+  return `/api/evaluator/assignments`;
+};
+
+export const listMyAssignments = async (
+  options?: RequestInit,
+): Promise<EvaluatorAssignmentList> => {
+  return customFetch<EvaluatorAssignmentList>(getListMyAssignmentsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListMyAssignmentsQueryKey = () => {
+  return [`/api/evaluator/assignments`] as const;
+};
+
+export const getListMyAssignmentsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listMyAssignments>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listMyAssignments>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListMyAssignmentsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listMyAssignments>>
+  > = ({ signal }) => listMyAssignments({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listMyAssignments>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListMyAssignmentsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listMyAssignments>>
+>;
+export type ListMyAssignmentsQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary List the current evaluator's assignments
+ */
+
+export function useListMyAssignments<
+  TData = Awaited<ReturnType<typeof listMyAssignments>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listMyAssignments>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListMyAssignmentsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get an application the current evaluator is assigned to (with own evaluation only)
+ */
+export const getGetEvaluatorApplicationUrl = (id: number) => {
+  return `/api/evaluator/applications/${id}`;
+};
+
+export const getEvaluatorApplication = async (
+  id: number,
+  options?: RequestInit,
+): Promise<EvaluatorApplicationDetail> => {
+  return customFetch<EvaluatorApplicationDetail>(
+    getGetEvaluatorApplicationUrl(id),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetEvaluatorApplicationQueryKey = (id: number) => {
+  return [`/api/evaluator/applications/${id}`] as const;
+};
+
+export const getGetEvaluatorApplicationQueryOptions = <
+  TData = Awaited<ReturnType<typeof getEvaluatorApplication>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getEvaluatorApplication>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetEvaluatorApplicationQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getEvaluatorApplication>>
+  > = ({ signal }) =>
+    getEvaluatorApplication(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getEvaluatorApplication>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetEvaluatorApplicationQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getEvaluatorApplication>>
+>;
+export type GetEvaluatorApplicationQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Get an application the current evaluator is assigned to (with own evaluation only)
+ */
+
+export function useGetEvaluatorApplication<
+  TData = Awaited<ReturnType<typeof getEvaluatorApplication>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getEvaluatorApplication>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetEvaluatorApplicationQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Submit or update the current evaluator's evaluation for the given stage
+ */
+export const getSubmitEvaluationUrl = (id: number) => {
+  return `/api/evaluator/applications/${id}/evaluations`;
+};
+
+export const submitEvaluation = async (
+  id: number,
+  submitEvaluationBody: SubmitEvaluationBody,
+  options?: RequestInit,
+): Promise<Evaluation> => {
+  return customFetch<Evaluation>(getSubmitEvaluationUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(submitEvaluationBody),
+  });
+};
+
+export const getSubmitEvaluationMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitEvaluation>>,
+    TError,
+    { id: number; data: BodyType<SubmitEvaluationBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof submitEvaluation>>,
+  TError,
+  { id: number; data: BodyType<SubmitEvaluationBody> },
+  TContext
+> => {
+  const mutationKey = ["submitEvaluation"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof submitEvaluation>>,
+    { id: number; data: BodyType<SubmitEvaluationBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return submitEvaluation(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SubmitEvaluationMutationResult = NonNullable<
+  Awaited<ReturnType<typeof submitEvaluation>>
+>;
+export type SubmitEvaluationMutationBody = BodyType<SubmitEvaluationBody>;
+export type SubmitEvaluationMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Submit or update the current evaluator's evaluation for the given stage
+ */
+export const useSubmitEvaluation = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitEvaluation>>,
+    TError,
+    { id: number; data: BodyType<SubmitEvaluationBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof submitEvaluation>>,
+  TError,
+  { id: number; data: BodyType<SubmitEvaluationBody> },
+  TContext
+> => {
+  return useMutation(getSubmitEvaluationMutationOptions(options));
+};
