@@ -11,7 +11,7 @@ export default function Home() {
       {/* Hero */}
       <section className="py-24 md:py-32 px-4 bg-gradient-to-b from-muted/50 to-background">
         <div className="container mx-auto max-w-4xl text-center">
-          <div className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-6 font-medium">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-accent mb-6 font-semibold">
             {c.hero.eyebrow}
           </div>
           <h1 className="text-4xl md:text-6xl font-serif font-bold tracking-tight text-foreground mb-6 leading-tight">
@@ -38,7 +38,7 @@ export default function Home() {
       {/* Stats */}
       <section className="py-20 px-4 border-t border-border">
         <div className="container mx-auto max-w-5xl">
-          <div className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-3 font-medium text-center">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-accent mb-3 font-semibold text-center">
             {c.stats.eyebrow}
           </div>
           <h2 className="text-3xl md:text-4xl font-serif font-bold mb-12 text-center">
@@ -60,7 +60,7 @@ export default function Home() {
       {/* About */}
       <section className="py-24 px-4 bg-muted/30 border-t border-border">
         <div className="container mx-auto max-w-4xl">
-          <div className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-3 font-medium">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-accent mb-3 font-semibold">
             {c.about.eyebrow}
           </div>
           <h2 className="text-3xl md:text-4xl font-serif font-bold mb-6">{c.about.title}</h2>
@@ -79,7 +79,7 @@ export default function Home() {
       {/* Featured projects */}
       <section className="py-24 px-4 border-t border-border">
         <div className="container mx-auto max-w-5xl">
-          <div className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-3 font-medium">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-accent mb-3 font-semibold">
             {c.projects.eyebrow}
           </div>
           <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">{c.projects.title}</h2>
@@ -103,7 +103,7 @@ export default function Home() {
       {/* Recent activities */}
       <section className="py-24 px-4 bg-muted/30 border-t border-border">
         <div className="container mx-auto max-w-4xl">
-          <div className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-3 font-medium">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-accent mb-3 font-semibold">
             {c.activities.eyebrow}
           </div>
           <h2 className="text-3xl md:text-4xl font-serif font-bold mb-12">{c.activities.title}</h2>
@@ -124,7 +124,7 @@ export default function Home() {
       {/* Recruit banner */}
       <section className="py-24 px-4 bg-primary text-primary-foreground">
         <div className="container mx-auto max-w-3xl text-center">
-          <div className="text-xs uppercase tracking-[0.2em] text-primary-foreground/70 mb-3 font-medium">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-primary-foreground/80 mb-3 font-semibold">
             {c.recruitBanner.eyebrow}
           </div>
           <h2 className="text-3xl md:text-4xl font-serif font-bold mb-6">

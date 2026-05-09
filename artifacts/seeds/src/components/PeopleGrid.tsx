@@ -80,17 +80,17 @@ export function PeopleGrid({
   });
 
   return (
-    <section className="py-20 md:py-28 px-4">
+    <section className="py-24 md:py-32 px-4">
       <div className="container mx-auto max-w-6xl">
         <div className="text-center mb-12">
-          <div className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-3 font-medium">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-accent mb-3 font-semibold">
             Seeds People
           </div>
-          <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4">
+          <h1 className="text-5xl md:text-6xl font-serif mb-5 tracking-[-0.03em]">
             {title}
           </h1>
           {subtitle ? (
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            <p className="text-[17px] text-muted-foreground max-w-2xl mx-auto leading-[1.85]">
               {subtitle}
             </p>
           ) : null}

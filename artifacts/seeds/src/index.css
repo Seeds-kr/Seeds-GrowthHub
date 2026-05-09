@@ -59,50 +59,52 @@
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
-  /* A refined botanical green / deep ink vibe */
-  --background: 60 10% 98%;
-  --foreground: 160 30% 10%;
-  --border: 160 10% 85%;
+  /* Warm botanical palette — cream paper + deep forest + soft terracotta accent */
+  --background: 38 33% 97%;          /* warm cream (#FAF7F1) */
+  --foreground: 158 36% 11%;         /* near-black forest ink */
+  --border: 38 18% 88%;
   --card: 0 0% 100%;
-  --card-foreground: 160 30% 10%;
-  --card-border: 160 10% 90%;
-  
+  --card-foreground: 158 36% 11%;
+  --card-border: 38 18% 90%;
+
   --popover: 0 0% 100%;
-  --popover-foreground: 160 30% 10%;
-  --popover-border: 160 10% 90%;
+  --popover-foreground: 158 36% 11%;
+  --popover-border: 38 18% 90%;
 
-  /* Primary: Deep pine green */
-  --primary: 160 40% 20%;
-  --primary-foreground: 0 0% 100%;
+  /* Primary: Deep forest green */
+  --primary: 158 42% 18%;
+  --primary-foreground: 38 33% 97%;
 
-  /* Secondary: Soft sage */
-  --secondary: 160 10% 90%;
-  --secondary-foreground: 160 40% 20%;
+  /* Secondary: warm sage */
+  --secondary: 158 14% 92%;
+  --secondary-foreground: 158 42% 18%;
 
-  --muted: 60 5% 95%;
-  --muted-foreground: 160 15% 40%;
+  --muted: 38 22% 94%;
+  --muted-foreground: 158 14% 36%;
 
-  --accent: 40 20% 90%;
-  --accent-foreground: 160 40% 20%;
+  /* Accent: terracotta — used for highlights, eyebrow text, links on hover */
+  --accent: 18 55% 52%;
+  --accent-foreground: 38 33% 97%;
 
-  --destructive: 0 70% 40%;
+  --destructive: 6 65% 42%;
   --destructive-foreground: 0 0% 100%;
 
-  --input: 160 10% 85%;
-  --ring: 160 40% 20%;
+  --input: 38 18% 88%;
+  --ring: 158 42% 18%;
 
-  --sidebar: 60 10% 98%;
-  --sidebar-foreground: 160 30% 10%;
-  --sidebar-border: 160 10% 85%;
-  --sidebar-primary: 160 40% 20%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 160 10% 90%;
-  --sidebar-accent-foreground: 160 40% 20%;
-  --sidebar-ring: 160 40% 20%;
+  --sidebar: 38 33% 97%;
+  --sidebar-foreground: 158 36% 11%;
+  --sidebar-border: 38 18% 88%;
+  --sidebar-primary: 158 42% 18%;
+  --sidebar-primary-foreground: 38 33% 97%;
+  --sidebar-accent: 158 14% 92%;
+  --sidebar-accent-foreground: 158 42% 18%;
+  --sidebar-ring: 158 42% 18%;
 
-  --app-font-sans: 'Noto Sans KR', sans-serif;
-  --app-font-serif: 'Noto Serif KR', serif;
-  --app-font-mono: Menlo, monospace;
+  --app-font-sans: 'Pretendard Variable', Pretendard, 'Noto Sans KR', -apple-system,
+    BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Segoe UI', Roboto, sans-serif;
+  --app-font-serif: 'Gowun Batang', 'Noto Serif KR', 'Apple SD Gothic Neo', serif;
+  --app-font-mono: 'JetBrains Mono', Menlo, ui-monospace, monospace;
   --radius: 0rem; /* Sharp, premium corners */
 }
 
@@ -150,10 +152,36 @@
   * {
     @apply border-border;
   }
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply font-sans bg-background text-foreground;
+    font-feature-settings: 'ss01', 'tnum';
+    letter-spacing: -0.005em;
+    line-height: 1.65;
+    word-break: keep-all;        /* Korean: don't break inside words */
+    overflow-wrap: anywhere;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-serif;
+    font-weight: 700;
+    letter-spacing: -0.025em;    /* tighten Korean serif headings */
+    line-height: 1.25;
+    word-break: keep-all;
+  }
+  h1 { line-height: 1.18; }
+  p  { line-height: 1.75; }
+
+  /* Eyebrow / small caps used across hero / sections */
+  .eyebrow {
+    @apply font-sans;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: hsl(var(--accent));
   }
 }
