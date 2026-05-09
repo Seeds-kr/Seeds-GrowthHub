@@ -23,15 +23,17 @@ export function RoleSwitcher({
   const others = roles.filter((r) => r !== current && HOME_BY_ROLE[r]);
   if (others.length === 0) return null;
   return (
-    <div className="hidden md:flex items-center gap-2 mr-2 pr-3 border-r border-border">
-      <span className="text-xs text-muted-foreground">화면 전환:</span>
-      {others.map((r) => (
-        <Link key={r} href={HOME_BY_ROLE[r]}>
-          <Button variant="outline" size="sm" className="rounded-none h-7 text-xs">
-            {LABEL_BY_ROLE[r] ?? r}
-          </Button>
-        </Link>
-      ))}
+    <div className="px-3 py-1 space-y-1">
+      <div className="text-xs text-muted-foreground">다른 역할로 전환</div>
+      <div className="flex flex-wrap gap-1.5">
+        {others.map((r) => (
+          <Link key={r} href={HOME_BY_ROLE[r]}>
+            <Button variant="outline" size="sm" className="h-7 text-xs px-2.5">
+              {LABEL_BY_ROLE[r] ?? r}
+            </Button>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }
