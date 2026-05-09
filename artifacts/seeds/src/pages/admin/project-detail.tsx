@@ -94,7 +94,7 @@ export default function AdminProjectDetail() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="rounded-none">
+        <Card>
           <CardHeader><CardTitle>프로젝트 정보</CardTitle></CardHeader>
           <CardContent className="space-y-3 text-sm">
             <div><span className="text-muted-foreground">설명: </span>{p.description ?? "-"}</div>
@@ -103,73 +103,73 @@ export default function AdminProjectDetail() {
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground">상태 변경:</span>
               <Select value={statusVal || p.status} onValueChange={(v) => setStatusVal(v as ProjectStatus)}>
-                <SelectTrigger className="rounded-none w-40"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
                 <SelectContent>{PROJECT_STATUSES.map((s) => <SelectItem key={s} value={s}>{PROJECT_STATUS_LABEL[s]}</SelectItem>)}</SelectContent>
               </Select>
-              <Button size="sm" className="rounded-none" disabled={!statusVal || statusVal === p.status} onClick={() => updateProject.mutate({ status: statusVal })}>저장</Button>
+              <Button size="sm" disabled={!statusVal || statusVal === p.status} onClick={() => updateProject.mutate({ status: statusVal })}>저장</Button>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="rounded-none">
+        <Card>
           <CardHeader><CardTitle>팀원</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             {data.members.length === 0 ? <div className="text-sm text-muted-foreground">팀원이 없습니다.</div>
             : data.members.map((m) => (
               <div key={m.id} className="flex items-center justify-between text-sm border-b border-border pb-1">
                 <span><strong>{m.studentName}</strong>{m.role ? ` · ${m.role}` : ""}</span>
-                <Button variant="outline" size="sm" className="rounded-none" onClick={() => delMember.mutate(m.id)}>제거</Button>
+                <Button variant="outline" size="sm" onClick={() => delMember.mutate(m.id)}>제거</Button>
               </div>
             ))}
             <div className="flex gap-2">
               <Select value={memberForm.studentId} onValueChange={(v) => setMemberForm({ ...memberForm, studentId: v })}>
-                <SelectTrigger className="rounded-none"><SelectValue placeholder="학생 선택…" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="학생 선택…" /></SelectTrigger>
                 <SelectContent>{students?.items.map((s) => <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>)}</SelectContent>
               </Select>
-              <Input className="rounded-none" placeholder="역할 (선택)" value={memberForm.role} onChange={(e) => setMemberForm({ ...memberForm, role: e.target.value })} />
-              <Button className="rounded-none" disabled={!memberForm.studentId || addMember.isPending} onClick={() => addMember.mutate()}>추가</Button>
+              <Input placeholder="역할 (선택)" value={memberForm.role} onChange={(e) => setMemberForm({ ...memberForm, role: e.target.value })} />
+              <Button disabled={!memberForm.studentId || addMember.isPending} onClick={() => addMember.mutate()}>추가</Button>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="rounded-none">
+        <Card>
           <CardHeader><CardTitle>아티팩트</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             {data.artifacts.length === 0 ? <div className="text-sm text-muted-foreground">아티팩트가 없습니다.</div>
             : data.artifacts.map((a) => (
               <div key={a.id} className="text-sm border-b border-border pb-1">
                 <a className="font-medium hover:underline" href={a.url} target="_blank" rel="noreferrer">{a.title}</a>
-                <Badge variant="outline" className="rounded-none ml-2">{ARTIFACT_TYPE_LABEL[a.artifactType]}</Badge>
-                <Badge variant="outline" className="rounded-none ml-1">{ARTIFACT_VISIBILITY_LABEL[a.visibility]}</Badge>
+                <Badge variant="outline" className="ml-2">{ARTIFACT_TYPE_LABEL[a.artifactType]}</Badge>
+                <Badge variant="outline" className="ml-1">{ARTIFACT_VISIBILITY_LABEL[a.visibility]}</Badge>
               </div>
             ))}
             <div className="space-y-2">
-              <Input className="rounded-none" placeholder="제목" value={artForm.title} onChange={(e) => setArtForm({ ...artForm, title: e.target.value })} />
-              <Input className="rounded-none" placeholder="URL" value={artForm.url} onChange={(e) => setArtForm({ ...artForm, url: e.target.value })} />
+              <Input placeholder="제목" value={artForm.title} onChange={(e) => setArtForm({ ...artForm, title: e.target.value })} />
+              <Input placeholder="URL" value={artForm.url} onChange={(e) => setArtForm({ ...artForm, url: e.target.value })} />
               <div className="grid grid-cols-2 gap-2">
                 <Select value={artForm.artifactType} onValueChange={(v) => setArtForm({ ...artForm, artifactType: v as ArtifactType })}>
-                  <SelectTrigger className="rounded-none"><SelectValue /></SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{ARTIFACT_TYPES.map((t) => <SelectItem key={t} value={t}>{ARTIFACT_TYPE_LABEL[t]}</SelectItem>)}</SelectContent>
                 </Select>
                 <Select value={artForm.visibility} onValueChange={(v) => setArtForm({ ...artForm, visibility: v as ArtifactVisibility })}>
-                  <SelectTrigger className="rounded-none"><SelectValue /></SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{ARTIFACT_VISIBILITIES.map((v) => <SelectItem key={v} value={v}>{ARTIFACT_VISIBILITY_LABEL[v]}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <Button className="rounded-none w-full" disabled={!artForm.title || !artForm.url || addArt.isPending} onClick={() => addArt.mutate()}>아티팩트 추가</Button>
+              <Button className="w-full" disabled={!artForm.title || !artForm.url || addArt.isPending} onClick={() => addArt.mutate()}>아티팩트 추가</Button>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="rounded-none">
+        <Card>
           <CardHeader><CardTitle>피드백</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             {data.feedback.length === 0 ? <div className="text-sm text-muted-foreground">피드백이 없습니다.</div>
             : data.feedback.map((f) => (
               <div key={f.id} className="text-sm border-b border-border pb-2">
                 <div className="flex gap-2 items-center">
-                  <Badge variant="outline" className="rounded-none">{FEEDBACK_TYPE_LABEL[f.feedbackType]}</Badge>
-                  <Badge variant="outline" className="rounded-none">{FEEDBACK_VISIBILITY_LABEL[f.visibility]}</Badge>
+                  <Badge variant="outline">{FEEDBACK_TYPE_LABEL[f.feedbackType]}</Badge>
+                  <Badge variant="outline">{FEEDBACK_VISIBILITY_LABEL[f.visibility]}</Badge>
                   <span className="text-xs text-muted-foreground">{format(new Date(f.createdAt), "yyyy-MM-dd")}</span>
                 </div>
                 <div className="mt-1 whitespace-pre-wrap">{f.content}</div>
@@ -177,40 +177,40 @@ export default function AdminProjectDetail() {
             ))}
             <div className="space-y-2">
               <Select value={fbForm.studentId || "none"} onValueChange={(v) => setFbForm({ ...fbForm, studentId: v === "none" ? "" : v })}>
-                <SelectTrigger className="rounded-none"><SelectValue placeholder="대상 학생 (선택)" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="대상 학생 (선택)" /></SelectTrigger>
                 <SelectContent><SelectItem value="none">학생 미지정</SelectItem>{students?.items.map((s) => <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>)}</SelectContent>
               </Select>
-              <Textarea className="rounded-none" placeholder="피드백 내용" value={fbForm.content} onChange={(e) => setFbForm({ ...fbForm, content: e.target.value })} />
+              <Textarea placeholder="피드백 내용" value={fbForm.content} onChange={(e) => setFbForm({ ...fbForm, content: e.target.value })} />
               <div className="grid grid-cols-2 gap-2">
                 <Select value={fbForm.feedbackType} onValueChange={(v) => setFbForm({ ...fbForm, feedbackType: v as FeedbackType })}>
-                  <SelectTrigger className="rounded-none"><SelectValue /></SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{FEEDBACK_TYPES.map((t) => <SelectItem key={t} value={t}>{FEEDBACK_TYPE_LABEL[t]}</SelectItem>)}</SelectContent>
                 </Select>
                 <Select value={fbForm.visibility} onValueChange={(v) => setFbForm({ ...fbForm, visibility: v as FeedbackVisibility })}>
-                  <SelectTrigger className="rounded-none"><SelectValue /></SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{FEEDBACK_VISIBILITIES.map((v) => <SelectItem key={v} value={v}>{FEEDBACK_VISIBILITY_LABEL[v]}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <Button className="rounded-none w-full" disabled={!fbForm.content || addFb.isPending} onClick={() => addFb.mutate()}>피드백 추가</Button>
+              <Button className="w-full" disabled={!fbForm.content || addFb.isPending} onClick={() => addFb.mutate()}>피드백 추가</Button>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="rounded-none lg:col-span-2">
+        <Card className="lg:col-span-2">
           <CardHeader><CardTitle>스킬 태그</CardTitle></CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2 mb-3">
               {(tagMappings?.items ?? []).map((m) => (
-                <Badge key={m.mappingId} variant="outline" className="rounded-none cursor-pointer" onClick={() => detachTag.mutate(m.mappingId)}>{m.name} ✕</Badge>
+                <Badge key={m.mappingId} variant="outline" className="cursor-pointer" onClick={() => detachTag.mutate(m.mappingId)}>{m.name} ✕</Badge>
               ))}
               {(tagMappings?.items ?? []).length === 0 && <span className="text-sm text-muted-foreground">태그가 없습니다.</span>}
             </div>
             <div className="flex gap-2">
               <Select value={tagSel} onValueChange={setTagSel}>
-                <SelectTrigger className="rounded-none w-60"><SelectValue placeholder="태그 선택…" /></SelectTrigger>
+                <SelectTrigger className="w-60"><SelectValue placeholder="태그 선택…" /></SelectTrigger>
                 <SelectContent>{tags?.items.map((t) => <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>)}</SelectContent>
               </Select>
-              <Button className="rounded-none" disabled={!tagSel || attachTag.isPending} onClick={() => attachTag.mutate()}>태그 추가</Button>
+              <Button disabled={!tagSel || attachTag.isPending} onClick={() => attachTag.mutate()}>태그 추가</Button>
             </div>
           </CardContent>
         </Card>

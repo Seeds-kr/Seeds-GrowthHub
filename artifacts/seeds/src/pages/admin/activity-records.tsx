@@ -6,16 +6,17 @@ import {
   type ActivityRecord, type ActivitySource, type ActivityVisibility,
   type Cohort, type Program, type Student, type SkillTag,
 } from "@/lib/mvp3-api";
+import { formatKoreanDate } from "@/lib/admin-labels";
 import { Loader2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useState } from "react";
-import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 
 export default function AdminActivityRecords() {
@@ -66,28 +67,28 @@ export default function AdminActivityRecords() {
     <AdminLayout>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-serif font-bold">활동 기록</h1>
-        <Button className="rounded-none" onClick={openNew}>+ 새 기록</Button>
+        <Button onClick={openNew}>+ 새 기록</Button>
       </div>
 
-      <div className="bg-card border border-border p-4 mb-4 grid grid-cols-2 md:grid-cols-5 gap-2">
+      <div className="bg-card border border-border p-4 mb-4 grid grid-cols-2 md:grid-cols-5 gap-3">
         <Select value={filters.studentId || "all"} onValueChange={(v) => setFilters({ ...filters, studentId: v === "all" ? "" : v })}>
-          <SelectTrigger className="rounded-none"><SelectValue placeholder="학생" /></SelectTrigger>
+          <SelectTrigger><SelectValue placeholder="학생" /></SelectTrigger>
           <SelectContent><SelectItem value="all">학생 전체</SelectItem>{students?.items.map((s) => <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>)}</SelectContent>
         </Select>
         <Select value={filters.cohortId || "all"} onValueChange={(v) => setFilters({ ...filters, cohortId: v === "all" ? "" : v })}>
-          <SelectTrigger className="rounded-none"><SelectValue placeholder="기수" /></SelectTrigger>
+          <SelectTrigger><SelectValue placeholder="기수" /></SelectTrigger>
           <SelectContent><SelectItem value="all">기수 전체</SelectItem>{cohorts?.items.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}</SelectContent>
         </Select>
         <Select value={filters.programId || "all"} onValueChange={(v) => setFilters({ ...filters, programId: v === "all" ? "" : v })}>
-          <SelectTrigger className="rounded-none"><SelectValue placeholder="프로그램" /></SelectTrigger>
+          <SelectTrigger><SelectValue placeholder="프로그램" /></SelectTrigger>
           <SelectContent><SelectItem value="all">프로그램 전체</SelectItem>{programs?.items.map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}</SelectContent>
         </Select>
         <Select value={filters.sourceType || "all"} onValueChange={(v) => setFilters({ ...filters, sourceType: v === "all" ? "" : v })}>
-          <SelectTrigger className="rounded-none"><SelectValue placeholder="유형" /></SelectTrigger>
+          <SelectTrigger><SelectValue placeholder="유형" /></SelectTrigger>
           <SelectContent><SelectItem value="all">유형 전체</SelectItem>{ACTIVITY_SOURCES.map((s) => <SelectItem key={s} value={s}>{ACTIVITY_SOURCE_LABEL[s]}</SelectItem>)}</SelectContent>
         </Select>
         <Select value={filters.tagId || "all"} onValueChange={(v) => setFilters({ ...filters, tagId: v === "all" ? "" : v })}>
-          <SelectTrigger className="rounded-none"><SelectValue placeholder="태그" /></SelectTrigger>
+          <SelectTrigger><SelectValue placeholder="태그" /></SelectTrigger>
           <SelectContent><SelectItem value="all">태그 전체</SelectItem>{tags?.items.map((t) => <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>)}</SelectContent>
         </Select>
       </div>
@@ -100,15 +101,15 @@ export default function AdminActivityRecords() {
             : data?.items.length === 0 ? <TableRow><TableCell colSpan={7} className="h-24 text-center text-muted-foreground">기록이 없습니다.</TableCell></TableRow>
             : data?.items.map((r) => (
               <TableRow key={r.id}>
-                <TableCell>{format(new Date(r.activityDate), "yyyy-MM-dd")}</TableCell>
+                <TableCell className="text-sm">{formatKoreanDate(r.activityDate)}</TableCell>
                 <TableCell>{r.studentName ?? `#${r.studentId}`}</TableCell>
                 <TableCell>{ACTIVITY_SOURCE_LABEL[r.sourceType]}</TableCell>
                 <TableCell className="font-medium">{r.title}</TableCell>
-                <TableCell><Badge variant="outline" className="rounded-none">{ACTIVITY_VISIBILITY_LABEL[r.visibility]}</Badge></TableCell>
+                <TableCell><Badge variant="outline">{ACTIVITY_VISIBILITY_LABEL[r.visibility]}</Badge></TableCell>
                 <TableCell className="text-xs text-muted-foreground">{(r.tags ?? []).map((t) => t.name).join(", ")}</TableCell>
                 <TableCell className="space-x-2">
-                  <Button variant="outline" size="sm" className="rounded-none" onClick={() => openEdit(r)}>수정</Button>
-                  <Button variant="outline" size="sm" className="rounded-none" onClick={() => { if (confirm("삭제하시겠습니까?")) del.mutate(r.id); }}>삭제</Button>
+                  <Button variant="outline" size="sm" onClick={() => openEdit(r)}>수정</Button>
+                  <Button variant="outline" size="sm" onClick={() => { if (confirm("삭제하시겠습니까?")) del.mutate(r.id); }}>삭제</Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -117,35 +118,60 @@ export default function AdminActivityRecords() {
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="rounded-none max-w-lg">
+        <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>{editing ? "기록 수정" : "새 활동 기록"}</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <Select value={form.studentId} onValueChange={(v) => setForm({ ...form, studentId: v })}>
-              <SelectTrigger className="rounded-none"><SelectValue placeholder="학생 선택…" /></SelectTrigger>
-              <SelectContent>{students?.items.map((s) => <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>)}</SelectContent>
-            </Select>
-            <Select value={form.cohortId} onValueChange={(v) => setForm({ ...form, cohortId: v })}>
-              <SelectTrigger className="rounded-none"><SelectValue placeholder="기수 선택…" /></SelectTrigger>
-              <SelectContent>{cohorts?.items.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}</SelectContent>
-            </Select>
-            <Select value={form.programId || "none"} onValueChange={(v) => setForm({ ...form, programId: v === "none" ? "" : v })}>
-              <SelectTrigger className="rounded-none"><SelectValue placeholder="프로그램 (선택)" /></SelectTrigger>
-              <SelectContent><SelectItem value="none">프로그램 없음</SelectItem>{programs?.items.map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}</SelectContent>
-            </Select>
-            <Select value={form.sourceType} onValueChange={(v) => setForm({ ...form, sourceType: v as ActivitySource })}>
-              <SelectTrigger className="rounded-none"><SelectValue /></SelectTrigger>
-              <SelectContent>{ACTIVITY_SOURCES.map((s) => <SelectItem key={s} value={s}>{ACTIVITY_SOURCE_LABEL[s]}</SelectItem>)}</SelectContent>
-            </Select>
-            <Input className="rounded-none" placeholder="제목" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-            <Textarea className="rounded-none" placeholder="설명" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-            <Select value={form.visibility} onValueChange={(v) => setForm({ ...form, visibility: v as ActivityVisibility })}>
-              <SelectTrigger className="rounded-none"><SelectValue /></SelectTrigger>
-              <SelectContent>{ACTIVITY_VISIBILITIES.map((v) => <SelectItem key={v} value={v}>{ACTIVITY_VISIBILITY_LABEL[v]}</SelectItem>)}</SelectContent>
-            </Select>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>학생</Label>
+                <Select value={form.studentId} onValueChange={(v) => setForm({ ...form, studentId: v })}>
+                  <SelectTrigger><SelectValue placeholder="학생 선택…" /></SelectTrigger>
+                  <SelectContent>{students?.items.map((s) => <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>기수</Label>
+                <Select value={form.cohortId} onValueChange={(v) => setForm({ ...form, cohortId: v })}>
+                  <SelectTrigger><SelectValue placeholder="기수 선택…" /></SelectTrigger>
+                  <SelectContent>{cohorts?.items.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>프로그램 <span className="text-muted-foreground font-normal">(선택)</span></Label>
+                <Select value={form.programId || "none"} onValueChange={(v) => setForm({ ...form, programId: v === "none" ? "" : v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="none">없음</SelectItem>{programs?.items.map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>유형</Label>
+                <Select value={form.sourceType} onValueChange={(v) => setForm({ ...form, sourceType: v as ActivitySource })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{ACTIVITY_SOURCES.map((s) => <SelectItem key={s} value={s}>{ACTIVITY_SOURCE_LABEL[s]}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>제목</Label>
+              <Input placeholder="예: 해커톤 본선 진출" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>설명 <span className="text-muted-foreground font-normal">(선택)</span></Label>
+              <Textarea placeholder="활동에 대한 상세 내용" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>공개 범위</Label>
+              <Select value={form.visibility} onValueChange={(v) => setForm({ ...form, visibility: v as ActivityVisibility })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{ACTIVITY_VISIBILITIES.map((v) => <SelectItem key={v} value={v}>{ACTIVITY_VISIBILITY_LABEL[v]}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" className="rounded-none" onClick={() => setOpen(false)}>취소</Button>
-            <Button className="rounded-none" disabled={!form.studentId || !form.cohortId || !form.title || save.isPending} onClick={() => save.mutate()}>저장</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>취소</Button>
+            <Button disabled={!form.studentId || !form.cohortId || !form.title || save.isPending} onClick={() => save.mutate()}>저장</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

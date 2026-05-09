@@ -1,10 +1,12 @@
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, type Cohort, type Program, type AssignmentItem } from "@/lib/mvp3-api";
+import { TASK_STATUSES, TASK_STATUS_LABEL, TASK_STATUS_TONE, formatKoreanDateTime, type TaskStatus } from "@/lib/admin-labels";
 import { Loader2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -14,13 +16,11 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 
-const STATUSES = ["draft", "published", "closed"] as const;
-
 export default function AdminAssignments() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<AssignmentItem | null>(null);
-  const [form, setForm] = useState({ cohortId: "", programId: "", title: "", description: "", dueAt: "", status: "draft" as (typeof STATUSES)[number] });
+  const [form, setForm] = useState({ cohortId: "", programId: "", title: "", description: "", dueAt: "", status: "draft" as TaskStatus });
 
   const { data, isLoading } = useQuery({ queryKey: ["admin-assignments"], queryFn: () => api<{ items: AssignmentItem[] }>("/admin/assignments") });
   const { data: cohorts } = useQuery({ queryKey: ["admin-cohorts"], queryFn: () => api<{ items: Cohort[] }>("/admin/cohorts") });
@@ -49,7 +49,7 @@ export default function AdminAssignments() {
       cohortId: String(a.cohortId), programId: a.programId ? String(a.programId) : "",
       title: a.title, description: a.description ?? "",
       dueAt: a.dueAt ? format(new Date(a.dueAt), "yyyy-MM-dd'T'HH:mm") : "",
-      status: a.status,
+      status: a.status as TaskStatus,
     });
     setOpen(true);
   };
@@ -58,7 +58,7 @@ export default function AdminAssignments() {
     <AdminLayout>
       <div className="mb-8 flex items-center justify-between">
         <h1 className="text-3xl font-serif font-bold">과제 관리</h1>
-        <Button className="rounded-none" onClick={openNew}>+ 새 과제</Button>
+        <Button onClick={openNew}>+ 새 과제</Button>
       </div>
       <div className="bg-card border border-border">
         <Table>
@@ -70,11 +70,15 @@ export default function AdminAssignments() {
               <TableRow key={a.id}>
                 <TableCell className="font-medium">{a.title}</TableCell>
                 <TableCell>{a.cohortName} {a.programName ? `/ ${a.programName}` : ""}</TableCell>
-                <TableCell>{a.dueAt ? format(new Date(a.dueAt), "yyyy-MM-dd HH:mm") : "-"}</TableCell>
-                <TableCell><Badge className="rounded-none">{a.status}</Badge></TableCell>
+                <TableCell className="tabular-nums">{formatKoreanDateTime(a.dueAt)}</TableCell>
+                <TableCell>
+                  <Badge variant="outline" className={TASK_STATUS_TONE[a.status as TaskStatus] ?? ""}>
+                    {TASK_STATUS_LABEL[a.status as TaskStatus] ?? a.status}
+                  </Badge>
+                </TableCell>
                 <TableCell className="space-x-2">
-                  <Button variant="outline" size="sm" className="rounded-none" onClick={() => openEdit(a)}>수정</Button>
-                  <Link href={`/admin/assignments/${a.id}`}><Button size="sm" className="rounded-none">제출 관리</Button></Link>
+                  <Button variant="outline" size="sm" onClick={() => openEdit(a)}>수정</Button>
+                  <Link href={`/admin/assignments/${a.id}`}><Button size="sm">제출 관리</Button></Link>
                 </TableCell>
               </TableRow>
             ))}
@@ -83,31 +87,56 @@ export default function AdminAssignments() {
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="rounded-none">
+        <DialogContent>
           <DialogHeader><DialogTitle>{editing ? "과제 수정" : "새 과제"}</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <Select value={form.cohortId} onValueChange={(v) => setForm({ ...form, cohortId: v })}>
-              <SelectTrigger className="rounded-none"><SelectValue placeholder="기수 선택…" /></SelectTrigger>
-              <SelectContent>{cohorts?.items.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}</SelectContent>
-            </Select>
-            <Select value={form.programId || "none"} onValueChange={(v) => setForm({ ...form, programId: v === "none" ? "" : v })}>
-              <SelectTrigger className="rounded-none"><SelectValue placeholder="프로그램(선택)" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">없음</SelectItem>
-                {programs?.items.filter((p) => !form.cohortId || String(p.cohortId) === form.cohortId).map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Input className="rounded-none" placeholder="제목" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-            <Textarea className="rounded-none" placeholder="설명" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-            <Input type="datetime-local" className="rounded-none" placeholder="마감일" value={form.dueAt} onChange={(e) => setForm({ ...form, dueAt: e.target.value })} />
-            <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as any })}>
-              <SelectTrigger className="rounded-none"><SelectValue /></SelectTrigger>
-              <SelectContent>{STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-            </Select>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>기수</Label>
+                <Select value={form.cohortId} onValueChange={(v) => setForm({ ...form, cohortId: v })}>
+                  <SelectTrigger><SelectValue placeholder="기수 선택…" /></SelectTrigger>
+                  <SelectContent>{cohorts?.items.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>프로그램 <span className="text-muted-foreground font-normal">(선택)</span></Label>
+                <Select value={form.programId || "none"} onValueChange={(v) => setForm({ ...form, programId: v === "none" ? "" : v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">없음</SelectItem>
+                    {programs?.items.filter((p) => !form.cohortId || String(p.cohortId) === form.cohortId).map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>제목</Label>
+              <Input placeholder="예: 1주차 - 컴포넌트 분해 연습" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>설명 <span className="text-muted-foreground font-normal">(선택)</span></Label>
+              <Textarea placeholder="과제 요구사항, 제출 방법 등을 안내해 주세요." value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>마감일 <span className="text-muted-foreground font-normal">(선택)</span></Label>
+                <Input type="datetime-local" value={form.dueAt} onChange={(e) => setForm({ ...form, dueAt: e.target.value })} />
+                {form.dueAt
+                  ? <p className="text-xs text-muted-foreground">{formatKoreanDateTime(new Date(form.dueAt).toISOString())}</p>
+                  : <p className="text-xs text-muted-foreground">예: 2026년 5월 22일 (금) 오후 11:59</p>}
+              </div>
+              <div className="space-y-1.5">
+                <Label>상태</Label>
+                <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as TaskStatus })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{TASK_STATUSES.map((s) => <SelectItem key={s} value={s}>{TASK_STATUS_LABEL[s]}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" className="rounded-none" onClick={() => setOpen(false)}>취소</Button>
-            <Button className="rounded-none" disabled={!form.cohortId || !form.title || save.isPending} onClick={() => save.mutate()}>저장</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>취소</Button>
+            <Button disabled={!form.cohortId || !form.title || save.isPending} onClick={() => save.mutate()}>저장</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

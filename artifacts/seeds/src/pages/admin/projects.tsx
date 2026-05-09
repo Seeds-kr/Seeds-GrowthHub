@@ -5,16 +5,17 @@ import {
   api, PROJECT_STATUSES, PROJECT_STATUS_LABEL,
   type Project, type ProjectStatus, type Cohort, type Program,
 } from "@/lib/mvp3-api";
+import { formatKoreanDate } from "@/lib/admin-labels";
 import { Loader2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useState } from "react";
-import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 
 export default function AdminProjects() {
@@ -44,7 +45,7 @@ export default function AdminProjects() {
     <AdminLayout>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-serif font-bold">프로젝트</h1>
-        <Button className="rounded-none" onClick={() => { setForm({ cohortId: "", programId: "", title: "", description: "", status: "ideation" }); setOpen(true); }}>+ 새 프로젝트</Button>
+        <Button onClick={() => { setForm({ cohortId: "", programId: "", title: "", description: "", status: "ideation" }); setOpen(true); }}>+ 새 프로젝트</Button>
       </div>
       <div className="bg-card border border-border">
         <Table>
@@ -57,9 +58,9 @@ export default function AdminProjects() {
                 <TableCell className="font-medium">{p.title}</TableCell>
                 <TableCell>{p.cohortName ?? `#${p.cohortId}`}</TableCell>
                 <TableCell>{p.programName ?? "-"}</TableCell>
-                <TableCell><Badge variant="outline" className="rounded-none">{PROJECT_STATUS_LABEL[p.status]}</Badge></TableCell>
-                <TableCell>{format(new Date(p.createdAt), "yyyy-MM-dd")}</TableCell>
-                <TableCell><Link href={`/admin/projects/${p.id}`}><Button variant="outline" size="sm" className="rounded-none">상세</Button></Link></TableCell>
+                <TableCell><Badge variant="outline">{PROJECT_STATUS_LABEL[p.status]}</Badge></TableCell>
+                <TableCell className="text-sm">{formatKoreanDate(p.createdAt)}</TableCell>
+                <TableCell><Link href={`/admin/projects/${p.id}`}><Button variant="outline" size="sm">상세</Button></Link></TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -67,27 +68,44 @@ export default function AdminProjects() {
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="rounded-none">
+        <DialogContent>
           <DialogHeader><DialogTitle>새 프로젝트</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <Input className="rounded-none" placeholder="제목" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-            <Textarea className="rounded-none" placeholder="설명" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-            <Select value={form.cohortId} onValueChange={(v) => setForm({ ...form, cohortId: v })}>
-              <SelectTrigger className="rounded-none"><SelectValue placeholder="기수 선택…" /></SelectTrigger>
-              <SelectContent>{cohorts?.items.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}</SelectContent>
-            </Select>
-            <Select value={form.programId || "none"} onValueChange={(v) => setForm({ ...form, programId: v === "none" ? "" : v })}>
-              <SelectTrigger className="rounded-none"><SelectValue placeholder="프로그램 (선택)" /></SelectTrigger>
-              <SelectContent><SelectItem value="none">프로그램 없음</SelectItem>{programs?.items.map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}</SelectContent>
-            </Select>
-            <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as ProjectStatus })}>
-              <SelectTrigger className="rounded-none"><SelectValue /></SelectTrigger>
-              <SelectContent>{PROJECT_STATUSES.map((s) => <SelectItem key={s} value={s}>{PROJECT_STATUS_LABEL[s]}</SelectItem>)}</SelectContent>
-            </Select>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label>제목</Label>
+              <Input placeholder="예: 학교 식단 알림 봇" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>설명 <span className="text-muted-foreground font-normal">(선택)</span></Label>
+              <Textarea placeholder="프로젝트 한 줄 소개 또는 목표" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>기수</Label>
+                <Select value={form.cohortId} onValueChange={(v) => setForm({ ...form, cohortId: v })}>
+                  <SelectTrigger><SelectValue placeholder="기수 선택…" /></SelectTrigger>
+                  <SelectContent>{cohorts?.items.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>프로그램 <span className="text-muted-foreground font-normal">(선택)</span></Label>
+                <Select value={form.programId || "none"} onValueChange={(v) => setForm({ ...form, programId: v === "none" ? "" : v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="none">없음</SelectItem>{programs?.items.map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>상태</Label>
+              <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as ProjectStatus })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{PROJECT_STATUSES.map((s) => <SelectItem key={s} value={s}>{PROJECT_STATUS_LABEL[s]}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" className="rounded-none" onClick={() => setOpen(false)}>취소</Button>
-            <Button className="rounded-none" disabled={!form.cohortId || !form.title || create.isPending} onClick={() => create.mutate()}>생성</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>취소</Button>
+            <Button disabled={!form.cohortId || !form.title || create.isPending} onClick={() => create.mutate()}>생성</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
