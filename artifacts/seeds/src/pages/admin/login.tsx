@@ -65,7 +65,7 @@ export default function AdminLogin() {
       <div className="w-full max-w-md bg-card border border-border p-8 shadow-sm">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-serif font-bold text-primary mb-2">Seeds</h1>
-          <p className="text-muted-foreground text-sm">관리자 또는 평가자 계정으로 로그인하세요.</p>
+          <p className="text-muted-foreground text-sm">계정으로 로그인하세요. (관리자 / 평가위원 / 학생)</p>
         </div>
 
         {errorMsg && (
