@@ -233,6 +233,7 @@ export interface SessionUser {
   email: string;
   name: string;
   role: UserRole;
+  roles: UserRole[];
 }
 
 export interface User {
@@ -240,6 +241,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  extraRoles: UserRole[];
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -266,6 +268,7 @@ export interface CreateUserBody {
    */
   password: string;
   role: UserRole;
+  extraRoles?: UserRole[];
 }
 
 export interface UpdateUserBody {
@@ -282,6 +285,7 @@ export interface UpdateUserBody {
    */
   password?: string;
   isActive?: boolean;
+  extraRoles?: UserRole[];
 }
 
 export interface EvaluationAssignment {

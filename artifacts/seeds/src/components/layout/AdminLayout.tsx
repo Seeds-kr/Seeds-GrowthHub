@@ -5,30 +5,31 @@ import { useAdminMe, useAdminLogout } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getAdminMeQueryKey } from "@workspace/api-client-react";
 import { Loader2 } from "lucide-react";
+import { RoleSwitcher, effectiveRoles, pickRedirectFor } from "./RoleSwitcher";
 
 export function AdminLayout({ children }: { children: ReactNode }) {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const { data: admin, isLoading, isError } = useAdminMe({
-    query: {
-      retry: false,
-      queryKey: getAdminMeQueryKey(),
-    },
+    query: { retry: false, queryKey: getAdminMeQueryKey() },
   });
   const logout = useAdminLogout();
+
+  const roles = admin ? effectiveRoles(admin) : [];
+  const allowed = roles.includes("admin");
 
   useEffect(() => {
     if (isLoading) return;
     if (isError || !admin) {
-      setLocation("/admin/login");
-    } else if (admin.role === "evaluator") {
-      setLocation("/evaluator");
-    } else if (admin.role === "student") {
-      setLocation("/student");
+      setLocation("/login");
+      return;
     }
-  }, [isLoading, isError, admin, setLocation]);
+    if (!allowed) {
+      setLocation(pickRedirectFor(effectiveRoles(admin)));
+    }
+  }, [isLoading, isError, admin, allowed, setLocation]);
 
-  if (isLoading || isError || !admin || admin.role !== "admin") {
+  if (isLoading || isError || !admin || !allowed) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -40,7 +41,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
     logout.mutate(undefined, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getAdminMeQueryKey() });
-        setLocation("/admin/login");
+        setLocation("/login");
       },
     });
   };
@@ -54,54 +55,25 @@ export function AdminLayout({ children }: { children: ReactNode }) {
               Seeds Admin
             </Link>
             <nav className="hidden md:flex items-center gap-6">
-              <Link href="/admin" className="text-sm font-medium text-muted-foreground hover:text-primary">
-                대시보드
-              </Link>
-              <Link href="/admin/applications" className="text-sm font-medium text-muted-foreground hover:text-primary">
-                지원서
-              </Link>
-              <Link href="/admin/students" className="text-sm font-medium text-muted-foreground hover:text-primary">
-                학생
-              </Link>
-              <Link href="/admin/cohorts" className="text-sm font-medium text-muted-foreground hover:text-primary">
-                기수
-              </Link>
-              <Link href="/admin/programs" className="text-sm font-medium text-muted-foreground hover:text-primary">
-                프로그램
-              </Link>
-              <Link href="/admin/sessions" className="text-sm font-medium text-muted-foreground hover:text-primary">
-                세션
-              </Link>
-              <Link href="/admin/assignments" className="text-sm font-medium text-muted-foreground hover:text-primary">
-                과제
-              </Link>
-              <Link href="/admin/announcements" className="text-sm font-medium text-muted-foreground hover:text-primary">
-                공지
-              </Link>
-              <Link href="/admin/activity-records" className="text-sm font-medium text-muted-foreground hover:text-primary">
-                활동기록
-              </Link>
-              <Link href="/admin/projects" className="text-sm font-medium text-muted-foreground hover:text-primary">
-                프로젝트
-              </Link>
-              <Link href="/admin/artifacts" className="text-sm font-medium text-muted-foreground hover:text-primary">
-                아티팩트
-              </Link>
-              <Link href="/admin/feedback" className="text-sm font-medium text-muted-foreground hover:text-primary">
-                피드백
-              </Link>
-              <Link href="/admin/tags" className="text-sm font-medium text-muted-foreground hover:text-primary">
-                태그
-              </Link>
-              <Link href="/admin/evaluators" className="text-sm font-medium text-muted-foreground hover:text-primary">
-                평가자
-              </Link>
-              <Link href="/admin/site-content" className="text-sm font-medium text-muted-foreground hover:text-primary">
-                홈페이지
-              </Link>
+              <Link href="/admin" className="text-sm font-medium text-muted-foreground hover:text-primary">대시보드</Link>
+              <Link href="/admin/applications" className="text-sm font-medium text-muted-foreground hover:text-primary">지원서</Link>
+              <Link href="/admin/students" className="text-sm font-medium text-muted-foreground hover:text-primary">학생</Link>
+              <Link href="/admin/cohorts" className="text-sm font-medium text-muted-foreground hover:text-primary">기수</Link>
+              <Link href="/admin/programs" className="text-sm font-medium text-muted-foreground hover:text-primary">프로그램</Link>
+              <Link href="/admin/sessions" className="text-sm font-medium text-muted-foreground hover:text-primary">세션</Link>
+              <Link href="/admin/assignments" className="text-sm font-medium text-muted-foreground hover:text-primary">과제</Link>
+              <Link href="/admin/announcements" className="text-sm font-medium text-muted-foreground hover:text-primary">공지</Link>
+              <Link href="/admin/activity-records" className="text-sm font-medium text-muted-foreground hover:text-primary">활동기록</Link>
+              <Link href="/admin/projects" className="text-sm font-medium text-muted-foreground hover:text-primary">프로젝트</Link>
+              <Link href="/admin/artifacts" className="text-sm font-medium text-muted-foreground hover:text-primary">아티팩트</Link>
+              <Link href="/admin/feedback" className="text-sm font-medium text-muted-foreground hover:text-primary">피드백</Link>
+              <Link href="/admin/tags" className="text-sm font-medium text-muted-foreground hover:text-primary">태그</Link>
+              <Link href="/admin/evaluators" className="text-sm font-medium text-muted-foreground hover:text-primary">평가자</Link>
+              <Link href="/admin/site-content" className="text-sm font-medium text-muted-foreground hover:text-primary">홈페이지</Link>
             </nav>
           </div>
           <div className="flex items-center gap-4">
+            <RoleSwitcher roles={roles} current="admin" />
             <span className="text-sm text-muted-foreground">{admin.email}</span>
             <Button variant="outline" size="sm" onClick={handleLogout} disabled={logout.isPending}>
               {logout.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}

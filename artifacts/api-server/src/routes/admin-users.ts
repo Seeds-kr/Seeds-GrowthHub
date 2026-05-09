@@ -15,11 +15,30 @@ import { hashPassword, requireAdmin } from "../lib/auth";
 
 const router: IRouter = Router();
 
+function sanitizeExtraRoles(
+  primary: UserRole,
+  raw: unknown,
+): UserRole[] {
+  if (!Array.isArray(raw)) return [];
+  const set = new Set<UserRole>();
+  for (const r of raw) {
+    if (
+      typeof r === "string" &&
+      (USER_ROLES as readonly string[]).includes(r) &&
+      r !== primary
+    ) {
+      set.add(r as UserRole);
+    }
+  }
+  return Array.from(set);
+}
+
 function publicUser(u: {
   id: number;
   name: string;
   email: string;
   role: UserRole;
+  extraRoles: UserRole[] | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -31,6 +50,7 @@ function publicUser(u: {
     name: u.name,
     email: u.email,
     role: u.role,
+    extraRoles: u.extraRoles ?? [],
     isActive: u.isActive,
     createdAt: u.createdAt.toISOString(),
     updatedAt: u.updatedAt.toISOString(),
@@ -41,9 +61,14 @@ function publicUser(u: {
 
 router.get("/admin/users", requireAdmin, async (req, res) => {
   const roleParam = req.query.role;
-  const filters = [] as ReturnType<typeof eq>[];
+  const filters: any[] = [];
+  // Filter by EFFECTIVE role: primary role match OR role present in extra_roles[].
+  // Lets multi-role accounts (e.g. student with extraRoles=['evaluator']) appear
+  // in role-scoped admin pickers like the evaluator selector.
   if (typeof roleParam === "string" && (USER_ROLES as readonly string[]).includes(roleParam)) {
-    filters.push(eq(usersTable.role, roleParam as UserRole));
+    filters.push(
+      sql`(${usersTable.role} = ${roleParam} OR ${roleParam} = ANY(${usersTable.extraRoles}))`,
+    );
   }
 
   const rows = await db
@@ -52,6 +77,7 @@ router.get("/admin/users", requireAdmin, async (req, res) => {
       name: usersTable.name,
       email: usersTable.email,
       role: usersTable.role,
+      extraRoles: usersTable.extraRoles,
       isActive: usersTable.isActive,
       createdAt: usersTable.createdAt,
       updatedAt: usersTable.updatedAt,
@@ -92,6 +118,7 @@ router.post("/admin/users", requireAdmin, async (req, res) => {
     return;
   }
   const passwordHash = await hashPassword(parsed.data.password);
+  const extraRoles = sanitizeExtraRoles(parsed.data.role, (req.body as Record<string, unknown>)?.extraRoles);
   const [row] = await db
     .insert(usersTable)
     .values({
@@ -99,6 +126,7 @@ router.post("/admin/users", requireAdmin, async (req, res) => {
       email,
       passwordHash,
       role: parsed.data.role,
+      extraRoles,
       isActive: true,
     })
     .returning();
@@ -129,6 +157,20 @@ router.patch("/admin/users/:id", requireAdmin, async (req, res) => {
   if (parsed.data.isActive !== undefined) update.isActive = parsed.data.isActive;
   if (parsed.data.password !== undefined)
     update.passwordHash = await hashPassword(parsed.data.password);
+
+  const rawExtra = (req.body as Record<string, unknown>)?.extraRoles;
+  if (rawExtra !== undefined) {
+    const [current] = await db
+      .select({ role: usersTable.role })
+      .from(usersTable)
+      .where(eq(usersTable.id, id))
+      .limit(1);
+    if (!current) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+    update.extraRoles = sanitizeExtraRoles(current.role, rawExtra);
+  }
 
   const [row] = await db
     .update(usersTable)

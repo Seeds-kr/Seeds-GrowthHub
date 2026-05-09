@@ -773,7 +773,11 @@ components:
         name: { type: string }
         role:
           $ref: "#/components/schemas/UserRole"
-      required: [id, email, name, role]
+        roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserRole"
+      required: [id, email, name, role, roles]
 
     User:
       type: object
@@ -783,12 +787,16 @@ components:
         email: { type: string }
         role:
           $ref: "#/components/schemas/UserRole"
+        extraRoles:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserRole"
         isActive: { type: boolean }
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
         assignedCount: { type: integer }
         completedCount: { type: integer }
-      required: [id, name, email, role, isActive, createdAt, updatedAt, assignedCount, completedCount]
+      required: [id, name, email, role, extraRoles, isActive, createdAt, updatedAt, assignedCount, completedCount]
 
     UserList:
       type: object
@@ -808,6 +816,10 @@ components:
         password: { type: string, minLength: 8, maxLength: 200 }
         role:
           $ref: "#/components/schemas/UserRole"
+        extraRoles:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserRole"
       required: [name, email, password, role]
 
     UpdateUserBody:
@@ -817,6 +829,10 @@ components:
         email: { type: string, format: email, maxLength: 200 }
         password: { type: string, minLength: 8, maxLength: 200 }
         isActive: { type: boolean }
+        extraRoles:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserRole"
 
     EvaluationAssignment:
       type: object

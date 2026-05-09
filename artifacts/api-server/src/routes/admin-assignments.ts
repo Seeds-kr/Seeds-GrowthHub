@@ -7,6 +7,7 @@ import {
   usersTable,
   applicationsTable,
 } from "@workspace/db";
+import { getEffectiveRoles } from "@workspace/db";
 import { requireAdmin } from "../lib/auth";
 
 const router: IRouter = Router();
@@ -31,7 +32,11 @@ router.post(
       .from(usersTable)
       .where(eq(usersTable.id, parsed.data.evaluatorId))
       .limit(1);
-    if (!evaluator || evaluator.role !== "evaluator" || !evaluator.isActive) {
+    if (
+      !evaluator ||
+      !evaluator.isActive ||
+      !getEffectiveRoles(evaluator).includes("evaluator")
+    ) {
       res.status(400).json({ error: "Invalid evaluator" });
       return;
     }

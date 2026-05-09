@@ -12,6 +12,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  extraRoles: UserRole[];
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

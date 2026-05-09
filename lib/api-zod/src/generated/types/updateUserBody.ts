@@ -5,6 +5,7 @@
  * Seeds API
  * OpenAPI spec version: 0.2.0
  */
+import type { UserRole } from "./userRole";
 
 export interface UpdateUserBody {
   /**
@@ -20,4 +21,5 @@ export interface UpdateUserBody {
    */
   password?: string;
   isActive?: boolean;
+  extraRoles?: UserRole[];
 }

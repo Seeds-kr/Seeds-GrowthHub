@@ -41,13 +41,14 @@ export default function AdminLogin() {
       {
         onSuccess: (user) => {
           queryClient.invalidateQueries({ queryKey: getAdminMeQueryKey() });
-          if (user.role === "evaluator") {
-            setLocation("/evaluator");
-          } else if (user.role === "student") {
-            setLocation("/student");
-          } else {
-            setLocation("/admin");
-          }
+          // Use effective roles so multi-role accounts land on their highest-privilege
+          // home (admin > student > evaluator). Falls back to primary role if `roles`
+          // is missing (older clients / tokens).
+          const effective: string[] = (user as any).roles ?? [user.role];
+          if (effective.includes("admin")) setLocation("/admin");
+          else if (effective.includes("student")) setLocation("/student");
+          else if (effective.includes("evaluator")) setLocation("/evaluator");
+          else setLocation("/admin");
         },
         onError: (err: any) => {
           if (err.status === 401) {

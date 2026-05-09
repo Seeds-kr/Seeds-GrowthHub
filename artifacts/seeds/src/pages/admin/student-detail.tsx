@@ -13,7 +13,7 @@ import { toast } from "@/hooks/use-toast";
 
 type Detail = {
   student: {
-    id: number; name: string; email: string; phone: string | null; school: string | null;
+    id: number; userId: number; name: string; email: string; phone: string | null; school: string | null;
     isActive: boolean; applicationId: number | null; createdAt: string;
   };
   application: any | null;
@@ -82,6 +82,8 @@ export default function AdminStudentDetail() {
         </CardContent></Card>
       </div>
 
+      <ExtraRolesCard userId={s.userId} />
+
       <Card className="rounded-none mb-6"><CardHeader><CardTitle>기수 / 프로그램</CardTitle></CardHeader><CardContent className="space-y-4">
         <div>
           <div className="text-sm font-medium mb-2">기수</div>
@@ -121,5 +123,60 @@ export default function AdminStudentDetail() {
           ))}</ul>}
       </CardContent></Card>
     </AdminLayout>
+  );
+}
+
+function ExtraRolesCard({ userId }: { userId: number }) {
+  const qc = useQueryClient();
+  const { data: user } = useQuery({
+    queryKey: ["admin-user", userId],
+    queryFn: async () => {
+      const r = await api<{ items: { id: number; role: string; extraRoles: string[] }[] }>("/admin/users");
+      return r.items.find((u) => u.id === userId) ?? null;
+    },
+  });
+  const update = useMutation({
+    mutationFn: (extraRoles: string[]) =>
+      api(`/admin/users/${userId}`, { method: "PATCH", body: { extraRoles } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-user", userId] });
+      toast({ title: "권한 업데이트 완료" });
+    },
+    onError: (e: any) => toast({ title: "실패", description: e?.data?.error ?? e.message, variant: "destructive" }),
+  });
+  if (!user) return null;
+  const extras = user.extraRoles ?? [];
+  const has = (r: string) => extras.includes(r);
+  const toggle = (r: string) => {
+    const next = has(r) ? extras.filter((x) => x !== r) : [...extras, r];
+    update.mutate(next);
+  };
+  return (
+    <Card className="rounded-none mb-6">
+      <CardHeader><CardTitle>겸직 권한 (추가 역할)</CardTitle></CardHeader>
+      <CardContent className="space-y-3 text-sm">
+        <p className="text-muted-foreground">
+          이 학생 계정에 추가 역할을 부여하면 같은 계정으로 운영진/평가위원 화면도 사용할 수 있습니다. 기본 역할(학생)은 항상 유지됩니다.
+        </p>
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            variant={has("admin") ? "default" : "outline"}
+            className="rounded-none"
+            disabled={update.isPending}
+            onClick={() => toggle("admin")}
+          >
+            운영진(admin) {has("admin") ? "✓" : ""}
+          </Button>
+          <Button
+            variant={has("evaluator") ? "default" : "outline"}
+            className="rounded-none"
+            disabled={update.isPending}
+            onClick={() => toggle("evaluator")}
+          >
+            평가위원(evaluator) {has("evaluator") ? "✓" : ""}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

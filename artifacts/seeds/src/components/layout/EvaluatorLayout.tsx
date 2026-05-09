@@ -5,6 +5,7 @@ import { useAdminMe, useAdminLogout } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getAdminMeQueryKey } from "@workspace/api-client-react";
 import { Loader2 } from "lucide-react";
+import { RoleSwitcher, effectiveRoles, pickRedirectFor } from "./RoleSwitcher";
 
 export function EvaluatorLayout({ children }: { children: ReactNode }) {
   const [, setLocation] = useLocation();
@@ -14,16 +15,21 @@ export function EvaluatorLayout({ children }: { children: ReactNode }) {
   });
   const logout = useAdminLogout();
 
+  const roles = me ? effectiveRoles(me) : [];
+  const allowed = roles.includes("evaluator");
+
   useEffect(() => {
     if (isLoading) return;
     if (isError || !me) {
-      setLocation("/admin/login");
-    } else if (me.role !== "evaluator") {
-      setLocation("/admin");
+      setLocation("/login");
+      return;
     }
-  }, [isLoading, isError, me, setLocation]);
+    if (!allowed) {
+      setLocation(pickRedirectFor(effectiveRoles(me)));
+    }
+  }, [isLoading, isError, me, allowed, setLocation]);
 
-  if (isLoading || isError || !me || me.role !== "evaluator") {
+  if (isLoading || isError || !me || !allowed) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -35,7 +41,7 @@ export function EvaluatorLayout({ children }: { children: ReactNode }) {
     logout.mutate(undefined, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getAdminMeQueryKey() });
-        setLocation("/admin/login");
+        setLocation("/login");
       },
     });
   };
@@ -45,16 +51,13 @@ export function EvaluatorLayout({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-50 w-full border-b border-border bg-card">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
-            <Link href="/evaluator" className="font-serif text-lg font-bold text-primary">
-              Seeds 평가자
-            </Link>
+            <Link href="/evaluator" className="font-serif text-lg font-bold text-primary">Seeds 평가자</Link>
             <nav className="hidden md:flex items-center gap-6">
-              <Link href="/evaluator" className="text-sm font-medium text-muted-foreground hover:text-primary">
-                내 배정 목록
-              </Link>
+              <Link href="/evaluator" className="text-sm font-medium text-muted-foreground hover:text-primary">내 배정 목록</Link>
             </nav>
           </div>
           <div className="flex items-center gap-4">
+            <RoleSwitcher roles={roles} current="evaluator" />
             <span className="text-sm text-muted-foreground">{me.name} ({me.email})</span>
             <Button variant="outline" size="sm" onClick={handleLogout} disabled={logout.isPending}>
               {logout.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}

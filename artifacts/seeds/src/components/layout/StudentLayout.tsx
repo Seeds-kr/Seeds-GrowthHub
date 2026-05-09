@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useAdminMe, useAdminLogout, getAdminMeQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { RoleSwitcher, effectiveRoles, pickRedirectFor } from "./RoleSwitcher";
 
 export function StudentLayout({ children }: { children: ReactNode }) {
   const [, setLocation] = useLocation();
@@ -13,18 +14,21 @@ export function StudentLayout({ children }: { children: ReactNode }) {
   });
   const logout = useAdminLogout();
 
+  const roles = me ? effectiveRoles(me) : [];
+  const allowed = roles.includes("student");
+
   useEffect(() => {
     if (isLoading) return;
     if (isError || !me) {
-      setLocation("/student/login");
-    } else if (me.role === "admin") {
-      setLocation("/admin");
-    } else if (me.role === "evaluator") {
-      setLocation("/evaluator");
+      setLocation("/login");
+      return;
     }
-  }, [isLoading, isError, me, setLocation]);
+    if (!allowed) {
+      setLocation(pickRedirectFor(effectiveRoles(me)));
+    }
+  }, [isLoading, isError, me, allowed, setLocation]);
 
-  if (isLoading || isError || !me || me.role !== "student") {
+  if (isLoading || isError || !me || !allowed) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -36,7 +40,7 @@ export function StudentLayout({ children }: { children: ReactNode }) {
     logout.mutate(undefined, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getAdminMeQueryKey() });
-        setLocation("/student/login");
+        setLocation("/login");
       },
     });
   };
@@ -46,9 +50,7 @@ export function StudentLayout({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-50 w-full border-b border-border bg-card">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
-            <Link href="/student" className="font-serif text-lg font-bold text-primary">
-              Seeds 학생
-            </Link>
+            <Link href="/student" className="font-serif text-lg font-bold text-primary">Seeds 학생</Link>
             <nav className="hidden md:flex items-center gap-6">
               <Link href="/student" className="text-sm font-medium text-muted-foreground hover:text-primary">대시보드</Link>
               <Link href="/student/sessions" className="text-sm font-medium text-muted-foreground hover:text-primary">세션</Link>
@@ -62,6 +64,7 @@ export function StudentLayout({ children }: { children: ReactNode }) {
             </nav>
           </div>
           <div className="flex items-center gap-4">
+            <RoleSwitcher roles={roles} current="student" />
             <span className="text-sm text-muted-foreground">{me.email}</span>
             <Button variant="outline" size="sm" onClick={handleLogout} disabled={logout.isPending}>
               {logout.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}

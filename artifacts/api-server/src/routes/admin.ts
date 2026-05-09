@@ -20,6 +20,7 @@ import {
   type InterviewStatus,
   decisionLogsTable,
   usersTable,
+  getEffectiveRoles,
 } from "@workspace/db";
 import {
   authenticateUser,
@@ -42,8 +43,15 @@ router.post("/admin/login", async (req, res) => {
     res.status(401).json({ error: "Invalid credentials" });
     return;
   }
-  setSessionCookie(res, { userId: user.id, role: user.role });
-  res.json({ id: user.id, email: user.email, name: user.name, role: user.role });
+  const roles = getEffectiveRoles(user);
+  setSessionCookie(res, { userId: user.id, role: user.role, roles });
+  res.json({
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    roles,
+  });
 });
 
 router.post("/admin/logout", (_req, res) => {
@@ -57,7 +65,13 @@ router.get("/admin/me", async (req, res) => {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
-  res.json({ id: user.id, email: user.email, name: user.name, role: user.role });
+  res.json({
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    roles: getEffectiveRoles(user),
+  });
 });
 
 function isApplicationStatus(value: unknown): value is ApplicationStatus {

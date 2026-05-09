@@ -21,4 +21,5 @@ export interface CreateUserBody {
    */
   password: string;
   role: UserRole;
+  extraRoles?: UserRole[];
 }

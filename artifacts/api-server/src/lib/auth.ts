@@ -2,18 +2,30 @@ import crypto from "node:crypto";
 import bcrypt from "bcryptjs";
 import type { Request, Response, NextFunction, RequestHandler } from "express";
 import { eq } from "drizzle-orm";
-import { db, usersTable, USER_ROLES, type User, type UserRole } from "@workspace/db";
+import {
+  db,
+  usersTable,
+  USER_ROLES,
+  getEffectiveRoles,
+  type User,
+  type UserRole,
+} from "@workspace/db";
 import { logger } from "./logger";
 
 const COOKIE_NAME = "seeds_admin";
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
 
-export type Session = { userId: number; role: UserRole };
+export type Session = {
+  userId: number;
+  role: UserRole;
+  roles: UserRole[];
+};
 export type SessionUser = {
   id: number;
   email: string;
   name: string;
   role: UserRole;
+  roles: UserRole[];
 };
 
 function getSessionSecret(): string {
@@ -58,7 +70,12 @@ export function verifySessionToken(
   try {
     const payload = JSON.parse(
       Buffer.from(encoded, "base64url").toString("utf8"),
-    ) as { userId?: number; role?: UserRole; exp?: number };
+    ) as {
+      userId?: number;
+      role?: UserRole;
+      roles?: UserRole[];
+      exp?: number;
+    };
     if (
       typeof payload.userId !== "number" ||
       typeof payload.role !== "string" ||
@@ -68,7 +85,18 @@ export function verifySessionToken(
     ) {
       return null;
     }
-    return { userId: payload.userId, role: payload.role as UserRole };
+    const role = payload.role as UserRole;
+    // Backwards-compat: tokens issued before multi-role support lack `roles`.
+    let roles: UserRole[];
+    if (Array.isArray(payload.roles)) {
+      roles = payload.roles.filter((r): r is UserRole =>
+        (USER_ROLES as readonly string[]).includes(r),
+      );
+      if (!roles.includes(role)) roles.unshift(role);
+    } else {
+      roles = [role];
+    }
+    return { userId: payload.userId, role, roles };
   } catch {
     return null;
   }
@@ -130,7 +158,6 @@ export async function authenticateUser(
     .where(eq(usersTable.email, normalizedEmail))
     .limit(1);
   if (!user || !user.isActive) {
-    // run a dummy compare to keep timing similar
     await bcrypt.compare(password, "$2a$10$invalidsaltinvalidsaltinvalidsaO");
     return null;
   }
@@ -154,7 +181,8 @@ function makeRequireRole(allowed: UserRole[]): RequestHandler {
       res.status(401).json({ error: "Unauthorized" });
       return;
     }
-    if (!allowed.includes(user.role)) {
+    const effective = getEffectiveRoles(user);
+    if (!allowed.some((r) => effective.includes(r))) {
       res.status(403).json({ error: "Forbidden" });
       return;
     }
@@ -201,7 +229,6 @@ export async function bootstrapAdminFromEnv(): Promise<void> {
     logger.info({ email: adminEmail }, "bootstrapped admin user");
     return;
   }
-  // Refresh the password hash if env value changed; ensure role is admin & active.
   const ok = await verifyPassword(adminPassword, existing.passwordHash);
   const updates: Partial<User> = {};
   if (!ok) updates.passwordHash = await hashPassword(adminPassword);

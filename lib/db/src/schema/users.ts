@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   pgTable,
   serial,
@@ -18,6 +19,11 @@ export const usersTable = pgTable(
     email: text("email").notNull(),
     passwordHash: text("password_hash").notNull(),
     role: text("role").notNull().$type<UserRole>(),
+    extraRoles: text("extra_roles")
+      .array()
+      .notNull()
+      .$type<UserRole[]>()
+      .default(sql`'{}'::text[]`),
     isActive: boolean("is_active").notNull().default(true),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -33,3 +39,19 @@ export const usersTable = pgTable(
 
 export type User = typeof usersTable.$inferSelect;
 export type InsertUser = typeof usersTable.$inferInsert;
+
+/**
+ * Effective roles = primary role + extra roles, deduped.
+ * Used by middleware and role-switcher UI to support a single account
+ * holding multiple roles (e.g. a student who is also a staff/admin).
+ */
+export function getEffectiveRoles(u: {
+  role: UserRole;
+  extraRoles?: UserRole[] | null;
+}): UserRole[] {
+  const set = new Set<UserRole>([u.role]);
+  for (const r of u.extraRoles ?? []) {
+    if ((USER_ROLES as readonly string[]).includes(r)) set.add(r);
+  }
+  return Array.from(set);
+}
