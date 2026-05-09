@@ -21,6 +21,7 @@ import adminFeedbackRouter from "./admin-feedback";
 import adminTagsRouter from "./admin-tags";
 import adminReportsRouter from "./admin-reports";
 import studentMvp4Router from "./student-mvp4";
+import siteContentRouter from "./site-content";
 
 const router: IRouter = Router();
 
@@ -46,5 +47,6 @@ router.use(adminFeedbackRouter);
 router.use(adminTagsRouter);
 router.use(adminReportsRouter);
 router.use(studentMvp4Router);
+router.use(siteContentRouter);
 
 export default router;

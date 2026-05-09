@@ -96,6 +96,9 @@ export function AdminLayout({ children }: { children: ReactNode }) {
               <Link href="/admin/evaluators" className="text-sm font-medium text-muted-foreground hover:text-primary">
                 평가자
               </Link>
+              <Link href="/admin/site-content" className="text-sm font-medium text-muted-foreground hover:text-primary">
+                홈페이지
+              </Link>
             </nav>
           </div>
           <div className="flex items-center gap-4">

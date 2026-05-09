@@ -34,6 +34,7 @@ import AdminTags from "@/pages/admin/tags";
 import AdminStudentTimeline from "@/pages/admin/student-timeline";
 import AdminStudentReport from "@/pages/admin/student-report";
 import AdminCohortSummary from "@/pages/admin/cohort-summary";
+import AdminSiteContent from "@/pages/admin/site-content";
 
 import EvaluatorDashboard from "@/pages/evaluator/dashboard";
 import EvaluatorApplicationDetail from "@/pages/evaluator/application-detail";
@@ -93,6 +94,7 @@ function Router() {
       <Route path="/admin/students/:id/timeline" component={AdminStudentTimeline} />
       <Route path="/admin/students/:id/report" component={AdminStudentReport} />
       <Route path="/admin/cohorts/:id/summary" component={AdminCohortSummary} />
+      <Route path="/admin/site-content" component={AdminSiteContent} />
 
       <Route path="/evaluator" component={EvaluatorDashboard} />
       <Route path="/evaluator/applications/:id" component={EvaluatorApplicationDetail} />

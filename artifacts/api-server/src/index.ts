@@ -1,6 +1,8 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { bootstrapAdminFromEnv } from "./lib/auth";
+import { bootstrapSiteContents } from "./lib/site-content-defaults";
+import { db, siteContentsTable } from "@workspace/db";
 
 const rawPort = process.env["PORT"];
 
@@ -21,6 +23,11 @@ async function start() {
     await bootstrapAdminFromEnv();
   } catch (err) {
     logger.error({ err }, "Failed to bootstrap admin user");
+  }
+  try {
+    await bootstrapSiteContents(db, siteContentsTable);
+  } catch (err) {
+    logger.error({ err }, "Failed to bootstrap site contents");
   }
   app.listen(port, (err) => {
     if (err) {

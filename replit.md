@@ -48,6 +48,9 @@ The shared proxy at `localhost:80` routes `/api/*` to the API server and everyth
 - `/student/assignments`, `/student/assignments/:id` — Submit / re-submit (text + URL); status auto-flips to `late` past the due date
 - `/student/announcements`
 
+### Admin — Site content CMS (role=admin)
+- `/admin/site-content` — JSON editor for the four public pages (`page.home`, `page.about`, `page.program`, `page.faq`); changes are live immediately. Defaults are bootstrapped from `artifacts/api-server/src/lib/site-content-defaults.ts` on every server start (insert `onConflictDoNothing` + label refresh). Public pages fetch via `GET /api/site-content/:key` with hardcoded fallback constants in `artifacts/seeds/src/lib/site-content.ts` so they render even if the API is unreachable.
+
 ### Admin MVP 4 (role=admin)
 - `/admin/activity-records` — searchable/filterable manual activity log (student/cohort/program/source/tag); CRUD + tag mappings
 - `/admin/projects`, `/admin/projects/:id` — CRUD; per-project members, artifacts, feedback, tag mappings, and status updates from one screen
@@ -117,6 +120,11 @@ Admin MVP 4 (role=admin):
 - `GET /admin/students/:id/report` — student profile, cohorts, programs, attendance summary, submissions, projects (+ my role), artifacts, feedback highlights, tag counts, full timeline
 - `GET /admin/cohorts/:id/summary` — cohort, studentCount, attendanceOverview, submissionOverview, project/artifact counts, tag distribution, students missing activity
 
+Site content (public + admin):
+- `GET /api/site-content` · `GET /api/site-content/:key` — public; key whitelisted to `page.home | page.about | page.program | page.faq`
+- `GET /admin/site-content` — admin list (always returns all known keys, blanks included)
+- `PUT /admin/site-content/:key` — upsert JSON value; sets `updated_by` from session
+
 Student MVP 4 (role=student via `requireStudent`):
 - `GET /student/timeline` — own records (`studentId = me`) with `visibility = student_visible` only; tags joined. `private` and `admin_only` records are not exposed to the student (admins flip visibility to `student_visible` to share)
 - `GET /student/projects` — projects I'm a member of (via `project_members`)
@@ -152,6 +160,7 @@ MVP 4 tables (additive, non-destructive):
 - `artifacts` (Drizzle export `mvp4ArtifactsTable`, file `lib/db/src/schema/mvp4-artifacts.ts`) — student_id?, project_id?, assignment_submission_id?, title, description, artifact_type (link | document | presentation | video | code | image | report | other), url, visibility (private | student_visible | cohort_visible | admin_only — default `student_visible`).
 - `feedback` — target_type (student | project | assignment_submission | activity_record | session), target_id, student_id?, author_id, feedback_type (general | strength | improvement | review | mentor_note | admin_note), content, visibility (student_visible | admin_only — default `admin_only`).
 - `skill_tags` — name unique, description.
+- `site_contents` — `(key unique, label, value jsonb, updated_by, timestamps)`. One row per public page; admin edits the JSON blob directly.
 - `tag_mappings` — (tag_id, target_type, target_id) unique; target_type ∈ {activity_record, project, artifact, feedback, student}.
 
 Student-side visibility rules in code:
