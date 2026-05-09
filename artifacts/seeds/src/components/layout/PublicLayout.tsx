@@ -32,7 +32,10 @@ export function PublicLayout({ children }: { children: ReactNode }) {
               </Link>
             ))}
           </nav>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Link href="/admin/login">
+              <Button variant="ghost" size="sm">로그인</Button>
+            </Link>
             <Link href="/apply">
               <Button>지원하기</Button>
             </Link>
@@ -45,7 +48,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
           <div>&copy; {new Date().getFullYear()} Seeds Program. All rights reserved.</div>
           <div className="flex items-center gap-4">
             <Link href="/admin/login" className="hover:text-primary transition-colors">
-              관리자 로그인
+              로그인 (관리자 / 평가위원 / 학생)
             </Link>
           </div>
         </div>
