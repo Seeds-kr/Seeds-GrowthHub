@@ -53,6 +53,11 @@ import StudentProjectDetail from "@/pages/student/project-detail";
 import StudentArtifacts from "@/pages/student/artifacts";
 import StudentReportPage from "@/pages/student/report";
 import ActivatePage from "@/pages/activate";
+import MentorsPage from "@/pages/mentors";
+import StaffPage from "@/pages/staff";
+import MembersPage from "@/pages/members";
+import AdminPeople from "@/pages/admin/people";
+import StudentProfilePage from "@/pages/student/profile";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -73,6 +78,9 @@ function Router() {
       <Route path="/recruit" component={Recruit} />
       <Route path="/apply" component={Apply} />
       <Route path="/apply/success" component={ApplySuccess} />
+      <Route path="/mentors" component={MentorsPage} />
+      <Route path="/staff" component={StaffPage} />
+      <Route path="/members" component={MembersPage} />
 
       <Route path="/activate/:token" component={ActivatePage} />
       <Route path="/login" component={AdminLogin} />
@@ -100,6 +108,7 @@ function Router() {
       <Route path="/admin/students/:id/report" component={AdminStudentReport} />
       <Route path="/admin/cohorts/:id/summary" component={AdminCohortSummary} />
       <Route path="/admin/site-content" component={AdminSiteContent} />
+      <Route path="/admin/people" component={AdminPeople} />
 
       <Route path="/evaluator" component={EvaluatorDashboard} />
       <Route path="/evaluator/applications/:id" component={EvaluatorApplicationDetail} />
@@ -116,6 +125,7 @@ function Router() {
       <Route path="/student/projects/:id" component={StudentProjectDetail} />
       <Route path="/student/artifacts" component={StudentArtifacts} />
       <Route path="/student/report" component={StudentReportPage} />
+      <Route path="/student/profile" component={StudentProfilePage} />
 
       <Route component={NotFound} />
     </Switch>

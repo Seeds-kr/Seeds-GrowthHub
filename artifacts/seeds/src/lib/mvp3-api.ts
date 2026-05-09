@@ -296,6 +296,48 @@ export type StudentReport = {
   skillTags: { tagId: number; name: string; count: number }[];
 };
 
+export const PEOPLE_KINDS = ["mentor", "staff", "member"] as const;
+export type PeopleKind = (typeof PEOPLE_KINDS)[number];
+export const PEOPLE_KIND_LABEL: Record<PeopleKind, string> = {
+  mentor: "멘토",
+  staff: "운영진",
+  member: "학생",
+};
+export const PEOPLE_KIND_PATH: Record<PeopleKind, string> = {
+  mentor: "/mentors",
+  staff: "/staff",
+  member: "/members",
+};
+
+export type PeopleProfile = {
+  id: number;
+  kind: PeopleKind;
+  userId: number | null;
+  studentId: number | null;
+  name: string;
+  roleTitle: string | null;
+  affiliation: string | null;
+  bio: string | null;
+  photoUrl: string | null;
+  tags: string[];
+  displayOrder: number;
+  isPublic: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PublicPeopleProfile = {
+  id: number;
+  kind: PeopleKind;
+  name: string;
+  roleTitle: string | null;
+  affiliation: string | null;
+  bio: string | null;
+  photoUrl: string | null;
+  tags: string[];
+  displayOrder: number;
+};
+
 export type CohortSummary = {
   cohort: { id: number; name: string; status: string };
   studentCount: number;

@@ -48,7 +48,11 @@ The shared proxy at `localhost:80` routes `/api/*` to the API server and everyth
 - `/student/assignments`, `/student/assignments/:id` — Submit / re-submit (text + URL); status auto-flips to `late` past the due date
 - `/student/announcements`
 
+### Public — People pages
+- `/mentors`, `/staff`, `/members` — 카드 그리드(이름·직함·소속·소개·태그·사진). 같은 `PeopleGrid` 컴포넌트 재사용. 각 페이지 상단 탭으로 세 페이지를 함께 묶음. **공개(`is_public=true`)된 항목만** 노출, `displayOrder asc, id asc` 정렬. 데이터는 `GET /api/people/:kind` (kind ∈ `mentor|staff|member`).
+
 ### Admin — Site content CMS (role=admin)
+- `/admin/people` — 멘토/운영진/학생 프로필 통합 CRUD. 탭으로 kind 전환, 표시 순서·공개 토글·태그(쉼표 입력)·사진 URL·소개 필드. 학생 본인이 만든 행은 학생 본인이 `/student/profile`에서 편집 가능하지만 어드민도 항상 모든 행을 편집·삭제 가능.
 - `/admin/site-content` — JSON editor for the four public pages (`page.home`, `page.about`, `page.program`, `page.faq`); changes are live immediately. Defaults are bootstrapped from `artifacts/api-server/src/lib/site-content-defaults.ts` on every server start (insert `onConflictDoNothing` + label refresh). Public pages fetch via `GET /api/site-content/:key` with hardcoded fallback constants in `artifacts/seeds/src/lib/site-content.ts` so they render even if the API is unreachable.
 
 ### Admin MVP 4 (role=admin)
@@ -60,6 +64,9 @@ The shared proxy at `localhost:80` routes `/api/*` to the API server and everyth
 - `/admin/students/:id/timeline` — admin view of a student's full activity stream with inline tag attach/detach
 - `/admin/students/:id/report` — printable per-student report (cohorts, attendance, submissions, projects, artifacts, feedback highlights, tag summary, timeline)
 - `/admin/cohorts/:id/summary` — cohort-level analytics (counts, attendance distribution, submission distribution, tag distribution, students missing activity)
+
+### Student — Profile (role=student)
+- `/student/profile` — 본인의 공개 프로필(`people_profiles` member 행) 편집. GET 시 행이 없으면 자동 생성(기본 비공개). 학생 본인이 표시 이름·직함·소속·사진 URL·소개·태그·**공개 여부 토글**을 직접 편집. 공개 ON일 때만 `/members`에 카드 노출.
 
 ### Student MVP 4 (role=student)
 - `/student/timeline` — own activity stream (`studentId = me` AND `visibility = student_visible`)
@@ -121,6 +128,11 @@ Admin MVP 4 (role=admin):
 - `GET /admin/students/:id/report` — student profile, cohorts, programs, attendance summary, submissions, projects (+ my role), artifacts, feedback highlights, tag counts, full timeline
 - `GET /admin/cohorts/:id/summary` — cohort, studentCount, attendanceOverview, submissionOverview, project/artifact counts, tag distribution, students missing activity
 
+People profiles:
+- `GET  /api/people/:kind` — 공개 라우트. kind ∈ `mentor | staff | member`(그 외 404). `is_public=true`만, `display_order asc, id asc`. 응답은 공개 안전 필드만(id/kind/name/roleTitle/affiliation/bio/photoUrl/tags/displayOrder).
+- `GET    /admin/people[?kind=]` · `POST /admin/people` · `PATCH /admin/people/:id` · `DELETE /admin/people/:id` — 어드민 전용. 모든 kind, 모든 필드(`userId`/`studentId` 연결 포함). user_id/student_id 유니크 충돌 시 409.
+- `GET   /student/profile` · `PATCH /student/profile` — 학생 본인 전용. GET 시 본인 학생 행에 매칭되는 `people_profiles` row가 없으면 lazy-create(`kind='member', studentId=me, userId=me, isPublic=false`). PATCH는 자기 행만 수정 가능(`kind`/`studentId`/`userId`/`displayOrder`는 학생이 변경 불가, 어드민만).
+
 Account activation (public, no auth):
 - `GET  /api/activation/:token` — inspect a token; returns `{status:"ok", email, name, expiresAt}` or 404 (not_found) / 410 (`{status:"expired"|"used"}`)
 - `POST /api/activation/:token` — body `{password}` (≥8 chars); atomically consumes the token, sets `users.password_hash` (bcrypt), flips `users.is_active=true`, returns `{ok:true}`. Returns 410 if the token was just used by a concurrent request.
@@ -170,6 +182,7 @@ MVP 4 tables (additive, non-destructive):
 - `site_contents` — `(key unique, label, value jsonb, updated_by, timestamps)`. One row per public page; admin edits the JSON blob directly.
 - `tag_mappings` — (tag_id, target_type, target_id) unique; target_type ∈ {activity_record, project, artifact, feedback, student}.
 - `account_activation_tokens` — id, user_id (FK→users, cascade delete), token_hash (sha256 of plaintext token; plaintext stored only in the response at issue time), expires_at (default 14d), used_at?, created_by (FK→users), created_at. Indexes on `token_hash` and `user_id`. Used by the public magic-link account activation flow (`/activate/:token` ↔ `/api/activation/:token`).
+- `people_profiles` — id, kind (`mentor|staff|member`), user_id? (FK→users set null, unique), student_id? (FK→students set null, unique), name, role_title?, affiliation?, bio?, photo_url?, tags `text[]` not null default `'{}'`, display_order int not null default 0, is_public bool not null default false, timestamps. Index `(kind, display_order)`. 한 명의 학생/유저당 최대 한 개의 프로필 행. 공개 라우트(`/api/people/:kind`)는 `is_public=true`만, 정렬 `display_order asc, id asc`.
 
 Student-side visibility rules in code:
 - `student/timeline` = `studentId = me` AND `visibility = student_visible`.

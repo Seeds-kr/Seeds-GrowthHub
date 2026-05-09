@@ -23,6 +23,7 @@ import adminReportsRouter from "./admin-reports";
 import studentMvp4Router from "./student-mvp4";
 import siteContentRouter from "./site-content";
 import activationRouter from "./activation";
+import peopleRouter from "./people";
 
 const router: IRouter = Router();
 
@@ -50,5 +51,6 @@ router.use(adminReportsRouter);
 router.use(studentMvp4Router);
 router.use(siteContentRouter);
 router.use(activationRouter);
+router.use(peopleRouter);
 
 export default router;

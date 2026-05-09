@@ -61,6 +61,7 @@ export function StudentLayout({ children }: { children: ReactNode }) {
               <Link href="/student/projects" className="text-sm font-medium text-muted-foreground hover:text-primary">프로젝트</Link>
               <Link href="/student/artifacts" className="text-sm font-medium text-muted-foreground hover:text-primary">아티팩트</Link>
               <Link href="/student/report" className="text-sm font-medium text-muted-foreground hover:text-primary">리포트</Link>
+              <Link href="/student/profile" className="text-sm font-medium text-muted-foreground hover:text-primary">내 프로필</Link>
             </nav>
           </div>
           <div className="flex items-center gap-4">
