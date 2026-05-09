@@ -165,6 +165,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApplicationStats"
 
+  /admin/dashboard:
+    get:
+      operationId: adminDashboard
+      tags: [admin]
+      summary: Aggregated stats for the admin dashboard
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDashboard"
+
   /admin/applications/{id}:
     get:
       operationId: getApplication
@@ -745,6 +758,133 @@ components:
           items:
             $ref: "#/components/schemas/ApplicationStatusCount"
       required: [total, byStatus]
+
+    DashboardCohortItem:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        status: { type: string }
+        startDate: { type: string, nullable: true }
+        endDate: { type: string, nullable: true }
+        studentCount: { type: integer }
+      required: [id, name, status, startDate, endDate, studentCount]
+
+    DashboardSessionItem:
+      type: object
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        scheduledAt: { type: string, format: date-time }
+        sessionType: { type: string }
+        status: { type: string }
+        cohortName: { type: string, nullable: true }
+        programName: { type: string, nullable: true }
+      required: [id, title, scheduledAt, sessionType, status, cohortName, programName]
+
+    DashboardAssignmentItem:
+      type: object
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        dueAt: { type: string, format: date-time, nullable: true }
+        cohortName: { type: string, nullable: true }
+        submissions: { type: integer }
+        totalStudents: { type: integer }
+      required: [id, title, dueAt, cohortName, submissions, totalStudents]
+
+    DashboardAnnouncementItem:
+      type: object
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        targetType: { type: string }
+        publishedAt: { type: string, format: date-time, nullable: true }
+      required: [id, title, targetType, publishedAt]
+
+    AdminDashboard:
+      type: object
+      properties:
+        generatedAt: { type: string, format: date-time }
+        applications:
+          type: object
+          properties:
+            total: { type: integer }
+            byStatus:
+              type: array
+              items:
+                $ref: "#/components/schemas/ApplicationStatusCount"
+            last7d: { type: integer }
+          required: [total, byStatus, last7d]
+        members:
+          type: object
+          properties:
+            activeStudents: { type: integer }
+            pendingActivation: { type: integer }
+            evaluators: { type: integer }
+          required: [activeStudents, pendingActivation, evaluators]
+        cohorts:
+          type: object
+          properties:
+            activeCount: { type: integer }
+            active:
+              type: array
+              items:
+                $ref: "#/components/schemas/DashboardCohortItem"
+          required: [activeCount, active]
+        sessions:
+          type: object
+          properties:
+            upcoming:
+              type: array
+              items:
+                $ref: "#/components/schemas/DashboardSessionItem"
+            last30dCount: { type: integer }
+          required: [upcoming, last30dCount]
+        assignments:
+          type: object
+          properties:
+            activeCount: { type: integer }
+            pendingReview: { type: integer }
+            dueSoon:
+              type: array
+              items:
+                $ref: "#/components/schemas/DashboardAssignmentItem"
+          required: [activeCount, pendingReview, dueSoon]
+        activity:
+          type: object
+          properties:
+            activeProjects: { type: integer }
+            activityRecordsLast30d: { type: integer }
+            feedbackLast30d: { type: integer }
+            artifactsLast30d: { type: integer }
+          required:
+            [activeProjects, activityRecordsLast30d, feedbackLast30d, artifactsLast30d]
+        announcements:
+          type: object
+          properties:
+            publishedCount: { type: integer }
+            recent:
+              type: array
+              items:
+                $ref: "#/components/schemas/DashboardAnnouncementItem"
+          required: [publishedCount, recent]
+        windowDays:
+          type: object
+          properties:
+            upcoming: { type: integer }
+            recent: { type: integer }
+          required: [upcoming, recent]
+      required:
+        - generatedAt
+        - applications
+        - members
+        - cohorts
+        - sessions
+        - assignments
+        - activity
+        - announcements
+        - windowDays
 
     UpdateApplicationBody:
       type: object

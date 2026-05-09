@@ -215,6 +215,98 @@ export interface ApplicationStats {
   byStatus: ApplicationStatusCount[];
 }
 
+export interface DashboardCohortItem {
+  id: number;
+  name: string;
+  status: string;
+  startDate: string | null;
+  endDate: string | null;
+  studentCount: number;
+}
+
+export interface DashboardSessionItem {
+  id: number;
+  title: string;
+  scheduledAt: string;
+  sessionType: string;
+  status: string;
+  cohortName: string | null;
+  programName: string | null;
+}
+
+export interface DashboardAssignmentItem {
+  id: number;
+  title: string;
+  dueAt: string | null;
+  cohortName: string | null;
+  submissions: number;
+  totalStudents: number;
+}
+
+export interface DashboardAnnouncementItem {
+  id: number;
+  title: string;
+  targetType: string;
+  publishedAt: string | null;
+}
+
+export type AdminDashboardApplications = {
+  total: number;
+  byStatus: ApplicationStatusCount[];
+  last7d: number;
+};
+
+export type AdminDashboardMembers = {
+  activeStudents: number;
+  pendingActivation: number;
+  evaluators: number;
+};
+
+export type AdminDashboardCohorts = {
+  activeCount: number;
+  active: DashboardCohortItem[];
+};
+
+export type AdminDashboardSessions = {
+  upcoming: DashboardSessionItem[];
+  last30dCount: number;
+};
+
+export type AdminDashboardAssignments = {
+  activeCount: number;
+  pendingReview: number;
+  dueSoon: DashboardAssignmentItem[];
+};
+
+export type AdminDashboardActivity = {
+  activeProjects: number;
+  activityRecordsLast30d: number;
+  feedbackLast30d: number;
+  artifactsLast30d: number;
+};
+
+export type AdminDashboardAnnouncements = {
+  publishedCount: number;
+  recent: DashboardAnnouncementItem[];
+};
+
+export type AdminDashboardWindowDays = {
+  upcoming: number;
+  recent: number;
+};
+
+export interface AdminDashboard {
+  generatedAt: string;
+  applications: AdminDashboardApplications;
+  members: AdminDashboardMembers;
+  cohorts: AdminDashboardCohorts;
+  sessions: AdminDashboardSessions;
+  assignments: AdminDashboardAssignments;
+  activity: AdminDashboardActivity;
+  announcements: AdminDashboardAnnouncements;
+  windowDays: AdminDashboardWindowDays;
+}
+
 export interface UpdateApplicationBody {
   status?: ApplicationStatus;
   applicationStatus?: ApplicationLifecycleStatus;

@@ -208,6 +208,98 @@ export const ApplicationStatsResponse = zod.object({
 });
 
 /**
+ * @summary Aggregated stats for the admin dashboard
+ */
+export const AdminDashboardResponse = zod.object({
+  generatedAt: zod.coerce.date(),
+  applications: zod.object({
+    total: zod.number(),
+    byStatus: zod.array(
+      zod.object({
+        status: zod.enum([
+          "submitted",
+          "reviewing",
+          "interview",
+          "accepted",
+          "rejected",
+          "waitlisted",
+          "withdrawn",
+        ]),
+        count: zod.number(),
+      }),
+    ),
+    last7d: zod.number(),
+  }),
+  members: zod.object({
+    activeStudents: zod.number(),
+    pendingActivation: zod.number(),
+    evaluators: zod.number(),
+  }),
+  cohorts: zod.object({
+    activeCount: zod.number(),
+    active: zod.array(
+      zod.object({
+        id: zod.number(),
+        name: zod.string(),
+        status: zod.string(),
+        startDate: zod.string().nullable(),
+        endDate: zod.string().nullable(),
+        studentCount: zod.number(),
+      }),
+    ),
+  }),
+  sessions: zod.object({
+    upcoming: zod.array(
+      zod.object({
+        id: zod.number(),
+        title: zod.string(),
+        scheduledAt: zod.coerce.date(),
+        sessionType: zod.string(),
+        status: zod.string(),
+        cohortName: zod.string().nullable(),
+        programName: zod.string().nullable(),
+      }),
+    ),
+    last30dCount: zod.number(),
+  }),
+  assignments: zod.object({
+    activeCount: zod.number(),
+    pendingReview: zod.number(),
+    dueSoon: zod.array(
+      zod.object({
+        id: zod.number(),
+        title: zod.string(),
+        dueAt: zod.coerce.date().nullable(),
+        cohortName: zod.string().nullable(),
+        submissions: zod.number(),
+        totalStudents: zod.number(),
+      }),
+    ),
+  }),
+  activity: zod.object({
+    activeProjects: zod.number(),
+    activityRecordsLast30d: zod.number(),
+    feedbackLast30d: zod.number(),
+    artifactsLast30d: zod.number(),
+  }),
+  announcements: zod.object({
+    publishedCount: zod.number(),
+    recent: zod.array(
+      zod.object({
+        id: zod.number(),
+        title: zod.string(),
+        targetType: zod.string(),
+        publishedAt: zod.coerce.date().nullable(),
+      }),
+    ),
+  }),
+  windowDays: zod.object({
+    upcoming: zod.number(),
+    recent: zod.number(),
+  }),
+});
+
+/**
  * @summary Get application detail (admin) — includes assignments, evaluations, interview, decision logs
  */
 export const GetApplicationParams = zod.object({

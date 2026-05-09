@@ -17,6 +17,7 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  AdminDashboard,
   AdminLoginBody,
   Application,
   ApplicationDetail,
@@ -612,6 +613,81 @@ export function useApplicationStats<
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getApplicationStatsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Aggregated stats for the admin dashboard
+ */
+export const getAdminDashboardUrl = () => {
+  return `/api/admin/dashboard`;
+};
+
+export const adminDashboard = async (
+  options?: RequestInit,
+): Promise<AdminDashboard> => {
+  return customFetch<AdminDashboard>(getAdminDashboardUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getAdminDashboardQueryKey = () => {
+  return [`/api/admin/dashboard`] as const;
+};
+
+export const getAdminDashboardQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminDashboard>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof adminDashboard>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAdminDashboardQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof adminDashboard>>> = ({
+    signal,
+  }) => adminDashboard({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminDashboard>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type AdminDashboardQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminDashboard>>
+>;
+export type AdminDashboardQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Aggregated stats for the admin dashboard
+ */
+
+export function useAdminDashboard<
+  TData = Awaited<ReturnType<typeof adminDashboard>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof adminDashboard>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getAdminDashboardQueryOptions(options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;
