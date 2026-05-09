@@ -73,6 +73,7 @@ function Router() {
       <Route path="/apply" component={Apply} />
       <Route path="/apply/success" component={ApplySuccess} />
 
+      <Route path="/login" component={AdminLogin} />
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/admin/applications" component={AdminApplications} />

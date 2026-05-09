@@ -33,7 +33,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             ))}
           </nav>
           <div className="flex items-center gap-2">
-            <Link href="/admin/login">
+            <Link href="/login">
               <Button variant="ghost" size="sm">로그인</Button>
             </Link>
             <Link href="/apply">
@@ -47,7 +47,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
         <div className="container mx-auto px-4 py-12 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
           <div>&copy; {new Date().getFullYear()} Seeds Program. All rights reserved.</div>
           <div className="flex items-center gap-4">
-            <Link href="/admin/login" className="hover:text-primary transition-colors">
+            <Link href="/login" className="hover:text-primary transition-colors">
               로그인 (관리자 / 평가위원 / 학생)
             </Link>
           </div>
