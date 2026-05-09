@@ -27,7 +27,7 @@ export default function StudentAttendance() {
       </CardContent></Card>
       <div className="bg-card border border-border">
         <Table>
-          <TableHeader><TableRow><TableHead>세션</TableHead><TableHead>일시</TableHead><TableHead>상태</TableHead><TableHead>노트</TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>모임</TableHead><TableHead>일시</TableHead><TableHead>상태</TableHead><TableHead>노트</TableHead></TableRow></TableHeader>
           <TableBody>
             {data.items.length === 0 ? <TableRow><TableCell colSpan={4} className="h-24 text-center text-muted-foreground">출석 기록이 없습니다.</TableCell></TableRow>
             : data.items.map((r) => (

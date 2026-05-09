@@ -10,13 +10,13 @@ export default function StudentSessions() {
   const { data, isLoading } = useQuery({ queryKey: ["student-sessions"], queryFn: () => api<{ items: SessionItem[] }>("/student/sessions") });
   return (
     <StudentLayout>
-      <h1 className="text-3xl font-serif font-bold mb-6">세션</h1>
+      <h1 className="text-3xl font-serif font-bold mb-6">모임</h1>
       <div className="bg-card border border-border">
         <Table>
           <TableHeader><TableRow><TableHead>제목</TableHead><TableHead>일시</TableHead><TableHead>장소/링크</TableHead><TableHead>유형</TableHead><TableHead>상태</TableHead></TableRow></TableHeader>
           <TableBody>
             {isLoading ? <TableRow><TableCell colSpan={5} className="h-24 text-center"><Loader2 className="animate-spin mx-auto" /></TableCell></TableRow>
-            : data?.items.length === 0 ? <TableRow><TableCell colSpan={5} className="h-24 text-center text-muted-foreground">세션이 없습니다.</TableCell></TableRow>
+            : data?.items.length === 0 ? <TableRow><TableCell colSpan={5} className="h-24 text-center text-muted-foreground">모임이 없습니다.</TableCell></TableRow>
             : data?.items.map((s) => (
               <TableRow key={s.id}>
                 <TableCell className="font-medium">{s.title}</TableCell>

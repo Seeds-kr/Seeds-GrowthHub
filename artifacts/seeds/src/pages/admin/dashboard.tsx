@@ -202,7 +202,7 @@ export default function AdminDashboard() {
           </Link>
           <Link href="/admin/sessions">
             <Button size="sm">
-              세션 관리 <ArrowRight className="w-3.5 h-3.5 ml-1" />
+              모임 관리 <ArrowRight className="w-3.5 h-3.5 ml-1" />
             </Button>
           </Link>
         </div>
@@ -234,7 +234,7 @@ export default function AdminDashboard() {
               href="/admin/cohorts"
             />
             <KpiCard
-              label="다가오는 세션"
+              label="다가오는 모임"
               value={`${data.sessions.upcoming.length}건`}
               hint={`최근 30일 ${data.sessions.last30dCount}건 진행`}
               icon={CalendarClock}
@@ -344,11 +344,11 @@ export default function AdminDashboard() {
 
             {/* Upcoming sessions */}
             <div className="lg:col-span-2">
-              <SectionHeader title="다가오는 세션" href="/admin/sessions" />
+              <SectionHeader title="다가오는 모임" href="/admin/sessions" />
               <Card className="border-border shadow-none">
                 <CardContent className="p-0">
                   {data.sessions.upcoming.length === 0 ? (
-                    <EmptyRow message="예정된 세션이 없습니다." />
+                    <EmptyRow message="예정된 모임이 없습니다." />
                   ) : (
                     <ul className="divide-y divide-border">
                       {data.sessions.upcoming.map((s) => (

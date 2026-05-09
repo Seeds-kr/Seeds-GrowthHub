@@ -130,7 +130,7 @@ export const ACTIVITY_SOURCES = [
 ] as const;
 export type ActivitySource = (typeof ACTIVITY_SOURCES)[number];
 export const ACTIVITY_SOURCE_LABEL: Record<ActivitySource, string> = {
-  session: "세션", assignment: "과제", project: "프로젝트",
+  session: "모임", assignment: "과제", project: "프로젝트",
   feedback: "피드백", manual: "수동 기록",
 };
 
@@ -235,7 +235,7 @@ export const FEEDBACK_TARGETS = [
 export type FeedbackTarget = (typeof FEEDBACK_TARGETS)[number];
 export const FEEDBACK_TARGET_LABEL: Record<FeedbackTarget, string> = {
   student: "학생", project: "프로젝트", assignment_submission: "과제 제출",
-  activity_record: "활동 기록", session: "세션",
+  activity_record: "활동 기록", session: "모임",
 };
 
 export const FEEDBACK_TYPES = [

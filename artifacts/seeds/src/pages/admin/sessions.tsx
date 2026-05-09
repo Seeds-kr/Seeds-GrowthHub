@@ -79,8 +79,8 @@ export default function AdminSessions() {
   return (
     <AdminLayout>
       <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-3xl font-serif font-bold">세션 관리</h1>
-        <Button className="rounded-none" onClick={openNew}>+ 새 세션</Button>
+        <h1 className="text-3xl font-serif font-bold">모임 관리</h1>
+        <Button className="rounded-none" onClick={openNew}>+ 새 모임</Button>
       </div>
       <div className="bg-card border border-border p-4 mb-6 flex gap-4">
         <Select value={filterCohort} onValueChange={setFilterCohort}>
@@ -103,7 +103,7 @@ export default function AdminSessions() {
           <TableHeader><TableRow><TableHead>제목</TableHead><TableHead>기수/프로그램</TableHead><TableHead>일시</TableHead><TableHead>유형</TableHead><TableHead>상태</TableHead><TableHead></TableHead></TableRow></TableHeader>
           <TableBody>
             {isLoading ? <TableRow><TableCell colSpan={6} className="h-24 text-center"><Loader2 className="animate-spin mx-auto" /></TableCell></TableRow>
-            : data?.items.length === 0 ? <TableRow><TableCell colSpan={6} className="h-24 text-center text-muted-foreground">세션이 없습니다.</TableCell></TableRow>
+            : data?.items.length === 0 ? <TableRow><TableCell colSpan={6} className="h-24 text-center text-muted-foreground">모임이 없습니다.</TableCell></TableRow>
             : data?.items.map((s) => (
               <TableRow key={s.id}>
                 <TableCell className="font-medium">{s.title}</TableCell>
@@ -123,7 +123,7 @@ export default function AdminSessions() {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="rounded-none max-w-lg">
-          <DialogHeader><DialogTitle>{editing ? "세션 수정" : "새 세션"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editing ? "모임 수정" : "새 모임"}</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <Select value={form.cohortId} onValueChange={(v) => setForm({ ...form, cohortId: v })}>
               <SelectTrigger className="rounded-none"><SelectValue placeholder="기수 선택…" /></SelectTrigger>

@@ -44,8 +44,8 @@ export default function StudentDashboard() {
         </CardContent></Card>
       </div>
 
-      <Card className="rounded-none mb-6"><CardHeader><CardTitle>다가오는 세션</CardTitle></CardHeader><CardContent>
-        {upcoming.length === 0 ? <div className="text-sm text-muted-foreground">예정된 세션이 없습니다.</div>
+      <Card className="rounded-none mb-6"><CardHeader><CardTitle>다가오는 모임</CardTitle></CardHeader><CardContent>
+        {upcoming.length === 0 ? <div className="text-sm text-muted-foreground">예정된 모임이 없습니다.</div>
         : <ul className="space-y-2 text-sm">{upcoming.map((s) => (
             <li key={s.id} className="flex justify-between border-b pb-2 last:border-0"><span>{s.title}</span><span>{format(new Date(s.scheduledAt), "yyyy-MM-dd HH:mm")}</span></li>
           ))}</ul>}

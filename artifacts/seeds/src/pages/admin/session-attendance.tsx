@@ -47,13 +47,13 @@ export default function AdminSessionAttendance() {
 
   return (
     <AdminLayout>
-      <div className="mb-4"><Link href="/admin/sessions" className="text-sm text-muted-foreground hover:text-primary">← 세션 목록</Link></div>
+      <div className="mb-4"><Link href="/admin/sessions" className="text-sm text-muted-foreground hover:text-primary">← 모임 목록</Link></div>
       <h1 className="text-3xl font-serif font-bold mb-2">{data.session.title}</h1>
       <div className="text-muted-foreground text-sm mb-6">
         {format(new Date(data.session.scheduledAt), "yyyy-MM-dd HH:mm")}
         {data.session.locationOrLink ? ` · ${data.session.locationOrLink}` : ""}
       </div>
-      {data.roster.length === 0 ? <div className="text-muted-foreground">이 세션의 기수에 학생이 없습니다.</div> : (
+      {data.roster.length === 0 ? <div className="text-muted-foreground">이 모임의 기수에 학생이 없습니다.</div> : (
         <>
           <div className="bg-card border border-border mb-6">
             <Table>

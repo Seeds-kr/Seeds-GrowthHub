@@ -53,7 +53,7 @@ export function StudentLayout({ children }: { children: ReactNode }) {
             <Link href="/student" className="font-serif text-lg font-bold text-primary">Seeds 학생</Link>
             <nav className="hidden md:flex items-center gap-6">
               <Link href="/student" className="text-sm font-medium text-muted-foreground hover:text-primary">대시보드</Link>
-              <Link href="/student/sessions" className="text-sm font-medium text-muted-foreground hover:text-primary">세션</Link>
+              <Link href="/student/sessions" className="text-sm font-medium text-muted-foreground hover:text-primary">모임</Link>
               <Link href="/student/assignments" className="text-sm font-medium text-muted-foreground hover:text-primary">과제</Link>
               <Link href="/student/announcements" className="text-sm font-medium text-muted-foreground hover:text-primary">공지사항</Link>
               <Link href="/student/attendance" className="text-sm font-medium text-muted-foreground hover:text-primary">출석</Link>

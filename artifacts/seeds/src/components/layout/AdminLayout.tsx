@@ -48,7 +48,7 @@ const NAV_SECTIONS: NavSection[] = [
       { href: "/admin/cohorts", label: "기수", icon: Users },
       { href: "/admin/programs", label: "프로그램", icon: FolderKanban },
       { href: "/admin/students", label: "학생", icon: GraduationCap },
-      { href: "/admin/sessions", label: "세션", icon: CalendarDays },
+      { href: "/admin/sessions", label: "모임", icon: CalendarDays },
       { href: "/admin/assignments", label: "과제", icon: ClipboardList },
       { href: "/admin/announcements", label: "공지", icon: Megaphone },
     ],
