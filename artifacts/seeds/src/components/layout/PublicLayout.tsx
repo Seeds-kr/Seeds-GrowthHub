@@ -8,6 +8,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
   const navItems = [
     { label: "소개", href: "/about" },
     { label: "프로그램", href: "/program" },
+    { label: "모집", href: "/recruit" },
     { label: "FAQ", href: "/faq" },
   ];
 

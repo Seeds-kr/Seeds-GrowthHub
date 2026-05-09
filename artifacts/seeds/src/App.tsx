@@ -8,6 +8,7 @@ import Home from "@/pages/home";
 import About from "@/pages/about";
 import Program from "@/pages/program";
 import Faq from "@/pages/faq";
+import Recruit from "@/pages/recruit";
 import Apply from "@/pages/apply";
 import ApplySuccess from "@/pages/apply-success";
 
@@ -68,6 +69,7 @@ function Router() {
       <Route path="/about" component={About} />
       <Route path="/program" component={Program} />
       <Route path="/faq" component={Faq} />
+      <Route path="/recruit" component={Recruit} />
       <Route path="/apply" component={Apply} />
       <Route path="/apply/success" component={ApplySuccess} />
 

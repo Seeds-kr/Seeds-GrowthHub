@@ -2,161 +2,141 @@ import { PublicLayout } from "@/components/layout/PublicLayout";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useSiteContent, HOME_DEFAULT } from "@/lib/site-content";
+import { ArrowRight } from "lucide-react";
 
 export default function Home() {
   const { value: c } = useSiteContent("page.home", HOME_DEFAULT);
   return (
     <PublicLayout>
       {/* Hero */}
-      <section className="py-24 md:py-32 flex flex-col items-center justify-center text-center px-4 bg-gradient-to-b from-muted/50 to-background">
-        <div className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-6 font-medium">
-          {c.hero.eyebrow}
-        </div>
-        <h1 className="text-4xl md:text-6xl font-serif font-bold tracking-tight text-foreground max-w-3xl mb-6 leading-tight">
-          {c.hero.headlineLine1}<br />{c.hero.headlineLine2}
-        </h1>
-        <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mb-10 leading-relaxed whitespace-pre-line">
-          {c.hero.body}
-        </p>
-        <Link href="/apply">
-          <Button size="lg" className="text-lg px-8 h-14 rounded-none">
-            {c.hero.ctaLabel}
-          </Button>
-        </Link>
-      </section>
-
-      {/* What is Seeds? */}
-      <section className="py-24 px-4 border-t border-border">
-        <div className="container mx-auto max-w-4xl">
-          <div className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-3 font-medium">
-            {c.intro.eyebrow}
+      <section className="py-24 md:py-32 px-4 bg-gradient-to-b from-muted/50 to-background">
+        <div className="container mx-auto max-w-4xl text-center">
+          <div className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-6 font-medium">
+            {c.hero.eyebrow}
           </div>
-          <h2 className="text-3xl md:text-4xl font-serif font-bold mb-6">
-            {c.intro.title}
-          </h2>
-          <p className="text-muted-foreground text-lg leading-relaxed mb-12 max-w-3xl whitespace-pre-line">
-            {c.intro.body}
+          <h1 className="text-4xl md:text-6xl font-serif font-bold tracking-tight text-foreground mb-6 leading-tight">
+            {c.hero.title}
+          </h1>
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed whitespace-pre-line">
+            {c.hero.body}
           </p>
-          <div className="grid md:grid-cols-3 gap-6">
-            {c.intro.features.map((f, i) => (
-              <div key={i} className="border border-border bg-card p-8">
-                <div className="text-sm text-primary font-semibold mb-3">0{i + 1}</div>
-                <h3 className="text-xl font-bold mb-3">{f.title}</h3>
-                <p className="text-muted-foreground leading-relaxed">{f.desc}</p>
-              </div>
-            ))}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link href={c.hero.primaryCtaHref}>
+              <Button size="lg" className="text-lg px-8 h-14 rounded-none">
+                {c.hero.primaryCtaLabel}
+              </Button>
+            </Link>
+            <Link href={c.hero.secondaryCtaHref}>
+              <Button size="lg" variant="outline" className="text-lg px-8 h-14 rounded-none">
+                {c.hero.secondaryCtaLabel}
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* Who should apply? */}
-      <section className="py-24 px-4 bg-muted/30 border-t border-border">
-        <div className="container mx-auto max-w-4xl">
-          <div className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-3 font-medium">
-            {c.applicants.eyebrow}
-          </div>
-          <h2 className="text-3xl md:text-4xl font-serif font-bold mb-12">
-            {c.applicants.title}
-          </h2>
-          <div className="grid md:grid-cols-2 gap-x-12 gap-y-6">
-            {c.applicants.items.map((item, i) => (
-              <div key={i} className="flex items-start gap-4 py-3 border-b border-border/60">
-                <span className="font-serif text-primary font-bold text-lg leading-none mt-1">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <p className="text-foreground leading-relaxed">{item}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Program flow */}
-      <section className="py-24 px-4 border-t border-border">
+      {/* Stats */}
+      <section className="py-20 px-4 border-t border-border">
         <div className="container mx-auto max-w-5xl">
-          <div className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-3 font-medium">
-            {c.flow.eyebrow}
+          <div className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-3 font-medium text-center">
+            {c.stats.eyebrow}
           </div>
-          <h2 className="text-3xl md:text-4xl font-serif font-bold mb-12">
-            {c.flow.title}
+          <h2 className="text-3xl md:text-4xl font-serif font-bold mb-12 text-center">
+            {c.stats.title}
           </h2>
-          <div className="grid md:grid-cols-4 gap-px bg-border border border-border">
-            {c.flow.steps.map((step, i) => (
-              <div key={i} className="bg-card p-8">
-                <div className="text-sm text-primary font-semibold mb-2">{step.month}</div>
-                <h3 className="text-xl font-bold mb-3">{step.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-border border border-border">
+            {c.stats.items.map((s, i) => (
+              <div key={i} className="bg-card p-8 text-center">
+                <div className="text-4xl md:text-5xl font-serif font-bold text-primary mb-2">
+                  {s.value}
+                </div>
+                <div className="text-sm text-muted-foreground">{s.label}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Recruitment schedule */}
+      {/* About */}
       <section className="py-24 px-4 bg-muted/30 border-t border-border">
         <div className="container mx-auto max-w-4xl">
           <div className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-3 font-medium">
-            {c.schedule.eyebrow}
+            {c.about.eyebrow}
           </div>
-          <h2 className="text-3xl md:text-4xl font-serif font-bold mb-12">
-            {c.schedule.title}
-          </h2>
-          <div className="grid md:grid-cols-4 gap-8">
-            {c.schedule.steps.map((step, i) => (
-              <div key={i} className="flex flex-col p-6 border border-border bg-card">
-                <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
-                  Step {i + 1}
-                </div>
-                <div className="text-sm font-semibold text-primary mb-2">{step.date}</div>
-                <div className="text-xl font-bold mb-3">{step.phase}</div>
-                <div className="text-sm text-muted-foreground">{step.desc}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ teaser */}
-      <section className="py-24 px-4 border-t border-border">
-        <div className="container mx-auto max-w-4xl">
-          <div className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-3 font-medium">
-            {c.faqTeaser.eyebrow}
-          </div>
-          <h2 className="text-3xl md:text-4xl font-serif font-bold mb-12">
-            {c.faqTeaser.title}
-          </h2>
-          <div className="space-y-4 mb-10">
-            {c.faqTeaser.items.map((item, i) => (
-              <div key={i} className="border border-border bg-card p-6">
-                <h3 className="font-bold mb-2">Q. {item.q}</h3>
-                <p className="text-muted-foreground leading-relaxed">{item.a}</p>
-              </div>
-            ))}
-          </div>
-          <Link href="/faq">
+          <h2 className="text-3xl md:text-4xl font-serif font-bold mb-6">{c.about.title}</h2>
+          <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-3xl whitespace-pre-line">
+            {c.about.body}
+          </p>
+          <Link href={c.about.ctaHref}>
             <Button variant="outline" className="rounded-none">
-              {c.faqTeaser.ctaLabel}
+              {c.about.ctaLabel}
+              <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </Link>
         </div>
       </section>
 
-      {/* Apply CTA */}
+      {/* Featured projects */}
+      <section className="py-24 px-4 border-t border-border">
+        <div className="container mx-auto max-w-5xl">
+          <div className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-3 font-medium">
+            {c.projects.eyebrow}
+          </div>
+          <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">{c.projects.title}</h2>
+          <p className="text-muted-foreground leading-relaxed mb-12 max-w-2xl whitespace-pre-line">
+            {c.projects.body}
+          </p>
+          <div className="grid md:grid-cols-3 gap-6">
+            {c.projects.items.map((p, i) => (
+              <div key={i} className="border border-border bg-card p-8 flex flex-col">
+                <div className="inline-flex items-center text-xs font-semibold text-primary uppercase tracking-wider mb-4">
+                  {p.status}
+                </div>
+                <h3 className="text-xl font-bold mb-3">{p.title}</h3>
+                <p className="text-muted-foreground leading-relaxed text-sm">{p.summary}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Recent activities */}
+      <section className="py-24 px-4 bg-muted/30 border-t border-border">
+        <div className="container mx-auto max-w-4xl">
+          <div className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-3 font-medium">
+            {c.activities.eyebrow}
+          </div>
+          <h2 className="text-3xl md:text-4xl font-serif font-bold mb-12">{c.activities.title}</h2>
+          <div className="border border-border bg-card divide-y divide-border">
+            {c.activities.items.map((a, i) => (
+              <div key={i} className="p-6 flex flex-col md:flex-row md:items-baseline gap-2 md:gap-8">
+                <div className="text-sm font-semibold text-primary md:w-28 shrink-0">{a.date}</div>
+                <div className="flex-1">
+                  <h3 className="font-bold mb-1">{a.title}</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">{a.summary}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Recruit banner */}
       <section className="py-24 px-4 bg-primary text-primary-foreground">
         <div className="container mx-auto max-w-3xl text-center">
+          <div className="text-xs uppercase tracking-[0.2em] text-primary-foreground/70 mb-3 font-medium">
+            {c.recruitBanner.eyebrow}
+          </div>
           <h2 className="text-3xl md:text-4xl font-serif font-bold mb-6">
-            {c.cta.title}
+            {c.recruitBanner.title}
           </h2>
           <p className="text-primary-foreground/80 text-lg mb-10 leading-relaxed whitespace-pre-line">
-            {c.cta.body}
+            {c.recruitBanner.body}
           </p>
-          <Link href="/apply">
-            <Button
-              size="lg"
-              variant="secondary"
-              className="text-lg px-8 h-14 rounded-none"
-            >
-              {c.cta.ctaLabel}
+          <Link href={c.recruitBanner.ctaHref}>
+            <Button size="lg" variant="secondary" className="text-lg px-8 h-14 rounded-none">
+              {c.recruitBanner.ctaLabel}
+              <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
           </Link>
         </div>

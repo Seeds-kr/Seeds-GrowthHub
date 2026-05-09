@@ -4,6 +4,48 @@ import type { SiteContentKey } from "./site-content-defaults";
 const homeSchema = z.object({
   hero: z.object({
     eyebrow: z.string(),
+    title: z.string(),
+    body: z.string(),
+    primaryCtaLabel: z.string(),
+    primaryCtaHref: z.string(),
+    secondaryCtaLabel: z.string(),
+    secondaryCtaHref: z.string(),
+  }),
+  stats: z.object({
+    eyebrow: z.string(),
+    title: z.string(),
+    items: z.array(z.object({ value: z.string(), label: z.string() })),
+  }),
+  about: z.object({
+    eyebrow: z.string(),
+    title: z.string(),
+    body: z.string(),
+    ctaLabel: z.string(),
+    ctaHref: z.string(),
+  }),
+  projects: z.object({
+    eyebrow: z.string(),
+    title: z.string(),
+    body: z.string(),
+    items: z.array(z.object({ title: z.string(), summary: z.string(), status: z.string() })),
+  }),
+  activities: z.object({
+    eyebrow: z.string(),
+    title: z.string(),
+    items: z.array(z.object({ date: z.string(), title: z.string(), summary: z.string() })),
+  }),
+  recruitBanner: z.object({
+    eyebrow: z.string(),
+    title: z.string(),
+    body: z.string(),
+    ctaLabel: z.string(),
+    ctaHref: z.string(),
+  }),
+});
+
+const recruitSchema = z.object({
+  hero: z.object({
+    eyebrow: z.string(),
     headlineLine1: z.string(),
     headlineLine2: z.string(),
     body: z.string(),
@@ -65,6 +107,7 @@ const faqSchema = z.object({
 
 export const SITE_CONTENT_SCHEMAS: Record<SiteContentKey, z.ZodTypeAny> = {
   "page.home": homeSchema,
+  "page.recruit": recruitSchema,
   "page.about": aboutSchema,
   "page.program": programSchema,
   "page.faq": faqSchema,

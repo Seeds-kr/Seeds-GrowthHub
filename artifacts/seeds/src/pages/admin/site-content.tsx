@@ -10,6 +10,7 @@ import { Link } from "wouter";
 
 const PREVIEW_PATH: Record<string, string> = {
   "page.home": "/",
+  "page.recruit": "/recruit",
   "page.about": "/about",
   "page.program": "/program",
   "page.faq": "/faq",

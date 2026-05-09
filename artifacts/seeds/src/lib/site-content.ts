@@ -3,6 +3,7 @@ import { api } from "./mvp3-api";
 
 export const SITE_CONTENT_KEYS = [
   "page.home",
+  "page.recruit",
   "page.about",
   "page.program",
   "page.faq",
@@ -19,6 +20,38 @@ export type SiteContentRow = {
 };
 
 export type HomeContent = {
+  hero: {
+    eyebrow: string;
+    title: string;
+    body: string;
+    primaryCtaLabel: string;
+    primaryCtaHref: string;
+    secondaryCtaLabel: string;
+    secondaryCtaHref: string;
+  };
+  stats: { eyebrow: string; title: string; items: { value: string; label: string }[] };
+  about: { eyebrow: string; title: string; body: string; ctaLabel: string; ctaHref: string };
+  projects: {
+    eyebrow: string;
+    title: string;
+    body: string;
+    items: { title: string; summary: string; status: string }[];
+  };
+  activities: {
+    eyebrow: string;
+    title: string;
+    items: { date: string; title: string; summary: string }[];
+  };
+  recruitBanner: {
+    eyebrow: string;
+    title: string;
+    body: string;
+    ctaLabel: string;
+    ctaHref: string;
+  };
+};
+
+export type RecruitContent = {
   hero: { eyebrow: string; headlineLine1: string; headlineLine2: string; body: string; ctaLabel: string };
   intro: { eyebrow: string; title: string; body: string; features: { title: string; desc: string }[] };
   applicants: { eyebrow: string; title: string; items: string[] };
@@ -47,6 +80,61 @@ export type FaqContent = {
 };
 
 export const HOME_DEFAULT: HomeContent = {
+  hero: {
+    eyebrow: "Seeds Leadership Program",
+    title: "씨앗을 심고, 함께 자랍니다",
+    body: "Seeds는 사회를 바꾸려는 학생들이 모여 배우고 실험하는 비영리 리더십 커뮤니티입니다. 매기수 새로운 프로젝트가 시작되고, 졸업생들이 각자의 자리에서 변화를 만들어가고 있습니다.",
+    primaryCtaLabel: "모집 알아보기",
+    primaryCtaHref: "/recruit",
+    secondaryCtaLabel: "프로그램 보기",
+    secondaryCtaHref: "/program",
+  },
+  stats: {
+    eyebrow: "By the Numbers",
+    title: "숫자로 보는 Seeds",
+    items: [
+      { value: "5", label: "기수 운영" },
+      { value: "120+", label: "누적 졸업생" },
+      { value: "24", label: "진행/완료 프로젝트" },
+      { value: "12", label: "파트너 기관" },
+    ],
+  },
+  about: {
+    eyebrow: "About Seeds",
+    title: "Seeds가 만드는 변화",
+    body: "Seeds는 단순한 교육 프로그램을 넘어, 학생들이 자신의 문제 의식을 실제 프로젝트로 풀어내고 동료·멘토와 함께 성장할 수 있는 장을 제공합니다. 졸업 후에도 알럼나이 네트워크를 통해 지속적으로 연결됩니다.",
+    ctaLabel: "더 알아보기",
+    ctaHref: "/about",
+  },
+  projects: {
+    eyebrow: "Featured Projects",
+    title: "지금 진행 중인 프로젝트",
+    body: "현재 활동 중인 학생 팀들의 임팩트 프로젝트를 소개합니다.",
+    items: [
+      { title: "청소년 정서 케어 챗봇", summary: "또래 상담이 어려운 청소년을 위한 익명 대화 챗봇을 설계하고 베타 테스트 중입니다.", status: "진행 중" },
+      { title: "지역 도서관 디지털 전환", summary: "공공 도서관의 도서 추천·예약 시스템을 리뉴얼하여 3개 지역에 시범 도입했습니다.", status: "완료" },
+      { title: "다문화 가정 진로 멘토링", summary: "다문화 가정 청소년과 대학생 멘토를 매칭하는 플랫폼을 운영하고 있습니다.", status: "진행 중" },
+    ],
+  },
+  activities: {
+    eyebrow: "Recent Activities",
+    title: "최근 활동",
+    items: [
+      { date: "2025.04", title: "5기 최종 발표회", summary: "12개 팀의 6개월 프로젝트 결과를 공유했습니다." },
+      { date: "2025.03", title: "멘토 합동 워크숍", summary: "30명의 현직 멘토진과 함께한 콘텐츠 디자인 세션." },
+      { date: "2025.02", title: "신규 파트너십 체결", summary: "지역 공익 재단 두 곳과 협력 협약을 체결했습니다." },
+    ],
+  },
+  recruitBanner: {
+    eyebrow: "다음 기수 모집",
+    title: "Seeds와 함께 시작할 준비가 되셨나요?",
+    body: "다음 기수 모집 일정과 지원 자격을 확인해보세요.",
+    ctaLabel: "모집 페이지로",
+    ctaHref: "/recruit",
+  },
+};
+
+export const RECRUIT_DEFAULT: RecruitContent = {
   hero: {
     eyebrow: "Seeds Leadership Program",
     headlineLine1: "차세대를 이끌어갈",
