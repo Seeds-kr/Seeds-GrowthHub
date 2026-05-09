@@ -21,3 +21,4 @@ export * from "./mvp4-artifacts";
 export * from "./feedback";
 export * from "./skill-tags";
 export * from "./site-contents";
+export * from "./account-activation-tokens";

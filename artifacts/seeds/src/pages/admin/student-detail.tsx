@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState } from "react";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
+import { Copy, Check, KeyRound } from "lucide-react";
 
 type Detail = {
   student: {
@@ -82,6 +83,7 @@ export default function AdminStudentDetail() {
         </CardContent></Card>
       </div>
 
+      <ActivationLinkCard userId={s.userId} />
       <ExtraRolesCard userId={s.userId} />
 
       <Card className="rounded-none mb-6"><CardHeader><CardTitle>기수 / 프로그램</CardTitle></CardHeader><CardContent className="space-y-4">
@@ -123,6 +125,62 @@ export default function AdminStudentDetail() {
           ))}</ul>}
       </CardContent></Card>
     </AdminLayout>
+  );
+}
+
+function ActivationLinkCard({ userId }: { userId: number }) {
+  const [result, setResult] = useState<{ activationPath: string; expiresAt: string } | null>(null);
+  const [copied, setCopied] = useState(false);
+  const issue = useMutation({
+    mutationFn: () =>
+      api<{ activationPath: string; expiresAt: string }>(`/admin/users/${userId}/activation-token`, {
+        method: "POST",
+        body: {},
+      }),
+    onSuccess: (data) => {
+      setResult(data);
+      setCopied(false);
+      toast({ title: "활성화 링크 재발급 완료", description: "이전 미사용 링크는 무효화됩니다." });
+    },
+    onError: (e: any) => toast({ title: "실패", description: e?.data?.error ?? e.message, variant: "destructive" }),
+  });
+  const url = result ? `${window.location.origin}${result.activationPath}` : "";
+  const copy = async () => {
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast({ title: "복사 실패", variant: "destructive" });
+    }
+  };
+  return (
+    <Card className="rounded-none mb-6">
+      <CardHeader><CardTitle className="flex items-center gap-2"><KeyRound className="w-4 h-4" />계정 활성화 링크</CardTitle></CardHeader>
+      <CardContent className="space-y-3 text-sm">
+        <p className="text-muted-foreground">
+          학생이 비밀번호를 분실했거나 활성화 링크가 만료된 경우, 새 1회용 링크를 발급해 학생에게 직접 전달할 수 있습니다. 발급 시 이전의 미사용 링크는 즉시 무효화됩니다.
+        </p>
+        <Button className="rounded-none" disabled={issue.isPending} onClick={() => issue.mutate()}>
+          {issue.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+          새 활성화 링크 발급
+        </Button>
+        {result && (
+          <div className="space-y-2 pt-2">
+            <div className="border border-border bg-muted p-3 text-xs break-all font-mono">{url}</div>
+            <div className="flex gap-2">
+              <Button variant="outline" className="rounded-none" onClick={copy}>
+                {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                {copied ? "복사됨" : "복사"}
+              </Button>
+              <span className="text-xs text-muted-foreground self-center">만료: {new Date(result.expiresAt).toLocaleString()}</span>
+            </div>
+            <p className="text-xs text-muted-foreground">이 화면을 떠나면 링크는 다시 볼 수 없습니다.</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

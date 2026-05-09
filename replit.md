@@ -96,7 +96,8 @@ Admin MVP 3 (role=admin):
 - `GET/POST/PATCH /admin/cohorts[/:id]`, `GET/POST/PATCH /admin/programs[/:id]`
 - `GET/POST/PATCH /admin/students[/:id]`; `POST/DELETE /admin/students/:id/cohorts[/:cohortId]`; `POST/DELETE /admin/students/:id/programs[/:programId]`
 - `GET /admin/applications-accepted-pending` — finalDecision=accepted but not yet a student
-- `POST /admin/applications/:id/convert-to-student` — atomic: creates user(role=student) + students row; rejects if already converted (409) or not accepted (400)
+- `POST /admin/applications/:id/convert-to-student` — atomic: creates user(role=student) + students row; rejects if already converted (409) or not accepted (400). Body `{password?}`: when omitted (default) the user is created **inactive** with a random unguessable hash and a one-time **activation token** (magic link) is issued; the response includes `{activationToken, activationPath: "/activate/<token>", expiresAt}` (token shown only at issue time). When `password` is provided (legacy path) the user is created active and no token is issued.
+- `POST /admin/users/:id/activation-token` — admin-only re-issue of an activation magic link for any user (e.g. expired or lost). Returns `{activationToken, activationPath, expiresAt}`. Issuing a new token marks any prior unused tokens for that user as used (latest-wins).
 - `GET/POST/PATCH /admin/sessions[/:id]`; `GET/PUT /admin/sessions/:id/attendance` — bulk roster upsert
 - `GET/POST/PATCH /admin/assignments[/:id]` (MVP 3 homework); `PATCH /admin/submissions/:id` — feedback + status
 - `GET/POST/PATCH /admin/announcements[/:id]`
@@ -119,6 +120,12 @@ Admin MVP 4 (role=admin):
 - `GET /admin/students/:id/timeline` — full activity stream with tags joined
 - `GET /admin/students/:id/report` — student profile, cohorts, programs, attendance summary, submissions, projects (+ my role), artifacts, feedback highlights, tag counts, full timeline
 - `GET /admin/cohorts/:id/summary` — cohort, studentCount, attendanceOverview, submissionOverview, project/artifact counts, tag distribution, students missing activity
+
+Account activation (public, no auth):
+- `GET  /api/activation/:token` — inspect a token; returns `{status:"ok", email, name, expiresAt}` or 404 (not_found) / 410 (`{status:"expired"|"used"}`)
+- `POST /api/activation/:token` — body `{password}` (≥8 chars); atomically consumes the token, sets `users.password_hash` (bcrypt), flips `users.is_active=true`, returns `{ok:true}`. Returns 410 if the token was just used by a concurrent request.
+
+Frontend: public route `/activate/:token` (no layout). Admin UI surfaces the link in two places: (1) `/admin/students` "합격자 → 학생 전환" dialog now has no password field — on success it shows a one-time copyable activation URL built from `window.location.origin + activationPath`; (2) `/admin/students/:id` has a "계정 활성화 링크" card with a "새 활성화 링크 발급" button for re-issuing.
 
 Site content (public + admin):
 - `GET /api/site-content` · `GET /api/site-content/:key` — public; key whitelisted to `page.home | page.about | page.program | page.faq`
@@ -162,6 +169,7 @@ MVP 4 tables (additive, non-destructive):
 - `skill_tags` — name unique, description.
 - `site_contents` — `(key unique, label, value jsonb, updated_by, timestamps)`. One row per public page; admin edits the JSON blob directly.
 - `tag_mappings` — (tag_id, target_type, target_id) unique; target_type ∈ {activity_record, project, artifact, feedback, student}.
+- `account_activation_tokens` — id, user_id (FK→users, cascade delete), token_hash (sha256 of plaintext token; plaintext stored only in the response at issue time), expires_at (default 14d), used_at?, created_by (FK→users), created_at. Indexes on `token_hash` and `user_id`. Used by the public magic-link account activation flow (`/activate/:token` ↔ `/api/activation/:token`).
 
 Student-side visibility rules in code:
 - `student/timeline` = `studentId = me` AND `visibility = student_visible`.

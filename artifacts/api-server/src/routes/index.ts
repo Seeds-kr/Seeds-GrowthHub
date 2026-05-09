@@ -22,6 +22,7 @@ import adminTagsRouter from "./admin-tags";
 import adminReportsRouter from "./admin-reports";
 import studentMvp4Router from "./student-mvp4";
 import siteContentRouter from "./site-content";
+import activationRouter from "./activation";
 
 const router: IRouter = Router();
 
@@ -48,5 +49,6 @@ router.use(adminTagsRouter);
 router.use(adminReportsRouter);
 router.use(studentMvp4Router);
 router.use(siteContentRouter);
+router.use(activationRouter);
 
 export default router;

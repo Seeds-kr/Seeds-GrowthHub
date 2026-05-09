@@ -52,6 +52,7 @@ import StudentProjects from "@/pages/student/projects";
 import StudentProjectDetail from "@/pages/student/project-detail";
 import StudentArtifacts from "@/pages/student/artifacts";
 import StudentReportPage from "@/pages/student/report";
+import ActivatePage from "@/pages/activate";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -73,6 +74,7 @@ function Router() {
       <Route path="/apply" component={Apply} />
       <Route path="/apply/success" component={ApplySuccess} />
 
+      <Route path="/activate/:token" component={ActivatePage} />
       <Route path="/login" component={AdminLogin} />
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin" component={AdminDashboard} />

@@ -7,10 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Link } from "wouter";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
+import { Copy, Check } from "lucide-react";
 
 type AcceptedApp = {
   id: number;
@@ -19,13 +20,24 @@ type AcceptedApp = {
   school: string;
 };
 
+type ConvertResult = {
+  id: number;
+  userId: number;
+  name: string;
+  email: string;
+  activationPath?: string;
+  activationToken?: string;
+  expiresAt?: string;
+};
+
 export default function AdminStudents() {
   const qc = useQueryClient();
   const [q, setQ] = useState("");
   const [cohortId, setCohortId] = useState<string>("all");
   const [convertOpen, setConvertOpen] = useState(false);
   const [selectedAppId, setSelectedAppId] = useState<number | null>(null);
-  const [tempPassword, setTempPassword] = useState("");
+  const [activationResult, setActivationResult] = useState<ConvertResult | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const params = new URLSearchParams();
   if (q) params.set("q", q);
@@ -45,21 +57,37 @@ export default function AdminStudents() {
   });
 
   const convert = useMutation({
-    mutationFn: (vars: { appId: number; password: string }) =>
-      api(`/admin/applications/${vars.appId}/convert-to-student`, {
+    mutationFn: (vars: { appId: number }) =>
+      api<ConvertResult>(`/admin/applications/${vars.appId}/convert-to-student`, {
         method: "POST",
-        body: { password: vars.password },
+        body: {},
       }),
-    onSuccess: () => {
-      toast({ title: "학생으로 전환 완료" });
+    onSuccess: (data) => {
+      toast({ title: "학생 계정 생성 완료", description: "활성화 링크를 학생에게 전달해주세요." });
       qc.invalidateQueries({ queryKey: ["admin-students"] });
       qc.invalidateQueries({ queryKey: ["admin-applications-accepted-pending"] });
       setConvertOpen(false);
       setSelectedAppId(null);
-      setTempPassword("");
+      setActivationResult(data);
+      setCopied(false);
     },
     onError: (err: any) => toast({ title: "전환 실패", description: err?.data?.error ?? err.message, variant: "destructive" }),
   });
+
+  const activationUrl = activationResult?.activationPath
+    ? `${window.location.origin}${activationResult.activationPath}`
+    : "";
+
+  const copyActivationUrl = async () => {
+    if (!activationUrl) return;
+    try {
+      await navigator.clipboard.writeText(activationUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast({ title: "복사 실패", variant: "destructive" });
+    }
+  };
 
   return (
     <AdminLayout>
@@ -107,7 +135,12 @@ export default function AdminStudents() {
 
       <Dialog open={convertOpen} onOpenChange={setConvertOpen}>
         <DialogContent className="rounded-none">
-          <DialogHeader><DialogTitle>합격자를 학생으로 전환</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>합격자를 학생으로 전환</DialogTitle>
+            <DialogDescription>
+              학생 계정이 생성되고, 본인이 직접 비밀번호를 설정할 수 있는 1회용 활성화 링크가 발급됩니다.
+            </DialogDescription>
+          </DialogHeader>
           <div className="space-y-4">
             <Select value={selectedAppId ? String(selectedAppId) : ""} onValueChange={(v) => setSelectedAppId(Number(v))}>
               <SelectTrigger className="rounded-none"><SelectValue placeholder="합격자 선택…" /></SelectTrigger>
@@ -116,13 +149,39 @@ export default function AdminStudents() {
                   : pending?.items.map((a) => <SelectItem key={a.id} value={String(a.id)}>{a.name} ({a.email})</SelectItem>)}
               </SelectContent>
             </Select>
-            <Input className="rounded-none" type="password" placeholder="초기 비밀번호 (8자 이상)" value={tempPassword} onChange={(e) => setTempPassword(e.target.value)} />
           </div>
           <DialogFooter>
             <Button variant="outline" className="rounded-none" onClick={() => setConvertOpen(false)}>취소</Button>
-            <Button className="rounded-none" disabled={!selectedAppId || tempPassword.length < 8 || convert.isPending} onClick={() => selectedAppId && convert.mutate({ appId: selectedAppId, password: tempPassword })}>
-              {convert.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}전환
+            <Button className="rounded-none" disabled={!selectedAppId || convert.isPending} onClick={() => selectedAppId && convert.mutate({ appId: selectedAppId })}>
+              {convert.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}계정 생성 + 활성화 링크 발급
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!activationResult} onOpenChange={(open) => !open && setActivationResult(null)}>
+        <DialogContent className="rounded-none max-w-lg">
+          <DialogHeader>
+            <DialogTitle>활성화 링크 발급 완료</DialogTitle>
+            <DialogDescription>
+              아래 링크를 <strong>{activationResult?.name} ({activationResult?.email})</strong> 학생에게 직접 전달해주세요. 본인이 링크를 열고 비밀번호를 설정하면 로그인할 수 있습니다. 링크는 14일간 유효하며, 1회만 사용할 수 있습니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="border border-border bg-muted p-3 text-xs break-all font-mono">{activationUrl}</div>
+            <Button className="rounded-none w-full" onClick={copyActivationUrl}>
+              {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+              {copied ? "복사됨" : "링크 복사"}
+            </Button>
+            {activationResult?.expiresAt && (
+              <p className="text-xs text-muted-foreground">만료: {new Date(activationResult.expiresAt).toLocaleString()}</p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              이 링크는 이 화면을 닫으면 다시 볼 수 없습니다. 만료되거나 분실 시 학생 상세 페이지에서 재발급할 수 있습니다.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" className="rounded-none" onClick={() => setActivationResult(null)}>닫기</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

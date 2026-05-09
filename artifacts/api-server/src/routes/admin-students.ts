@@ -16,11 +16,16 @@ import {
   assignmentsTable,
 } from "@workspace/db";
 import { requireAdmin, hashPassword } from "../lib/auth";
+import { issueActivationToken } from "../lib/activation";
 
 const router: IRouter = Router();
 
+// MVP4: password is now optional. When omitted, the user is created in an
+// inactive state with a random unguessable placeholder hash, and an activation
+// token (magic link) is issued. The admin shares the activation URL with the
+// student, who picks their own password at /activate/:token.
 const ConvertBody = z.object({
-  password: z.string().min(8).max(200),
+  password: z.string().min(8).max(200).optional(),
 });
 
 router.post(
@@ -74,15 +79,21 @@ router.post(
       return;
     }
     try {
+      const useMagicLink = !parsed.data.password;
+      // For magic-link flow, store an unguessable random hash so direct login
+      // is impossible until the user activates and picks a real password.
+      const initialPassword =
+        parsed.data.password ??
+        (await import("node:crypto")).randomBytes(48).toString("base64url");
       const result = await db.transaction(async (tx) => {
         const [user] = await tx
           .insert(usersTable)
           .values({
             name: app.name,
             email,
-            passwordHash: await hashPassword(parsed.data.password),
+            passwordHash: await hashPassword(initialPassword),
             role: "student",
-            isActive: true,
+            isActive: !useMagicLink,
           })
           .returning();
         const [student] = await tx
@@ -99,12 +110,27 @@ router.post(
           .returning();
         return { user, student };
       });
+      let activation:
+        | { activationToken: string; activationPath: string; expiresAt: string }
+        | undefined;
+      if (useMagicLink) {
+        const { token, expiresAt } = await issueActivationToken({
+          userId: result.user.id,
+          createdBy: req.sessionUser!.id,
+        });
+        activation = {
+          activationToken: token,
+          activationPath: `/activate/${token}`,
+          expiresAt: expiresAt.toISOString(),
+        };
+      }
       res.status(201).json({
         id: result.student.id,
         userId: result.user.id,
         applicationId: appId,
         name: result.student.name,
         email: result.student.email,
+        ...(activation ?? {}),
       });
     } catch (err) {
       req.log.error({ err }, "convert to student failed");
