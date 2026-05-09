@@ -1,241 +1,132 @@
 # Seeds — Student Developer Club Operations Platform
 
-A Korean-language web platform for the **Seeds** student developer club (학생 개발자 동아리): public site + application form (MVP 1), evaluator selection workflow (MVP 2), activity operation management (MVP 3), and **student activity record & utilization (MVP 4)** — activity timeline, projects, artifacts, feedback, and skill-tag-driven reports. Public copy is positioned around stusy groups, side projects, hackathons, and senior dev mentorship — not "leadership program".
+Korean web platform for the **Seeds** student developer club (학생 개발자 동아리). Public site positioned around study groups, side projects, hackathons, and senior dev mentorship — **not** "leadership program".
+
+Scope:
+- **MVP1** public site + application form
+- **MVP2** evaluator selection workflow (assignments, evaluations, interview, final decision + audit log)
+- **MVP3** activity ops (cohorts, programs, sessions, attendance, homework, announcements, students)
+- **MVP4** student activity record & utilization (timeline, projects, artifacts, feedback, skill tags, reports, cohort summary)
 
 ## Stack
 
-- **Monorepo**: pnpm workspaces (see `pnpm-workspace.yaml`)
-- **Frontend**: Vite + React + TypeScript + Tailwind + shadcn/ui (`artifacts/seeds`)
-- **Backend**: Express 5 + TypeScript (`artifacts/api-server`)
-- **Database**: Replit PostgreSQL via Drizzle ORM (`lib/db`)
-- **API contract**: OpenAPI 3.1 → orval-generated React Query hooks + Zod validators (`lib/api-spec`, `lib/api-client-react`, `lib/api-zod`)
-- **Auth**: Signed HMAC session cookie for admin (no DB session table)
+- **Monorepo**: pnpm workspaces (`pnpm-workspace.yaml`)
+- **Frontend**: Vite + React + TS + Tailwind + shadcn/ui (`artifacts/seeds`)
+- **Backend**: Express 5 + TS (`artifacts/api-server`)
+- **DB**: Replit Postgres via Drizzle ORM (`lib/db`)
+- **API contract**: OpenAPI 3.1 → orval React Query hooks + Zod (`lib/api-spec`, `lib/api-client-react`, `lib/api-zod`)
+- **Auth**: HMAC-signed session cookie (`seeds_admin`, no DB session table)
 
-The shared proxy at `localhost:80` routes `/api/*` to the API server and everything else to the Vite dev server.
+Shared proxy at `localhost:80` routes `/api/*` → API server, everything else → Vite.
 
-## Routes
+## Routes (web)
 
-### Public (Seeds web app, all Korean UI)
-- `/` — Home: hero, intro, who should apply, program flow, schedule, FAQ teaser, CTA
-- `/about` — About the program
-- `/program` — Program details / curriculum / schedule
-- `/faq` — Full FAQ
-- `/apply` — Application form (zod-validated, calls `POST /api/applications`)
-- `/apply/success` — Success page
+Public (Korean UI): `/`, `/about`, `/program`, `/faq`, `/recruit`, `/apply`, `/apply/success`, `/people` (탭 멘토/운영진/학생, 레거시 `/mentors`·`/staff`·`/members` 동일 페이지로 진입 시 탭 자동 선택, 탭 전환 시 URL `replace` 동기화), `/activate/:token` (no layout).
 
-### Admin (session-protected, role=admin)
-- `/admin/login` — Shared login for admin & evaluator (login redirects by role)
-- `/admin` — Stats dashboard
-- `/admin/applications` — Searchable, filterable applications table + CSV export
-- `/admin/applications/:id` — Detail view: assignments, evaluations (avg), interview upsert, final decision + decision log timeline
-- `/admin/evaluators` — Evaluator CRUD (create with bcrypt password, toggle active)
+Admin (`role=admin`): `/admin/login`, `/admin`, `/admin/applications[/:id]`, `/admin/evaluators`, `/admin/students[/:id]`, `/admin/cohorts`, `/admin/programs`, `/admin/sessions[/:id/attendance]`, `/admin/assignments[/:id]`, `/admin/announcements`, `/admin/people`, `/admin/site-content`, `/admin/activity-records`, `/admin/projects[/:id]`, `/admin/artifacts`, `/admin/feedback`, `/admin/tags`, `/admin/students/:id/timeline`, `/admin/students/:id/report`, `/admin/cohorts/:id/summary`.
 
-### Evaluator (session-protected, role=evaluator)
-- `/evaluator` — My assigned applications
-- `/evaluator/applications/:id` — Read application + submit evaluation form (per stage)
+Evaluator (`role=evaluator`): `/evaluator`, `/evaluator/applications/:id`.
 
-### Admin MVP 3 (role=admin)
-- `/admin/students`, `/admin/students/:id` — Students list + detail (cohort/program assignments, attendance summary, submissions); convert accepted applicants → student
-- `/admin/cohorts`, `/admin/programs` — CRUD
-- `/admin/sessions`, `/admin/sessions/:id/attendance` — Sessions CRUD + per-session roster attendance editor
-- `/admin/assignments`, `/admin/assignments/:id` — Homework CRUD + submission review/feedback
-- `/admin/announcements` — Announcements CRUD (target = all / cohort / program), publish toggle
+Student (`role=student`): `/student/login` (shared form), `/student`, `/student/sessions`, `/student/attendance`, `/student/assignments[/:id]`, `/student/announcements`, `/student/profile`, `/student/timeline`, `/student/projects[/:id]`, `/student/artifacts`, `/student/report`.
 
-### Student (session-protected, role=student)
-- `/student/login` — Reuses shared login form; role drives redirect
-- `/student` — Dashboard (cohort, upcoming sessions, active assignments, latest announcements)
-- `/student/sessions`, `/student/attendance`
-- `/student/assignments`, `/student/assignments/:id` — Submit / re-submit (text + URL); status auto-flips to `late` past the due date
-- `/student/announcements`
-
-### Public — People page
-- `/people` — 단일 페이지에서 멘토/운영진/학생 탭 전환(클라이언트 state). 헤더 nav에는 "사람들" 한 항목만 노출. 레거시 경로 `/mentors`·`/staff`·`/members`도 같은 페이지를 렌더링하며 진입 시 해당 탭이 선택되고, 탭을 바꾸면 URL이 `replace`로 동기화되어 딥링크가 유지됨. **공개(`is_public=true`)된 항목만** 노출, `displayOrder asc, id asc` 정렬. 데이터는 `GET /api/people/:kind` (kind ∈ `mentor|staff|member`).
-
-### Admin — Site content CMS (role=admin)
-- `/admin/people` — 멘토/운영진/학생 프로필 통합 CRUD. 탭으로 kind 전환, 표시 순서·공개 토글·태그(쉼표 입력)·사진 URL·소개 필드. 학생 본인이 만든 행은 학생 본인이 `/student/profile`에서 편집 가능하지만 어드민도 항상 모든 행을 편집·삭제 가능.
-- `/admin/site-content` — JSON editor for the four public pages (`page.home`, `page.about`, `page.program`, `page.faq`); changes are live immediately. Defaults are bootstrapped from `artifacts/api-server/src/lib/site-content-defaults.ts` on every server start (insert `onConflictDoNothing` + label refresh). Public pages fetch via `GET /api/site-content/:key` with hardcoded fallback constants in `artifacts/seeds/src/lib/site-content.ts` so they render even if the API is unreachable.
-
-### Admin MVP 4 (role=admin)
-- `/admin/activity-records` — searchable/filterable manual activity log (student/cohort/program/source/tag); CRUD + tag mappings
-- `/admin/projects`, `/admin/projects/:id` — CRUD; per-project members, artifacts, feedback, tag mappings, and status updates from one screen
-- `/admin/artifacts` — site-wide artifact CRUD (any type, any visibility, project- or student-scoped)
-- `/admin/feedback` — site-wide feedback CRUD (target = student / project / submission / activity / session; visibility = student_visible | admin_only)
-- `/admin/tags` — skill-tag CRUD (used to characterise activity records, projects, artifacts, feedback, and students)
-- `/admin/students/:id/timeline` — admin view of a student's full activity stream with inline tag attach/detach
-- `/admin/students/:id/report` — printable per-student report (cohorts, attendance, submissions, projects, artifacts, feedback highlights, tag summary, timeline)
-- `/admin/cohorts/:id/summary` — cohort-level analytics (counts, attendance distribution, submission distribution, tag distribution, students missing activity)
-
-### Student — Profile (role=student)
-- `/student/profile` — 본인의 공개 프로필(`people_profiles` member 행) 편집. GET 시 행이 없으면 자동 생성(기본 비공개). 학생 본인이 표시 이름·직함·소속·사진 URL·소개·태그·**공개 여부 토글**을 직접 편집. 공개 ON일 때만 `/members`에 카드 노출.
-
-### Student MVP 4 (role=student)
-- `/student/timeline` — own activity stream (`studentId = me` AND `visibility = student_visible`)
-- `/student/projects`, `/student/projects/:id` — projects I'm a member of, with members, artifacts, feedback, tags, and my role
-- `/student/artifacts` — artifacts visible to me (own non-admin_only ∪ project-member with `student_visible`/`cohort_visible` ∪ same-cohort projects with `cohort_visible`)
-- `/student/report` — printable own activity report (same shape as admin report but scoped to me; admin_only feedback excluded)
+Each role layout admits any user whose effective roles include its role and shows a header role-switcher (button row) to navigate between `/admin` · `/student` · `/evaluator`. Switching does not re-issue the session — access is purely role-membership-based.
 
 ## API endpoints (`/api/...`)
 
-Public + auth:
-- `GET  /healthz`
-- `POST /applications` — public submission
-- `POST /admin/login` — bcrypt-verified against `users` table; sets `seeds_admin` cookie
-- `POST /admin/logout` — clears cookie
-- `GET  /admin/me` — current session (returns role)
+Public: `GET /healthz`, `POST /applications`, `POST /admin/login`, `POST /admin/logout`, `GET /admin/me`, `GET /api/site-content[/:key]`, `GET /api/people/:kind` (kind ∈ `mentor|staff|member`, only `is_public=true`, sorted `display_order asc, id asc`), `GET|POST /api/activation/:token`.
 
-Admin (role=admin via `requireAdmin`):
-- `GET  /admin/applications?q=&status=&applicationStatus=&finalDecision=&interviewStatus=&evaluationCompletion=`
-- `GET  /admin/applications/stats`
-- `GET  /admin/applications/export` — CSV (now includes MVP2 columns)
-- `GET  /admin/applications/:id` — joins assignments, evaluations, interview, decisionLogs, avgDocReviewScore
-- `PATCH /admin/applications/:id` — legacy status / adminNote (MVP1 compatible)
-- `POST  /admin/applications/:id/assignments` + `DELETE /:appId/assignments/:assignmentId`
-- `PUT   /admin/applications/:id/interview` — upsert (one per app)
-- `PATCH /admin/applications/:id/final-decision` — writes a `decision_logs` row, sets `applicationStatus`
-- `GET   /admin/users?role=` · `POST /admin/users` · `PATCH /admin/users/:id`
+Admin (`requireAdmin`):
+- Applications: `GET /admin/applications` (filters `q,status,applicationStatus,finalDecision,interviewStatus,evaluationCompletion`), `/stats`, `/export` (CSV w/ formula-injection guard), `GET|PATCH /admin/applications/:id`, `POST|DELETE /admin/applications/:id/assignments[/:assignmentId]`, `PUT /admin/applications/:id/interview` (one per app), `PATCH /admin/applications/:id/final-decision` (writes `decision_logs`).
+- Users: `GET /admin/users?role=`, `POST /admin/users`, `PATCH /admin/users/:id` (incl. `extraRoles`).
+- MVP3: full CRUD `/admin/{cohorts,programs,students,sessions,assignments,announcements}`; `/admin/students/:id/cohorts[/:cohortId]` and `/programs[/:programId]`; `/admin/sessions/:id/attendance` (bulk PUT); `PATCH /admin/submissions/:id`; `GET /admin/applications-accepted-pending`; `POST /admin/applications/:id/convert-to-student` (`{password?}` — omitted = create inactive user + issue activation token, response `{activationToken, activationPath, expiresAt}`); `POST /admin/users/:id/activation-token` (re-issue; marks prior unused tokens used, latest-wins).
+- MVP4: full CRUD `/admin/{activity-records,projects,artifacts,feedback,tags,tag-mappings}`. `GET /admin/projects/:id` returns project + members + artifacts + feedback + tags. `POST|DELETE /admin/projects/:id/members[/:memberId]` (unique `(project,student)`). `GET /admin/students/:id/{timeline,report}`. `GET /admin/cohorts/:id/summary`.
+- People: `GET /admin/people[?kind=]`, `POST`, `PATCH`, `DELETE`. `user_id`/`student_id` unique → 409.
+- Site content: `GET /admin/site-content` (always returns all known keys, blanks included), `PUT /admin/site-content/:key`.
 
-Evaluator (role=evaluator via `requireEvaluator`):
-- `GET  /evaluator/assignments` — own assigned applications + completion flag
-- `GET  /evaluator/applications/:id` — only if assigned; returns app + own assignments/evaluations
-- `POST /evaluator/applications/:id/evaluations` — upsert evaluation per (app, evaluator, stage); auto-marks assignment `completed`
+Evaluator (`requireEvaluator`): `GET /evaluator/assignments`, `GET /evaluator/applications/:id` (only if assigned), `POST /evaluator/applications/:id/evaluations` (upsert per `(app,evaluator,stage)`, auto-marks assignment `completed`).
 
-Admin MVP 3 (role=admin):
-- `GET/POST/PATCH /admin/cohorts[/:id]`, `GET/POST/PATCH /admin/programs[/:id]`
-- `GET/POST/PATCH /admin/students[/:id]`; `POST/DELETE /admin/students/:id/cohorts[/:cohortId]`; `POST/DELETE /admin/students/:id/programs[/:programId]`
-- `GET /admin/applications-accepted-pending` — finalDecision=accepted but not yet a student
-- `POST /admin/applications/:id/convert-to-student` — atomic: creates user(role=student) + students row; rejects if already converted (409) or not accepted (400). Body `{password?}`: when omitted (default) the user is created **inactive** with a random unguessable hash and a one-time **activation token** (magic link) is issued; the response includes `{activationToken, activationPath: "/activate/<token>", expiresAt}` (token shown only at issue time). When `password` is provided (legacy path) the user is created active and no token is issued.
-- `POST /admin/users/:id/activation-token` — admin-only re-issue of an activation magic link for any user (e.g. expired or lost). Returns `{activationToken, activationPath, expiresAt}`. Issuing a new token marks any prior unused tokens for that user as used (latest-wins).
-- `GET/POST/PATCH /admin/sessions[/:id]`; `GET/PUT /admin/sessions/:id/attendance` — bulk roster upsert
-- `GET/POST/PATCH /admin/assignments[/:id]` (MVP 3 homework); `PATCH /admin/submissions/:id` — feedback + status
-- `GET/POST/PATCH /admin/announcements[/:id]`
+Student (`requireStudent`): `GET /student/me`, `/sessions`, `/attendance`, `/assignments[/:id]` (only published/closed in my cohorts/programs; `mySubmission` populated), `POST /student/assignments/:id/submission` (upsert; auto `late` past `dueAt`; rejected once `closed`), `/announcements` (published only; `target=all` OR my cohort/program), `/timeline` (own + `student_visible` only), `/projects[/:id]` (only if member; artifacts ≠ admin_only, feedback `student_visible`), `/artifacts` (own non-admin_only ∪ project-member `student_visible`/`cohort_visible` ∪ same-cohort projects with `cohort_visible`), `/report` (admin_only feedback excluded), `GET|PATCH /student/profile` (lazy-creates `people_profiles` row `kind=member, isPublic=false` on first GET; student cannot change `kind`/`studentId`/`userId`/`displayOrder`).
 
-Student (role=student via `requireStudent`):
-- `GET /student/me` — student profile + cohorts + programs
-- `GET /student/sessions`, `GET /student/attendance` — only sessions/records for my cohorts/programs
-- `GET /student/assignments`, `GET /student/assignments/:id` — only published/closed in my cohorts/programs; `mySubmission` populated
-- `POST /student/assignments/:id/submission` — upsert; status auto = `late` if past `dueAt`; rejected once assignment is `closed`
-- `GET /student/announcements` — published only; `target=all` OR (cohort/program in mine)
-
-Admin MVP 4 (role=admin):
-- `GET/POST/PATCH/DELETE /admin/activity-records[/:id]` — filters: studentId, cohortId, programId, sourceType, tagId
-- `GET/POST/PATCH/DELETE /admin/projects[/:id]`; `GET /admin/projects/:id` returns project + members + artifacts + feedback + tags
-- `POST/DELETE /admin/projects/:id/members[/:memberId]` — `(project_id, student_id)` unique → 409
-- `GET/POST/PATCH/DELETE /admin/artifacts[/:id]` — DB table is `artifacts`; route is `/admin/artifacts`; the file is `admin-mvp4-artifacts.ts` and the Drizzle export is `mvp4ArtifactsTable` to avoid the monorepo `artifacts/` directory clash
-- `GET/POST/PATCH/DELETE /admin/feedback[/:id]` — visibility: `student_visible | admin_only`
-- `GET/POST/PATCH/DELETE /admin/tags[/:id]` — unique tag name → 409 (matches pg `23505` or message contains `duplicate`)
-- `GET/POST/DELETE /admin/tag-mappings[?targetType=&targetId=][/:id]` — `(tag_id, target_type, target_id)` unique → 409
-- `GET /admin/students/:id/timeline` — full activity stream with tags joined
-- `GET /admin/students/:id/report` — student profile, cohorts, programs, attendance summary, submissions, projects (+ my role), artifacts, feedback highlights, tag counts, full timeline
-- `GET /admin/cohorts/:id/summary` — cohort, studentCount, attendanceOverview, submissionOverview, project/artifact counts, tag distribution, students missing activity
-
-People profiles:
-- `GET  /api/people/:kind` — 공개 라우트. kind ∈ `mentor | staff | member`(그 외 404). `is_public=true`만, `display_order asc, id asc`. 응답은 공개 안전 필드만(id/kind/name/roleTitle/affiliation/bio/photoUrl/tags/displayOrder).
-- `GET    /admin/people[?kind=]` · `POST /admin/people` · `PATCH /admin/people/:id` · `DELETE /admin/people/:id` — 어드민 전용. 모든 kind, 모든 필드(`userId`/`studentId` 연결 포함). user_id/student_id 유니크 충돌 시 409.
-- `GET   /student/profile` · `PATCH /student/profile` — 학생 본인 전용. GET 시 본인 학생 행에 매칭되는 `people_profiles` row가 없으면 lazy-create(`kind='member', studentId=me, userId=me, isPublic=false`). PATCH는 자기 행만 수정 가능(`kind`/`studentId`/`userId`/`displayOrder`는 학생이 변경 불가, 어드민만).
-
-Account activation (public, no auth):
-- `GET  /api/activation/:token` — inspect a token; returns `{status:"ok", email, name, expiresAt}` or 404 (not_found) / 410 (`{status:"expired"|"used"}`)
-- `POST /api/activation/:token` — body `{password}` (≥8 chars); atomically consumes the token, sets `users.password_hash` (bcrypt), flips `users.is_active=true`, returns `{ok:true}`. Returns 410 if the token was just used by a concurrent request.
-
-Frontend: public route `/activate/:token` (no layout). Admin UI surfaces the link in two places: (1) `/admin/students` "합격자 → 학생 전환" dialog now has no password field — on success it shows a one-time copyable activation URL built from `window.location.origin + activationPath`; (2) `/admin/students/:id` has a "계정 활성화 링크" card with a "새 활성화 링크 발급" button for re-issuing.
-
-Site content (public + admin):
-- `GET /api/site-content` · `GET /api/site-content/:key` — public; key whitelisted to `page.home | page.about | page.program | page.faq`
-- `GET /admin/site-content` — admin list (always returns all known keys, blanks included)
-- `PUT /admin/site-content/:key` — upsert JSON value; sets `updated_by` from session
-
-Student MVP 4 (role=student via `requireStudent`):
-- `GET /student/timeline` — own records (`studentId = me`) with `visibility = student_visible` only; tags joined. `private` and `admin_only` records are not exposed to the student (admins flip visibility to `student_visible` to share)
-- `GET /student/projects` — projects I'm a member of (via `project_members`)
-- `GET /student/projects/:id` — only if I'm a member; returns project + members + my membership + artifacts (visibility ≠ admin_only) + feedback (visibility=student_visible) + tags
-- `GET /student/artifacts` — own non-admin_only ∪ project-member with `student_visible`/`cohort_visible` ∪ same-cohort projects with `cohort_visible`
-- `GET /student/report` — same shape as admin report but scoped to me; admin_only feedback excluded
+Naming notes:
+- DB table is `artifacts`, route is `/admin/artifacts`, file is `admin-mvp4-artifacts.ts`, Drizzle export is `mvp4ArtifactsTable` — to avoid clash with monorepo `artifacts/` dir.
+- `evaluation_assignments` (MVP2 evaluator routing) and `assignments` (MVP3 homework) are distinct tables/routes (`admin-assignments.ts` vs `admin-tasks.ts`).
+- Site content key whitelist: `page.home | page.recruit | page.about | page.program | page.faq`. Defaults bootstrapped from `artifacts/api-server/src/lib/site-content-defaults.ts` on every server start (`onConflictDoNothing` + label refresh + one-time legacy "leadership" copy migration). Frontend has matching fallback constants in `artifacts/seeds/src/lib/site-content.ts` validated by `isShapeCompatible`.
 
 ## Database schema
 
-- `applications` — MVP1 columns (incl. legacy `status` enum) + MVP2 `application_status` (lifecycle: submitted → document_review → interview → final_decision_made / withdrawn) and `final_decision` (pending | accepted | rejected | waitlisted | withdrawn).
-- `users` — id, email (unique), name, password_hash (bcrypt), role (admin | evaluator | student) primary, **`extra_roles text[]` not null default `'{}'`** for multi-role accounts, is_active, timestamps. Admin user is bootstrapped from `ADMIN_EMAIL` / `ADMIN_PASSWORD` on server startup (`bootstrapAdminFromEnv`). Effective roles = unique union of `[role, ...extraRoles]`; helper `getEffectiveRoles(user)` exported from `@workspace/db`. Backend middleware `requireAdmin/requireEvaluator/requireStudent` admit if effective roles intersect the allowed set, so a single account can hold e.g. `student + admin`. Session cookie payload now carries `{userId, role, roles, exp}`; `verifySessionToken` falls back to `[role]` when older tokens lack `roles`. `/admin/login` and `/admin/me` return `{...user, role, roles}`. Admins manage extra roles from `/admin/students/:id` (운영진/평가위원 토글) via `PATCH /admin/users/:id { extraRoles }`. Each role-specific layout (Admin/Student/Evaluator) admits if the user's effective roles include the layout's role and shows a header role-switcher button-row to navigate to the user's other role homes (`/admin`, `/student`, `/evaluator`); the session itself is unchanged when switching since access is purely role-membership-based.
-- `evaluation_assignments` — (application_id, evaluator_id, stage) unique; status (assigned | in_progress | completed); assigned_by, assigned_at.
-- `evaluations` — (application_id, evaluator_id, stage) unique; sub-scores (motivation, problem awareness, initiative, collaboration, fit) + overall_score (1-5) + recommendation + comment.
-- `interviews` — (application_id) unique; scheduled_at, location_or_link, interviewer_note, status.
-- `decision_logs` — append-only audit trail of `final_decision` changes (previous, new, reason, changed_by, created_at).
+Core (MVP1/2):
+- `applications` — MVP1 cols + `application_status` (submitted → document_review → interview → final_decision_made / withdrawn) + `final_decision` (pending|accepted|rejected|waitlisted|withdrawn). Legacy `status` enum preserved.
+- `users` — email unique, name, password_hash (bcrypt), role primary (`admin|evaluator|student`), `extra_roles text[] not null default '{}'` (multi-role), `is_active`, timestamps. Bootstrapped from `ADMIN_EMAIL`/`ADMIN_PASSWORD` on startup. Effective roles = unique union of `[role, ...extraRoles]`; helper `getEffectiveRoles(user)` from `@workspace/db`. Session payload `{userId, role, roles, exp}`; `verifySessionToken` falls back to `[role]` for older tokens. `/admin/login` and `/admin/me` return `{...user, role, roles}`. Admins toggle extra roles from `/admin/students/:id` via `PATCH /admin/users/:id { extraRoles }`.
+- `evaluation_assignments` — `(application_id, evaluator_id, stage)` unique; status `assigned|in_progress|completed`.
+- `evaluations` — `(application_id, evaluator_id, stage)` unique; sub-scores (motivation, problem_awareness, initiative, collaboration, fit) + overall (1-5) + recommendation + comment.
+- `interviews` — `(application_id)` unique.
+- `decision_logs` — append-only audit trail of `final_decision` changes.
 
-MVP 3 tables (additive, no destructive migrations):
-- `cohorts` (name, dates, status), `programs` (cohort_id, name, status)
-- `students` (user_id unique, application_id unique, profile cache, is_active)
-- `student_cohorts` (student_id, cohort_id) unique; `student_programs` (student_id, program_id) unique
-- `sessions` (cohort_id, program_id?, scheduled_at, duration, type, status)
-- `attendance_records` (session_id, student_id) unique; status (present | late | absent | excused), marked_by
-- `assignments` (cohort_id, program_id?, due_at, status: draft | published | closed, created_by) — homework table
-- `assignment_submissions` (assignment_id, student_id) unique; status (not_submitted | submitted | late | reviewed); content / file_url / external_url; feedback, reviewed_by
-- `announcements` (target_type: all | cohort | program, target_id, is_published, published_at, created_by)
+MVP3 (additive):
+- `cohorts`, `programs(cohort_id)`, `students(user_id unique, application_id unique, profile cache, is_active)`
+- `student_cohorts`, `student_programs` (both `(student_id, X_id)` unique)
+- `sessions(cohort_id, program_id?, scheduled_at, duration, type, status)`
+- `attendance_records(session_id, student_id)` unique; status `present|late|absent|excused`
+- `assignments(cohort_id, program_id?, due_at, status: draft|published|closed, created_by)`
+- `assignment_submissions(assignment_id, student_id)` unique; status `not_submitted|submitted|late|reviewed`; content/file_url/external_url; feedback, reviewed_by
+- `announcements(target_type: all|cohort|program, target_id, is_published, published_at, created_by)`
 
-Note: `evaluation_assignments` (MVP 2 evaluator→app routing) and `assignments` (MVP 3 homework) are distinct tables with distinct routes (`admin-assignments.ts` vs `admin-tasks.ts`).
-
-MVP 4 tables (additive, non-destructive):
-- `activity_records` — student_id, cohort_id, program_id?, source_type (session | assignment | project | feedback | manual), source_id?, title, description, activity_date, visibility (private | student_visible | admin_only — default `admin_only`).
-- `projects` — cohort_id, program_id?, title, description, problem_statement, solution_summary, status (ideation | in_progress | submitted | presented | completed | archived), started_at, ended_at.
-- `project_members` — (project_id, student_id) unique; role, contribution_summary.
-- `artifacts` (Drizzle export `mvp4ArtifactsTable`, file `lib/db/src/schema/mvp4-artifacts.ts`) — student_id?, project_id?, assignment_submission_id?, title, description, artifact_type (link | document | presentation | video | code | image | report | other), url, visibility (private | student_visible | cohort_visible | admin_only — default `student_visible`).
-- `feedback` — target_type (student | project | assignment_submission | activity_record | session), target_id, student_id?, author_id, feedback_type (general | strength | improvement | review | mentor_note | admin_note), content, visibility (student_visible | admin_only — default `admin_only`).
-- `skill_tags` — name unique, description.
-- `site_contents` — `(key unique, label, value jsonb, updated_by, timestamps)`. One row per public page; admin edits the JSON blob directly.
-- `tag_mappings` — (tag_id, target_type, target_id) unique; target_type ∈ {activity_record, project, artifact, feedback, student}.
-- `account_activation_tokens` — id, user_id (FK→users, cascade delete), token_hash (sha256 of plaintext token; plaintext stored only in the response at issue time), expires_at (default 14d), used_at?, created_by (FK→users), created_at. Indexes on `token_hash` and `user_id`. Used by the public magic-link account activation flow (`/activate/:token` ↔ `/api/activation/:token`).
-- `people_profiles` — id, kind (`mentor|staff|member`), user_id? (FK→users set null, unique), student_id? (FK→students set null, unique), name, role_title?, affiliation?, bio?, photo_url?, tags `text[]` not null default `'{}'`, display_order int not null default 0, is_public bool not null default false, timestamps. Index `(kind, display_order)`. 한 명의 학생/유저당 최대 한 개의 프로필 행. 공개 라우트(`/api/people/:kind`)는 `is_public=true`만, 정렬 `display_order asc, id asc`.
+MVP4 (additive):
+- `activity_records` — student_id, cohort_id, program_id?, source_type `session|assignment|project|feedback|manual`, source_id?, title, description, activity_date, visibility `private|student_visible|admin_only` (default `admin_only`).
+- `projects` — cohort_id, program_id?, title, description, problem_statement, solution_summary, status `ideation|in_progress|submitted|presented|completed|archived`, started_at, ended_at.
+- `project_members(project_id, student_id)` unique; role, contribution_summary.
+- `artifacts` (Drizzle `mvp4ArtifactsTable`, file `lib/db/src/schema/mvp4-artifacts.ts`) — student_id?, project_id?, assignment_submission_id?, title, description, artifact_type `link|document|presentation|video|code|image|report|other`, url, visibility `private|student_visible|cohort_visible|admin_only` (default `student_visible`).
+- `feedback` — target_type `student|project|assignment_submission|activity_record|session`, target_id, student_id?, author_id, feedback_type `general|strength|improvement|review|mentor_note|admin_note`, content, visibility `student_visible|admin_only` (default `admin_only`).
+- `skill_tags` — name unique.
+- `tag_mappings(tag_id, target_type, target_id)` unique; target_type ∈ `{activity_record, project, artifact, feedback, student}`.
+- `site_contents(key unique, label, value jsonb, updated_by, timestamps)` — one row per public page.
+- `account_activation_tokens` — user_id (FK→users cascade), token_hash (sha256; plaintext only in response at issue time), expires_at (default 14d), used_at?, created_by, created_at. Indexes on `token_hash`, `user_id`. Drives the magic-link activation flow.
+- `people_profiles` — kind `mentor|staff|member`, user_id? (FK set null, unique), student_id? (FK set null, unique), name, role_title?, affiliation?, bio?, photo_url?, tags `text[] default '{}'`, display_order int default 0, is_public bool default false. Index `(kind, display_order)`. Max one row per student/user.
 
 Student-side visibility rules in code:
-- `student/timeline` = `studentId = me` AND `visibility = student_visible`.
-- `student/artifacts` = own (any except admin_only) ∪ project-member with visibility ∈ {student_visible, cohort_visible} ∪ same-cohort projects with cohort_visible.
-- `student/projects/:id` artifacts: own (any except admin_only) ∪ other members' (student_visible | cohort_visible). Never expose another member's `private` artifact.
-- `student/report.feedbackHighlights` filters `visibility = student_visible` and `studentId = me`.
+- `student/timeline`: `studentId = me` AND `visibility = student_visible`.
+- `student/artifacts`: own (≠ admin_only) ∪ project-member with `student_visible`/`cohort_visible` ∪ same-cohort projects with `cohort_visible`.
+- `student/projects/:id` artifacts: own (≠ admin_only) ∪ other members' (`student_visible`/`cohort_visible`). Never expose another member's `private`.
+- `student/report.feedbackHighlights`: `visibility = student_visible` AND `studentId = me`.
 
-`users.role` widened to `admin | evaluator | student` (text column, no enum widening). Legacy `applications.status` is preserved untouched so MVP 1 admin flows keep working.
+`users.role` is a text column (not pg enum) widened to `admin|evaluator|student`.
 
-## Required environment variables / secrets
+## Activation magic-link flow
 
-- `DATABASE_URL` — provisioned automatically by Replit
-- `SESSION_SECRET` — signs the `seeds_admin` HMAC session cookie (`{userId, role, exp}`, 7d TTL)
-- `ADMIN_EMAIL` / `ADMIN_PASSWORD` — bootstraps/refreshes the admin user in the `users` table on every server start
-- `NODE_ENV` — `production` makes the session cookie `Secure`
+1. Admin creates inactive user via `POST /admin/applications/:id/convert-to-student` (no password) or `POST /admin/users/:id/activation-token` for existing users.
+2. Response: `{activationToken, activationPath: "/activate/<token>", expiresAt}` (token plaintext shown **only at issue time**).
+3. Admin UI surfaces this in two places: `/admin/students` "합격자 → 학생 전환" dialog (one-time copyable URL = `window.location.origin + activationPath`) and `/admin/students/:id` "계정 활성화 링크" card with re-issue button.
+4. User opens `/activate/:token`, sets password (≥8 chars). `POST /api/activation/:token` atomically consumes the token, sets `password_hash`, flips `is_active=true`. Returns 410 on used/expired.
 
-## How to run locally
+## Required env / secrets
 
-The Replit workflows handle this — you do not run `pnpm dev` at the root. Workflows:
-- `artifacts/api-server: API Server` — runs the Express API on port 8080
-- `artifacts/seeds: web` — runs the Vite dev server
-- `artifacts/mockup-sandbox: Component Preview Server` — design sandbox (not used at runtime)
+- `DATABASE_URL` (provisioned), `SESSION_SECRET`, `ADMIN_EMAIL` / `ADMIN_PASSWORD`, `NODE_ENV`.
 
-To restart, use `restart_workflow <name>`.
+## Local run / commands
 
-## How to push DB schema changes
+Workflows handle running — do not `pnpm dev` at root.
+- `artifacts/api-server: API Server` (Express, port 8080)
+- `artifacts/seeds: web` (Vite dev server)
+- `artifacts/mockup-sandbox: Component Preview Server` (design sandbox, not runtime)
 
-After editing files in `lib/db/src/schema/`:
+Use `restart_workflow <name>` to restart.
 
-```
-pnpm --filter @workspace/db run push
-```
+DB schema changes: `pnpm --filter @workspace/db run push` (or `push-force` to drop columns).
 
-Use `pnpm --filter @workspace/db run push-force` only when you need to drop columns.
+API contract changes: edit `lib/api-spec/openapi.yaml`, then `pnpm --filter @workspace/api-spec run codegen` (regenerates `lib/api-client-react/src/generated/*` + `lib/api-zod/src/generated/*`, runs `tsc --build`).
 
-## How to update the API contract
+Deploy: `suggest_deploy`. Proxy auto-routes `/api/*` to API server in production.
 
-Edit `lib/api-spec/openapi.yaml`, then:
+## Security
 
-```
-pnpm --filter @workspace/api-spec run codegen
-```
+- bcrypt password hashing; admin bootstrapped from `ADMIN_EMAIL`/`ADMIN_PASSWORD`.
+- `requireAdmin`/`requireEvaluator`/`requireStudent`/`requireAuth` gate every protected route. Evaluator endpoints additionally check assignment ownership.
+- Session cookie HMAC-signed via `SESSION_SECRET`, `httpOnly`, `sameSite=lax`, `Secure` in prod.
+- All public form input server-side validated with generated Zod schemas + trimmed.
+- `decision_logs` append-only with changing user. CSV export has formula-injection guard.
 
-This regenerates `lib/api-client-react/src/generated/*` and `lib/api-zod/src/generated/*`, then runs `tsc --build` to verify types.
+## User preferences
 
-## How to deploy
-
-When ready, suggest deploy. The `deployment` skill handles building both artifacts; the proxy automatically routes `/api/*` to the API server in production.
-
-## Security notes
-
-- Passwords are stored as bcrypt hashes in the `users` table; the bootstrapped admin user comes from `ADMIN_EMAIL` / `ADMIN_PASSWORD`.
-- `requireAdmin`, `requireEvaluator`, and `requireAuth` middleware gate every protected route. Evaluator endpoints additionally check that the caller is actually assigned to the requested application.
-- The session cookie is HMAC-signed via `SESSION_SECRET`, `httpOnly`, `sameSite=lax`, and `Secure` in production. Payload contains `{userId, role, exp}` only.
-- All public form input is validated server-side with generated Zod schemas and trimmed before insert.
-- Final decision changes are append-only in `decision_logs` with the changing user recorded; CSV export still applies the formula-injection guard.
+- Korean UI for all student/public-facing copy.
+- Brand tone: 학생 개발자 동아리 (study groups, side projects, hackathons, senior dev mentorship). Avoid leadership/calligraphy/literary aesthetics.
+- Visual: Pretendard everywhere (incl. headings via `font-serif` aliased to sans), pure white bg, single vivid green accent, modern startup tone.
