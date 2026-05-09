@@ -164,7 +164,7 @@ export default function Apply() {
               <FormField control={form.control} name="experience" render={({ field }) => (
                 <FormItem>
                   <FormLabel>2. 관련 경험 *</FormLabel>
-                  <p className="text-sm text-muted-foreground mb-2">지금까지 리더십을 발휘하거나 주도적으로 문제를 해결해 본 경험을 구체적으로 서술해 주세요.</p>
+                  <p className="text-sm text-muted-foreground mb-2">지금까지 사이드 프로젝트·해커톤·스터디 등에서 무언가를 직접 만들어 본 경험을 구체적으로 서술해 주세요. 사용한 기술, 맡은 역할, 배운 점을 함께 적어주시면 좋습니다.</p>
                   <FormControl>
                     <Textarea className="min-h-[150px] rounded-none" {...field} />
                   </FormControl>

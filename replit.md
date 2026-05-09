@@ -1,6 +1,6 @@
-# Seeds — Student Program Operations Platform
+# Seeds — Student Developer Club Operations Platform
 
-A Korean-language web platform for the **Seeds** student program: public site + application form (MVP 1), evaluator selection workflow (MVP 2), activity operation management (MVP 3), and **student activity record & utilization (MVP 4)** — activity timeline, projects, artifacts, feedback, and skill-tag-driven reports.
+A Korean-language web platform for the **Seeds** student developer club (학생 개발자 동아리): public site + application form (MVP 1), evaluator selection workflow (MVP 2), activity operation management (MVP 3), and **student activity record & utilization (MVP 4)** — activity timeline, projects, artifacts, feedback, and skill-tag-driven reports. Public copy is positioned around stusy groups, side projects, hackathons, and senior dev mentorship — not "leadership program".
 
 ## Stack
 
