@@ -48,8 +48,8 @@ The shared proxy at `localhost:80` routes `/api/*` to the API server and everyth
 - `/student/assignments`, `/student/assignments/:id` — Submit / re-submit (text + URL); status auto-flips to `late` past the due date
 - `/student/announcements`
 
-### Public — People pages
-- `/mentors`, `/staff`, `/members` — 카드 그리드(이름·직함·소속·소개·태그·사진). 같은 `PeopleGrid` 컴포넌트 재사용. 각 페이지 상단 탭으로 세 페이지를 함께 묶음. **공개(`is_public=true`)된 항목만** 노출, `displayOrder asc, id asc` 정렬. 데이터는 `GET /api/people/:kind` (kind ∈ `mentor|staff|member`).
+### Public — People page
+- `/people` — 단일 페이지에서 멘토/운영진/학생 탭 전환(클라이언트 state). 헤더 nav에는 "사람들" 한 항목만 노출. 레거시 경로 `/mentors`·`/staff`·`/members`도 같은 페이지를 렌더링하며 진입 시 해당 탭이 선택되고, 탭을 바꾸면 URL이 `replace`로 동기화되어 딥링크가 유지됨. **공개(`is_public=true`)된 항목만** 노출, `displayOrder asc, id asc` 정렬. 데이터는 `GET /api/people/:kind` (kind ∈ `mentor|staff|member`).
 
 ### Admin — Site content CMS (role=admin)
 - `/admin/people` — 멘토/운영진/학생 프로필 통합 CRUD. 탭으로 kind 전환, 표시 순서·공개 토글·태그(쉼표 입력)·사진 URL·소개 필드. 학생 본인이 만든 행은 학생 본인이 `/student/profile`에서 편집 가능하지만 어드민도 항상 모든 행을 편집·삭제 가능.

@@ -53,9 +53,7 @@ import StudentProjectDetail from "@/pages/student/project-detail";
 import StudentArtifacts from "@/pages/student/artifacts";
 import StudentReportPage from "@/pages/student/report";
 import ActivatePage from "@/pages/activate";
-import MentorsPage from "@/pages/mentors";
-import StaffPage from "@/pages/staff";
-import MembersPage from "@/pages/members";
+import PeoplePage from "@/pages/people";
 import AdminPeople from "@/pages/admin/people";
 import StudentProfilePage from "@/pages/student/profile";
 
@@ -78,9 +76,10 @@ function Router() {
       <Route path="/recruit" component={Recruit} />
       <Route path="/apply" component={Apply} />
       <Route path="/apply/success" component={ApplySuccess} />
-      <Route path="/mentors" component={MentorsPage} />
-      <Route path="/staff" component={StaffPage} />
-      <Route path="/members" component={MembersPage} />
+      <Route path="/people" component={PeoplePage} />
+      <Route path="/mentors" component={PeoplePage} />
+      <Route path="/staff" component={PeoplePage} />
+      <Route path="/members" component={PeoplePage} />
 
       <Route path="/activate/:token" component={ActivatePage} />
       <Route path="/login" component={AdminLogin} />

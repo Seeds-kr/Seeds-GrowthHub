@@ -1,10 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
 import { Loader2 } from "lucide-react";
 import {
   api,
   PEOPLE_KIND_LABEL,
-  PEOPLE_KIND_PATH,
   PEOPLE_KINDS,
   type PeopleKind,
   type PublicPeopleProfile,
@@ -62,16 +60,23 @@ function Card({ p }: { p: PublicPeopleProfile }) {
   );
 }
 
+const KIND_SUBTITLE: Record<PeopleKind, string> = {
+  mentor: "Seeds 학생들의 성장을 함께하는 분야별 멘토를 소개합니다.",
+  staff: "Seeds 프로그램을 기획·운영하는 운영진입니다.",
+  member: "Seeds에서 함께 배우고 만드는 학생들입니다. 본인이 공개에 동의한 경우에만 표시됩니다.",
+};
+const KIND_EMPTY: Record<PeopleKind, string> = {
+  mentor: "아직 공개된 멘토가 없습니다.",
+  staff: "아직 공개된 운영진이 없습니다.",
+  member: "아직 공개에 동의한 학생이 없습니다.",
+};
+
 export function PeopleGrid({
   kind,
-  title,
-  subtitle,
-  emptyText,
+  onKindChange,
 }: {
   kind: PeopleKind;
-  title: string;
-  subtitle?: string;
-  emptyText: string;
+  onKindChange: (k: PeopleKind) => void;
 }) {
   const { data, isLoading } = useQuery({
     queryKey: ["public-people", kind],
@@ -82,25 +87,23 @@ export function PeopleGrid({
   return (
     <section className="py-24 md:py-32 px-4">
       <div className="container mx-auto max-w-6xl">
-        <div className="text-center mb-12">
-          <div className="text-[11px] uppercase tracking-[0.22em] text-accent mb-3 font-semibold">
+        <div className="text-center mb-10">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-primary mb-3 font-semibold">
             Seeds People
           </div>
-          <h1 className="text-5xl md:text-6xl font-serif mb-5 tracking-[-0.03em]">
-            {title}
-          </h1>
-          {subtitle ? (
-            <p className="text-[17px] text-muted-foreground max-w-2xl mx-auto leading-[1.85]">
-              {subtitle}
-            </p>
-          ) : null}
+          <h1 className="text-5xl md:text-6xl mb-5">사람들</h1>
+          <p className="text-[17px] text-muted-foreground max-w-2xl mx-auto">
+            Seeds를 함께 만드는 멘토·운영진·학생을 소개합니다.
+          </p>
         </div>
 
-        <nav className="flex justify-center gap-2 mb-12 border-b border-border">
+        <div role="tablist" className="flex justify-center gap-2 mb-6 border-b border-border">
           {PEOPLE_KINDS.map((k) => (
-            <Link
+            <button
               key={k}
-              href={PEOPLE_KIND_PATH[k]}
+              role="tab"
+              aria-selected={k === kind}
+              onClick={() => onKindChange(k)}
               className={`px-6 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${
                 k === kind
                   ? "border-primary text-primary"
@@ -108,9 +111,13 @@ export function PeopleGrid({
               }`}
             >
               {PEOPLE_KIND_LABEL[k]}
-            </Link>
+            </button>
           ))}
-        </nav>
+        </div>
+
+        <p className="text-center text-sm text-muted-foreground mb-10">
+          {KIND_SUBTITLE[kind]}
+        </p>
 
         {isLoading ? (
           <div className="py-24 flex justify-center">
@@ -118,7 +125,7 @@ export function PeopleGrid({
           </div>
         ) : !data || data.items.length === 0 ? (
           <div className="py-24 text-center text-muted-foreground">
-            {emptyText}
+            {KIND_EMPTY[kind]}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-border border border-border">
