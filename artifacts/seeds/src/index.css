@@ -59,53 +59,52 @@
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
-  /* Warm botanical palette — cream paper + deep forest + soft terracotta accent */
-  --background: 38 33% 97%;          /* warm cream (#FAF7F1) */
-  --foreground: 158 36% 11%;         /* near-black forest ink */
-  --border: 38 18% 88%;
+  /* Modern, confident palette — pure white + near-black + single vivid green accent */
+  --background: 0 0% 100%;
+  --foreground: 220 15% 8%;          /* near-black ink */
+  --border: 220 12% 91%;
   --card: 0 0% 100%;
-  --card-foreground: 158 36% 11%;
-  --card-border: 38 18% 90%;
+  --card-foreground: 220 15% 8%;
+  --card-border: 220 12% 91%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 158 36% 11%;
-  --popover-border: 38 18% 90%;
+  --popover-foreground: 220 15% 8%;
+  --popover-border: 220 12% 91%;
 
-  /* Primary: Deep forest green */
-  --primary: 158 42% 18%;
-  --primary-foreground: 38 33% 97%;
+  /* Primary: vivid, confident green — modern startup energy, not literary */
+  --primary: 152 70% 32%;
+  --primary-foreground: 0 0% 100%;
 
-  /* Secondary: warm sage */
-  --secondary: 158 14% 92%;
-  --secondary-foreground: 158 42% 18%;
+  --secondary: 220 14% 96%;
+  --secondary-foreground: 220 15% 8%;
 
-  --muted: 38 22% 94%;
-  --muted-foreground: 158 14% 36%;
+  --muted: 220 14% 96%;
+  --muted-foreground: 220 9% 42%;
 
-  /* Accent: terracotta — used for highlights, eyebrow text, links on hover */
-  --accent: 18 55% 52%;
-  --accent-foreground: 38 33% 97%;
+  /* Accent reuses primary green for system consistency */
+  --accent: 152 70% 32%;
+  --accent-foreground: 0 0% 100%;
 
-  --destructive: 6 65% 42%;
+  --destructive: 0 72% 45%;
   --destructive-foreground: 0 0% 100%;
 
-  --input: 38 18% 88%;
-  --ring: 158 42% 18%;
+  --input: 220 12% 91%;
+  --ring: 152 70% 32%;
 
-  --sidebar: 38 33% 97%;
-  --sidebar-foreground: 158 36% 11%;
-  --sidebar-border: 38 18% 88%;
-  --sidebar-primary: 158 42% 18%;
-  --sidebar-primary-foreground: 38 33% 97%;
-  --sidebar-accent: 158 14% 92%;
-  --sidebar-accent-foreground: 158 42% 18%;
-  --sidebar-ring: 158 42% 18%;
+  --sidebar: 0 0% 100%;
+  --sidebar-foreground: 220 15% 8%;
+  --sidebar-border: 220 12% 91%;
+  --sidebar-primary: 152 70% 32%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 220 14% 96%;
+  --sidebar-accent-foreground: 220 15% 8%;
+  --sidebar-ring: 152 70% 32%;
 
-  --app-font-sans: 'Pretendard Variable', Pretendard, 'Noto Sans KR', -apple-system,
+  --app-font-sans: 'Pretendard Variable', Pretendard, 'Inter', -apple-system,
     BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Segoe UI', Roboto, sans-serif;
-  --app-font-serif: 'Gowun Batang', 'Noto Serif KR', 'Apple SD Gothic Neo', serif;
+  --app-font-serif: var(--app-font-sans);  /* same family — modern look */
   --app-font-mono: 'JetBrains Mono', Menlo, ui-monospace, monospace;
-  --radius: 0rem; /* Sharp, premium corners */
+  --radius: 0.5rem;                  /* subtle modern corners */
 }
 
 .dark {
@@ -160,28 +159,27 @@
   body {
     @apply font-sans bg-background text-foreground;
     font-feature-settings: 'ss01', 'tnum';
-    letter-spacing: -0.005em;
-    line-height: 1.65;
-    word-break: keep-all;        /* Korean: don't break inside words */
+    letter-spacing: -0.01em;
+    line-height: 1.6;
+    word-break: keep-all;
     overflow-wrap: anywhere;
   }
   h1, h2, h3, h4, h5, h6 {
-    @apply font-serif;
-    font-weight: 700;
-    letter-spacing: -0.025em;    /* tighten Korean serif headings */
-    line-height: 1.25;
+    @apply font-sans;
+    font-weight: 800;
+    letter-spacing: -0.035em;     /* tight, modern */
+    line-height: 1.15;
     word-break: keep-all;
   }
-  h1 { line-height: 1.18; }
-  p  { line-height: 1.75; }
+  h1 { font-weight: 900; letter-spacing: -0.045em; }
+  p  { line-height: 1.7; }
 
-  /* Eyebrow / small caps used across hero / sections */
   .eyebrow {
     @apply font-sans;
     font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.22em;
+    font-weight: 700;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: hsl(var(--accent));
+    color: hsl(var(--primary));
   }
 }
