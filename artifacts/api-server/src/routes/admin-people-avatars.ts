@@ -8,35 +8,75 @@ import { requireAdmin } from "../lib/auth";
 const router: IRouter = Router();
 const objectStorageService = new ObjectStorageService();
 
-// Brand-aligned avatar prompt: minimalist flat illustration, mint green +
-// white palette, abstract silhouette (no facial features) to avoid the
-// "fake person" problem for AI-generated portraits.
+// Apple Memoji / Pixar-style stylized 3D cartoon character avatars.
+// We seed the deterministic randomness off the person's name so each profile
+// gets a distinct but stable character. We do NOT pass any descriptive text
+// (name, role, affiliation) into the prompt — Gemini hallucinates garbled
+// pseudo-text labels when given strings, and we don't want the model implying
+// it's a real-person likeness either.
 function buildPrompt(p: {
   name: string;
   kind: string;
   roleTitle: string | null;
   affiliation: string | null;
 }): string {
-  const role =
-    p.kind === "mentor"
-      ? "tech mentor"
-      : p.kind === "staff"
-        ? "club staff member"
-        : "student developer";
-  // Note: we deliberately do NOT pass the person's name, role, or affiliation
-  // to the image model. Gemini frequently hallucinates and renders garbled
-  // pseudo-text labels when given any descriptive string, even with explicit
-  // "no text" instructions. Using only a neutral seed keeps avatars clean.
   const seed = Math.abs(
     [...p.name].reduce((acc, c) => (acc * 31 + c.charCodeAt(0)) | 0, 0),
   );
-  const accents = ["a leaf", "a small circle", "a single line", "a soft spark", "a small dot pattern"];
-  const accent = accents[seed % accents.length];
+  const pick = <T,>(arr: readonly T[], offset = 0): T =>
+    arr[(seed + offset) % arr.length];
+
+  const gender = pick(["male", "female", "androgynous"] as const);
+  const skin = pick([
+    "light",
+    "fair",
+    "medium",
+    "tan",
+    "olive",
+    "warm brown",
+    "deep brown",
+  ] as const, 1);
+  const hair = pick([
+    "short black",
+    "medium black",
+    "buzz cut black",
+    "neat side-parted dark brown",
+    "wavy dark brown",
+    "short curly black",
+    "tied-back long black",
+    "ponytail dark brown",
+    "shoulder-length straight black",
+  ] as const, 2);
+  const accessory = pick([
+    "no accessories",
+    "round glasses",
+    "rectangular glasses",
+    "no accessories",
+    "small earphones",
+    "no accessories",
+  ] as const, 3);
+  const top = pick([
+    "a mint-green hoodie",
+    "a white t-shirt",
+    "a light grey crewneck sweater",
+    "a navy blue zip-up jacket",
+    "a black turtleneck",
+    "a mint-green t-shirt",
+  ] as const, 4);
+  const expression = pick([
+    "a warm friendly smile",
+    "a soft confident smile",
+    "a calm pleasant expression",
+    "a slight cheerful smile",
+  ] as const, 5);
+
   return [
-    `Minimalist flat vector illustration avatar for a ${role}.`,
-    `Style: clean modern startup illustration, similar to Notion or Linear avatars. Pure white background with a single mint-green accent color. Geometric simplified shapes only.`,
-    `Subject: an abstract head-and-shoulders silhouette of a person, NO facial features, NO eyes, NO mouth, NO realistic skin or hair detail. Just a clean simplified human shape with ${accent} as a soft geometric accent.`,
-    `Composition: centered, square, generous negative space, soft edges. Looks friendly and professional.`,
+    `A stylized 3D cartoon character avatar in the style of Apple Memoji / Pixar.`,
+    `A ${gender} character with ${skin} skin, ${hair} hair, ${accessory}, wearing ${top}, with ${expression}.`,
+    `The character is NOT a real or recognizable person — it is a generic friendly cartoon avatar with simplified, smooth, rounded cartoon features (no realistic skin pores, no photorealism).`,
+    `Head-and-shoulders portrait facing slightly forward, centered in the frame.`,
+    `Soft studio lighting, clean solid pure-white background (#FFFFFF), no scenery, no props, no shadow behind the character.`,
+    `Square 1:1 composition, high-quality 3D render, smooth shading, friendly and approachable, suitable as a profile avatar for a Korean student developer club.`,
     `STRICT: do NOT render any text, letters, words, numbers, symbols, watermark, logo, signature, caption, label, badge, name tag, or any typography of any kind anywhere in the image. The image must contain ZERO characters or glyphs.`,
   ].join(" ");
 }
