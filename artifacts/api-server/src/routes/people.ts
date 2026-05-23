@@ -56,14 +56,20 @@ router.get("/people/:kind", async (req, res) => {
   res.json({ items: rows.map(publicView) });
 });
 
-// Only http(s) URLs allowed for photo_url to block javascript:/data: vectors.
+// Allow http(s) URLs or internal storage paths (/api/storage/objects/... or
+// /objects/...). Blocks javascript:/data: vectors.
 const PhotoUrl = z
   .string()
   .trim()
   .max(2000)
-  .refine((s) => s === "" || /^https?:\/\//i.test(s), {
-    message: "photoUrl must be http(s)",
-  })
+  .refine(
+    (s) =>
+      s === "" ||
+      /^https?:\/\//i.test(s) ||
+      s.startsWith("/api/storage/") ||
+      s.startsWith("/objects/"),
+    { message: "photoUrl must be http(s) or an internal storage path" },
+  )
   .nullable()
   .optional();
 

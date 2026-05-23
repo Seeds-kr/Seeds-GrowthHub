@@ -121,6 +121,23 @@ export default function AdminPeople() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-people"] }),
   });
 
+  const generateAvatar = useMutation({
+    mutationFn: (id: number) =>
+      api<PeopleProfile>(`/admin/people/${id}/generate-avatar`, {
+        method: "POST",
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-people"] });
+      toast({ title: "AI 아바타 생성 완료" });
+    },
+    onError: (e: any) =>
+      toast({
+        title: "아바타 생성 실패",
+        description: e?.data?.error ?? e.message,
+        variant: "destructive",
+      }),
+  });
+
   function openCreate() {
     setEditing(null);
     setForm(blank(kind));
@@ -228,6 +245,29 @@ export default function AdminPeople() {
                       onClick={() => openEdit(p)}
                     >
                       수정
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-none"
+                      disabled={
+                        generateAvatar.isPending &&
+                        generateAvatar.variables === p.id
+                      }
+                      onClick={() => {
+                        const msg = p.photoUrl
+                          ? "기존 사진을 AI 생성 아바타로 교체합니다. 진행할까요?"
+                          : "AI 아바타를 생성합니다. 진행할까요?";
+                        if (confirm(msg)) generateAvatar.mutate(p.id);
+                      }}
+                      title="AI 미니멀 일러스트 아바타 생성 (Gemini)"
+                    >
+                      {generateAvatar.isPending &&
+                      generateAvatar.variables === p.id ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        "AI 아바타"
+                      )}
                     </Button>
                     <Button
                       variant="outline"

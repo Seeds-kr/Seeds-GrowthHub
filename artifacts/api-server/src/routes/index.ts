@@ -25,6 +25,8 @@ import studentMvp4Router from "./student-mvp4";
 import siteContentRouter from "./site-content";
 import activationRouter from "./activation";
 import peopleRouter from "./people";
+import adminPeopleAvatarsRouter from "./admin-people-avatars";
+import storageServeRouter from "./storage-serve";
 
 const router: IRouter = Router();
 
@@ -54,5 +56,7 @@ router.use(studentMvp4Router);
 router.use(siteContentRouter);
 router.use(activationRouter);
 router.use(peopleRouter);
+router.use(adminPeopleAvatarsRouter);
+router.use(storageServeRouter);
 
 export default router;
