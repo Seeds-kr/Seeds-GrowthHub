@@ -23,13 +23,29 @@ function getClient(): GoogleGenAI {
   return cachedClient;
 }
 
+export type ReferenceImage = {
+  /** Base64-encoded raw image bytes (NOT a data URL). */
+  base64: string;
+  /** MIME type, e.g. "image/jpeg", "image/png", "image/webp". */
+  mimeType: string;
+};
+
 export async function generateImage(
-  prompt: string
+  prompt: string,
+  referenceImages: ReferenceImage[] = []
 ): Promise<{ b64_json: string; mimeType: string }> {
   const ai = getClient();
+  const parts: Array<
+    | { text: string }
+    | { inlineData: { data: string; mimeType: string } }
+  > = [];
+  for (const img of referenceImages) {
+    parts.push({ inlineData: { data: img.base64, mimeType: img.mimeType } });
+  }
+  parts.push({ text: prompt });
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash-image",
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    contents: [{ role: "user", parts }],
     config: {
       responseModalities: [Modality.TEXT, Modality.IMAGE],
     },

@@ -28,8 +28,10 @@ app.use(
 );
 app.use(cors({ origin: true, credentials: true }));
 app.use(cookieParser());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// 10mb to comfortably fit a base64-encoded reference photo for AI avatar
+// generation (~5MB raw image). All other endpoints accept tiny JSON.
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 app.use("/api", router);
 

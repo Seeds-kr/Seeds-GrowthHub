@@ -121,13 +121,17 @@ export default function AdminPeople() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-people"] }),
   });
 
+  const [avatarTarget, setAvatarTarget] = useState<PeopleProfile | null>(null);
+
   const generateAvatar = useMutation({
-    mutationFn: (id: number) =>
-      api<PeopleProfile>(`/admin/people/${id}/generate-avatar`, {
+    mutationFn: (vars: { id: number; body: Record<string, unknown> }) =>
+      api<PeopleProfile>(`/admin/people/${vars.id}/generate-avatar`, {
         method: "POST",
+        body: vars.body,
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-people"] });
+      setAvatarTarget(null);
       toast({ title: "AI 아바타 생성 완료" });
     },
     onError: (e: any) =>
@@ -250,24 +254,10 @@ export default function AdminPeople() {
                       variant="outline"
                       size="sm"
                       className="rounded-none"
-                      disabled={
-                        generateAvatar.isPending &&
-                        generateAvatar.variables === p.id
-                      }
-                      onClick={() => {
-                        const msg = p.photoUrl
-                          ? "기존 사진을 AI 생성 아바타로 교체합니다. 진행할까요?"
-                          : "AI 아바타를 생성합니다. 진행할까요?";
-                        if (confirm(msg)) generateAvatar.mutate(p.id);
-                      }}
-                      title="AI 미니멀 일러스트 아바타 생성 (Gemini)"
+                      onClick={() => setAvatarTarget(p)}
+                      title="AI 캐릭터 아바타 생성 (Gemini)"
                     >
-                      {generateAvatar.isPending &&
-                      generateAvatar.variables === p.id ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      ) : (
-                        "AI 아바타"
-                      )}
+                      AI 아바타
                     </Button>
                     <Button
                       variant="outline"
@@ -420,6 +410,314 @@ export default function AdminPeople() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AvatarDialog
+        target={avatarTarget}
+        onClose={() => setAvatarTarget(null)}
+        isPending={generateAvatar.isPending}
+        onGenerate={(body) =>
+          avatarTarget &&
+          generateAvatar.mutate({ id: avatarTarget.id, body })
+        }
+      />
     </AdminLayout>
+  );
+}
+
+// ---------- AI avatar dialog ----------
+
+type AvatarFormState = {
+  gender: "" | "male" | "female" | "androgynous";
+  hairLength: "" | "short" | "medium" | "long";
+  hairStyle: "" | "straight" | "wavy" | "curly";
+  hairColor: "" | "black" | "dark_brown" | "brown";
+  glasses: "" | "none" | "round" | "rectangular";
+  top:
+    | ""
+    | "mint_hoodie"
+    | "white_tee"
+    | "grey_sweater"
+    | "navy_jacket"
+    | "black_turtleneck"
+    | "mint_tee";
+  expression: "" | "smile" | "calm" | "confident";
+  notes: string;
+  refImage: { base64: string; mimeType: string; name: string } | null;
+};
+
+const AVATAR_BLANK: AvatarFormState = {
+  gender: "",
+  hairLength: "",
+  hairStyle: "",
+  hairColor: "",
+  glasses: "",
+  top: "",
+  expression: "",
+  notes: "",
+  refImage: null,
+};
+
+const SELECT_AUTO = "__auto__";
+
+function AvatarSelect<V extends string>({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: "" | V;
+  options: { value: V; label: string }[];
+  onChange: (v: "" | V) => void;
+}) {
+  return (
+    <div>
+      <Label className="text-xs">{label}</Label>
+      <Select
+        value={value === "" ? SELECT_AUTO : value}
+        onValueChange={(v) =>
+          onChange(v === SELECT_AUTO ? "" : (v as V))
+        }
+      >
+        <SelectTrigger className="rounded-none">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={SELECT_AUTO}>자동 (이름 기반)</SelectItem>
+          {options.map((o) => (
+            <SelectItem key={o.value} value={o.value}>
+              {o.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+function AvatarDialog({
+  target,
+  onClose,
+  isPending,
+  onGenerate,
+}: {
+  target: PeopleProfile | null;
+  onClose: () => void;
+  isPending: boolean;
+  onGenerate: (body: Record<string, unknown>) => void;
+}) {
+  const [form, setForm] = useState<AvatarFormState>(AVATAR_BLANK);
+  const [refErr, setRefErr] = useState<string | null>(null);
+
+  // Reset form when target changes.
+  const lastTargetId = target?.id ?? null;
+  if (lastTargetId !== null && form === AVATAR_BLANK) {
+    // no-op; React-friendly reset done in onOpenChange below
+  }
+
+  function handleFile(file: File | null) {
+    setRefErr(null);
+    if (!file) {
+      setForm((f) => ({ ...f, refImage: null }));
+      return;
+    }
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setRefErr("JPEG / PNG / WebP 만 지원합니다.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setRefErr("이미지는 5MB 이하여야 합니다.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = String(reader.result ?? "");
+      const base64 = dataUrl.includes(",") ? dataUrl.split(",")[1] : dataUrl;
+      setForm((f) => ({
+        ...f,
+        refImage: { base64, mimeType: file.type, name: file.name },
+      }));
+    };
+    reader.onerror = () => setRefErr("파일을 읽지 못했습니다.");
+    reader.readAsDataURL(file);
+  }
+
+  function submit() {
+    const body: Record<string, unknown> = {};
+    if (form.gender) body.gender = form.gender;
+    if (form.hairLength) body.hairLength = form.hairLength;
+    if (form.hairStyle) body.hairStyle = form.hairStyle;
+    if (form.hairColor) body.hairColor = form.hairColor;
+    if (form.glasses) body.glasses = form.glasses;
+    if (form.top) body.top = form.top;
+    if (form.expression) body.expression = form.expression;
+    const notes = form.notes.trim();
+    if (notes) body.notes = notes;
+    if (form.refImage) {
+      body.referenceImage = {
+        base64: form.refImage.base64,
+        mimeType: form.refImage.mimeType,
+      };
+    }
+    onGenerate(body);
+  }
+
+  return (
+    <Dialog
+      open={!!target}
+      onOpenChange={(o) => {
+        if (!o) {
+          onClose();
+          setForm(AVATAR_BLANK);
+          setRefErr(null);
+        }
+      }}
+    >
+      <DialogContent className="rounded-none max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>
+            AI 아바타 생성{target ? ` — ${target.name}` : ""}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 max-h-[70vh] overflow-y-auto">
+          <p className="text-xs text-muted-foreground">
+            Apple Memoji 스타일의 3D 캐릭터 아바타를 생성합니다. 각 항목을
+            비워두면 이름을 기반으로 자동 선택됩니다.
+            {target?.photoUrl
+              ? " 기존 아바타는 새 아바타로 교체됩니다."
+              : ""}
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <AvatarSelect
+              label="성별"
+              value={form.gender}
+              onChange={(v) => setForm({ ...form, gender: v })}
+              options={[
+                { value: "male", label: "남성" },
+                { value: "female", label: "여성" },
+                { value: "androgynous", label: "중성적" },
+              ]}
+            />
+            <AvatarSelect
+              label="머리 길이"
+              value={form.hairLength}
+              onChange={(v) => setForm({ ...form, hairLength: v })}
+              options={[
+                { value: "short", label: "짧음" },
+                { value: "medium", label: "중간" },
+                { value: "long", label: "김" },
+              ]}
+            />
+            <AvatarSelect
+              label="머리 스타일"
+              value={form.hairStyle}
+              onChange={(v) => setForm({ ...form, hairStyle: v })}
+              options={[
+                { value: "straight", label: "생머리" },
+                { value: "wavy", label: "웨이브" },
+                { value: "curly", label: "곱슬" },
+              ]}
+            />
+            <AvatarSelect
+              label="머리 색상"
+              value={form.hairColor}
+              onChange={(v) => setForm({ ...form, hairColor: v })}
+              options={[
+                { value: "black", label: "검정" },
+                { value: "dark_brown", label: "흑갈색" },
+                { value: "brown", label: "갈색" },
+              ]}
+            />
+            <AvatarSelect
+              label="안경"
+              value={form.glasses}
+              onChange={(v) => setForm({ ...form, glasses: v })}
+              options={[
+                { value: "none", label: "없음" },
+                { value: "round", label: "둥근 테" },
+                { value: "rectangular", label: "사각 테" },
+              ]}
+            />
+            <AvatarSelect
+              label="표정"
+              value={form.expression}
+              onChange={(v) => setForm({ ...form, expression: v })}
+              options={[
+                { value: "smile", label: "따뜻한 미소" },
+                { value: "confident", label: "차분한 미소" },
+                { value: "calm", label: "평온함" },
+              ]}
+            />
+            <div className="col-span-2">
+              <AvatarSelect
+                label="상의"
+                value={form.top}
+                onChange={(v) => setForm({ ...form, top: v })}
+                options={[
+                  { value: "mint_hoodie", label: "민트 후드티" },
+                  { value: "white_tee", label: "흰 티셔츠" },
+                  { value: "grey_sweater", label: "회색 스웨터" },
+                  { value: "navy_jacket", label: "네이비 집업" },
+                  { value: "black_turtleneck", label: "검정 터틀넥" },
+                  { value: "mint_tee", label: "민트 티셔츠" },
+                ]}
+              />
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs">추가 지시사항 (선택, 한/영 모두 가능)</Label>
+            <Input
+              className="rounded-none"
+              maxLength={300}
+              placeholder="예: 수염 있음, 모자 착용, 친근한 인상"
+              value={form.notes}
+              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+            />
+          </div>
+          <div>
+            <Label className="text-xs">참고 이미지 (선택)</Label>
+            <Input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="rounded-none"
+              onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+            />
+            <p className="text-[11px] text-muted-foreground mt-1">
+              얼굴 형태·머리 길이·안경 여부 등을 참고용으로만 사용합니다.
+              실제 인물을 닮은 사진은 생성되지 않으며, 원본 사진은 저장되지
+              않습니다 (단체사진도 사용 가능 — 중앙 인물만 참고).
+            </p>
+            {form.refImage ? (
+              <p className="text-[11px] text-foreground mt-1">
+                선택됨: {form.refImage.name}
+              </p>
+            ) : null}
+            {refErr ? (
+              <p className="text-[11px] text-destructive mt-1">{refErr}</p>
+            ) : null}
+          </div>
+        </div>
+        <DialogFooter>
+          <Button
+            variant="outline"
+            className="rounded-none"
+            onClick={onClose}
+            disabled={isPending}
+          >
+            취소
+          </Button>
+          <Button
+            className="rounded-none"
+            disabled={isPending}
+            onClick={submit}
+          >
+            {isPending ? (
+              <Loader2 className="h-3 w-3 animate-spin mr-1" />
+            ) : null}
+            생성
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

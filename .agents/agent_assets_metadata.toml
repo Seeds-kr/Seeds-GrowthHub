@@ -30,3 +30,9 @@ id = "2I_EwWmmntd5JVf84kWis"
 uri = "file://attached_assets/memoji_ff06cbb4-7424-41e9-b8b2-943750978a9c.png"
 type = "image"
 title = "멘토 4 (방요셉)"
+
+[[outputs]]
+id = "9n5p8KcmxaSDo2mkkHjhL"
+uri = "file://attached_assets/memoji_custom_male.png"
+type = "image"
+title = "사용자 지정 옵션 샘플 (남성 + 둘근안경 + 민트후드티 + \"콧수염 있음\")"

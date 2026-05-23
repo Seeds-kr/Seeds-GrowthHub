@@ -1,1 +1,1 @@
-export { generateImage } from "./client";
+export { generateImage, type ReferenceImage } from "./client";
