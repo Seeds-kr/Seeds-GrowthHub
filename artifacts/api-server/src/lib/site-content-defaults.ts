@@ -18,176 +18,180 @@ export const SITE_CONTENT_LABELS: Record<SiteContentKey, string> = {
   "page.faq": "FAQ 페이지 (/faq)",
 };
 
-const RECRUIT_DEFAULT = {
-  hero: {
-    eyebrow: "Student Developer Club",
-    headlineLine1: "함께 만들",
-    headlineLine2: "학생 개발자를 찾습니다",
-    body: "Seeds는 학생 개발자들이 모여 매 학기 함께 스터디하고, 사이드 프로젝트를 만들고, 해커톤에 나가는 동아리입니다. 배운 것을 코드로 옮기고 싶은 분이라면 누구나 환영합니다.",
-    ctaLabel: "지원하기",
-  },
-  intro: {
-    eyebrow: "What is Seeds",
-    title: "Seeds는 어떤 동아리인가요?",
-    body: "Seeds는 학생 자치 개발 동아리입니다. 매 학기 새로운 부원을 모집해 정기 스터디·사이드 프로젝트·해커톤·선배 멘토링으로 한 학기를 함께 보내고, 학기 끝에 데모 데이로 결과물을 공유합니다.",
-    features: [
-      { title: "정기 스터디", desc: "주 1회 모여 언어·프레임워크·CS 기초를 함께 학습" },
-      { title: "사이드 프로젝트", desc: "기획·디자인·개발이 한 팀이 되어 한 학기 동안 제품을 빌드" },
-      { title: "선배 네트워크", desc: "현직 개발자가 된 졸업생들의 코드 리뷰·커리어 멘토링" },
-    ],
-  },
-  applicants: {
-    eyebrow: "Who Should Apply",
-    title: "이런 분들을 찾고 있습니다",
-    items: [
-      "코드를 좋아하고, 손으로 무언가를 만들어 보고 싶은 학생",
-      "기획·디자인·개발 중 어느 역할이든 끝까지 마무리해 본 경험(또는 의지)이 있는 학생",
-      "혼자보다 팀으로 같이 배우는 게 더 즐거운 학생",
-      "주 1회 정기 모임과 학기말 데모 데이에 꾸준히 참여 가능한 학생",
-      "고등학생·대학생 누구나 (전공 무관, 비전공자 환영)",
-      "전공·학년·실력보다 꾸준함과 호기심이 더 중요합니다",
-    ],
-  },
-  flow: {
-    eyebrow: "Semester Flow",
-    title: "한 학기의 흐름",
-    steps: [
-      { month: "Week 1-2", title: "온보딩 & 팀 빌딩", desc: "OT, 자기소개, 관심 스택별 팀 매칭" },
-      { month: "Week 3-6", title: "정기 스터디", desc: "프론트/백엔드/CS 트랙별 주간 스터디 + 토이 프로젝트" },
-      { month: "Week 7-11", title: "사이드 프로젝트", desc: "팀별로 한 학기 동안 제품을 기획·디자인·개발" },
-      { month: "Week 12", title: "데모 데이", desc: "한 학기 결과물을 부원·선배·외부 게스트에게 공유" },
-    ],
-  },
-  schedule: {
-    eyebrow: "Recruitment Schedule",
-    title: "모집 일정",
-    steps: [
-      { phase: "지원 접수", date: "10.01 — 10.15", desc: "온라인 지원서 제출" },
-      { phase: "서류 검토", date: "10.16 — 10.20", desc: "포트폴리오·지원서 종합 검토" },
-      { phase: "커피챗 면접", date: "10.25 — 10.27", desc: "운영진과의 30분 가벼운 대화" },
-      { phase: "최종 합격 발표", date: "11.01", desc: "개별 안내 및 OT 일정 공지" },
-    ],
-  },
-  faqTeaser: {
-    eyebrow: "FAQ",
-    title: "자주 묻는 질문",
-    items: [
-      { q: "회비가 있나요?", a: "Seeds는 학생 자치 동아리로 별도의 정기 회비는 없습니다. 일부 활동(외부 컨퍼런스 등)은 자율 분담입니다." },
-      { q: "비전공자도 가능한가요?", a: "환영합니다. 부원의 약 1/3이 비전공/복수전공 학생입니다." },
-      { q: "다음 학기에 다시 지원해도 되나요?", a: "물론입니다. 이번에 인연이 닿지 않더라도 다음 기수에 다시 만나요." },
-    ],
-    ctaLabel: "전체 FAQ 보기",
-  },
-  cta: {
-    title: "함께 만들 사람을 기다립니다",
-    body: "지원서 작성에 20분이면 충분합니다. 지금까지 만들어 본 것·만들어 보고 싶은 것을 솔직하게 적어주세요.",
-    ctaLabel: "지원하기",
-  },
-};
-
 const HOME_DEFAULT = {
   hero: {
-    eyebrow: "Student Developer Club",
-    title: "함께 코드를 심고, 함께 자랍니다",
-    body: "Seeds는 학생 개발자들이 모여 매 학기 함께 스터디하고, 사이드 프로젝트를 만들고, 해커톤에 나가는 동아리입니다. 졸업한 선배들은 다양한 회사와 팀에서 개발자로 일하고 있습니다.",
+    eyebrow: "STUDENT DEVELOPER CLUB",
+    title: "함께 배우고 도전하는\n학생 개발자들의 작은 생태계",
+    body: "Seeds는 씨앗으로 시작해 새싹과 묘목을 지나 튼튼한 나무로 나아가는 과정을 함께합니다. 현업 10년차 이상의 멘토님과 SW마에스트로 출신 운영진이 함께하는 연합 코딩 동아리예요.",
     primaryCtaLabel: "모집 알아보기",
     primaryCtaHref: "/recruit",
     secondaryCtaLabel: "활동 보기",
     secondaryCtaHref: "/program",
   },
   stats: {
-    eyebrow: "By the Numbers",
+    eyebrow: "BY THE NUMBERS",
     title: "숫자로 보는 Seeds",
     items: [
-      { value: "5", label: "기수 운영" },
-      { value: "120+", label: "누적 부원" },
-      { value: "24", label: "사이드 프로젝트" },
-      { value: "8", label: "수상 해커톤" },
+      { value: "3년+", label: "운영 기간" },
+      { value: "20+", label: "운영 프로젝트" },
+      { value: "96명", label: "멘토·운영진·회원" },
+      { value: "10개월", label: "프로젝트 주기" },
     ],
   },
   about: {
-    eyebrow: "About Seeds",
+    eyebrow: "ABOUT SEEDS",
     title: "Seeds가 만드는 것",
-    body: "Seeds는 강의를 듣는 동아리가 아니라, 직접 손으로 무언가를 만들어 보는 동아리입니다. 매주 모여 함께 배우고, 한 학기 동안 팀을 이뤄 사이드 프로젝트를 빌드하고, 학기말에 데모 데이로 공유합니다. 졸업 후에도 알럼나이 채널에서 꾸준히 연결됩니다.",
+    body: "기능 구현에 그치지 않고, 기획·설계·구현·테스트·배포로 이어지는 SDLC 전 과정을 멘토님과 함께 경험합니다. 하드스킬뿐 아니라 의사소통 같은 소프트스킬도 함께 익혀요. 졸업 후에도 정기모임과 네트워킹으로 꾸준히 연결됩니다.",
     ctaLabel: "더 알아보기",
     ctaHref: "/about",
   },
   projects: {
-    eyebrow: "Featured Projects",
-    title: "이번 학기 사이드 프로젝트",
-    body: "현재 활동 중인 부원 팀들이 만들고 있는 제품을 소개합니다.",
+    eyebrow: "ACTIVITIES",
+    title: "Seeds의 4가지 활동",
+    body: "프로젝트, 스터디, 강의·콘테스트, 네트워킹 — Seeds에서는 네 가지 흐름이 동시에 움직입니다.",
     items: [
-      {
-        title: "캠퍼스 출결 모바일 앱",
-        summary: "교내 강의실 NFC 태그로 한 번에 출결을 처리하는 앱. 베타 사용자 200명 모집 중.",
-        status: "진행 중",
-      },
-      {
-        title: "동아리 운영 관리 SaaS",
-        summary: "출결·과제·발표 자료를 한 곳에서 관리하는 동아리용 도구. 교내 4개 동아리에 시범 도입.",
-        status: "완료",
-      },
-      {
-        title: "오픈소스 문서 번역 봇",
-        summary: "GitHub PR로 영어 문서를 한국어로 번역해 주는 LLM 기반 봇. v0.2 공개.",
-        status: "진행 중",
-      },
+      { title: "창의도전 프로젝트", summary: "매년 2~11월 10개월간 진행되는 팀 프로젝트. SDLC 전 과정을 멘토와 함께 경험합니다.", status: "10개월" },
+      { title: "자유 제안 스터디", summary: "언어·프레임워크 기초부터 디자인 패턴·DevOps·AI Agent까지 자유롭게 주제를 제안하고 운영합니다.", status: "기초·기술" },
+      { title: "강의·세미나·콘테스트", summary: "AI 특강, 서비스 기획 세미나, 팀/학교 대항 콘테스트로 지식과 실력을 함께 끌어올려요.", status: "부스트업" },
+      { title: "커뮤니티 네트워킹", summary: "프로젝트 회원, 졸업 회원, 운영진, 멘토진이 함께하는 월간 정기모임으로 인사이트와 진로를 나눠요.", status: "월간 모임" },
     ],
   },
   activities: {
-    eyebrow: "Recent Activities",
-    title: "최근 활동",
+    eyebrow: "YEARS",
+    title: "년도별 활동",
     items: [
-      { date: "2025.04", title: "5기 데모 데이", summary: "8개 팀의 한 학기 사이드 프로젝트 결과를 공유했습니다." },
-      { date: "2025.03", title: "교내 해커톤 우승", summary: "Seeds 연합팀이 24시간 해커톤에서 1위와 산업혁신 특별상을 받았습니다." },
-      { date: "2025.02", title: "신입 부원 OT", summary: "5기 신입 부원 28명이 합류해 트랙별 스터디를 시작했습니다." },
+      { date: "2026", title: "2026 Seeds", summary: "차년도 정기 모집 예정." },
+      { date: "2025", title: "2025 Seeds", summary: "프로젝트 활동 · 자유 스터디 · 콘테스트 · 정기모임 운영 중." },
+      { date: "2024", title: "2024 Seeds", summary: "프로젝트 활동과 콘테스트, 정기모임을 통해 성장." },
+      { date: "2023", title: "2023 Seeds", summary: "Seeds 첫 출발 — 멘토진과 운영진이 함께 첫 기수 프로젝트를 진행." },
     ],
   },
   recruitBanner: {
-    eyebrow: "다음 기수 모집",
-    title: "Seeds와 함께 만들 준비가 되셨나요?",
-    body: "다음 기수 모집 일정과 지원 방법을 확인해 보세요.",
+    eyebrow: "RECRUITMENT",
+    title: "다음 기수와 함께할 학생 개발자를 기다립니다",
+    body: "정기 모집은 매년 12월. 정기모임·스터디·팀 합류는 수시로도 함께할 수 있어요.",
     ctaLabel: "모집 페이지로",
     ctaHref: "/recruit",
+  },
+};
+
+const RECRUIT_DEFAULT = {
+  hero: {
+    eyebrow: "RECRUITMENT",
+    headlineLine1: "함께 자랄",
+    headlineLine2: "학생 개발자를 기다립니다",
+    body: "씨앗에서 나무로 — 현업 10년차 이상 멘토님과 함께 10개월 프로젝트, 자유 스터디, 콘테스트, 네트워킹을 통해 성장합니다.",
+    ctaLabel: "지원하기",
+  },
+  intro: {
+    eyebrow: "WHAT IS SEEDS",
+    title: "Seeds는 어떤 동아리인가요?",
+    body: "Seeds는 현업 10년차 이상 멘토님과 SW마에스트로 출신 운영진이 함께하는 연합 코딩 동아리입니다. 매년 2월부터 11월까지 10개월간 프로젝트를 진행하며, 자유 스터디·세미나·콘테스트·정기모임을 통해 함께 성장합니다.",
+    features: [
+      { title: "10개월 프로젝트", desc: "기획부터 배포까지 SDLC 전 과정을 멘토와 함께" },
+      { title: "자유 제안 스터디", desc: "기초 언어부터 AI·DevOps·디자인 패턴까지 자유롭게" },
+      { title: "월간 정기모임", desc: "강연·진로 상담·네트워킹의 자리" },
+    ],
+  },
+  applicants: {
+    eyebrow: "WHO SHOULD APPLY",
+    title: "이런 분들을 기다립니다",
+    items: [
+      "스터디부터 팀 프로젝트 수행까지 가능하신 분",
+      "SW 분야 최고 전문가의 멘토링을 받으며 성장하고 싶으신 분",
+      "활동 기간 내 Seeds 활동에 몰입할 수 있으신 분",
+      "혼자보다 팀으로 함께 배우는 게 더 즐거우신 분",
+      "고등학생·대학생 누구나 (전공 무관, 비전공자 환영)",
+    ],
+  },
+  flow: {
+    eyebrow: "PROJECT FLOW",
+    title: "10개월 프로젝트의 흐름",
+    steps: [
+      { month: "2월", title: "팀 빌딩 & 기획", desc: "관심 주제·기술 스택으로 팀을 꾸리고 멘토와 함께 기획" },
+      { month: "3-5월", title: "설계 & 초기 구현", desc: "요구사항·아키텍처 설계와 핵심 기능 구현" },
+      { month: "6-9월", title: "본격 개발 & 멘토링", desc: "기능 확장과 코드 품질·성능·배포 고민. 정기 코드 리뷰" },
+      { month: "10-11월", title: "테스트·배포·공유", desc: "사용자 테스트와 배포 마무리, 콘테스트·정기모임에서 공유" },
+    ],
+  },
+  schedule: {
+    eyebrow: "RECRUITMENT SCHEDULE",
+    title: "모집 일정",
+    steps: [
+      { phase: "🗓️ 정기모집", date: "매년 12월", desc: "차년도 프로젝트 활동을 함께할 분 (지금은 정기 모집 기간이 아니에요)" },
+      { phase: "☀️ 수시모집", date: "상시", desc: "정기모임·스터디·팀 합류를 원하는 분 (팀 단위 지원도 가능)" },
+      { phase: "📬 문의", date: "이메일 · 오픈채팅", desc: "seeds.code@gmail.com / 카카오톡 오픈채팅" },
+    ],
+  },
+  faqTeaser: {
+    eyebrow: "FAQ",
+    title: "자주 묻는 질문",
+    items: [
+      { q: "Seeds는 어떤 동아리인가요?", a: "학생 개발자들이 함께 배우고 도전하는 연합 코딩 동아리입니다. SW마에스트로 출신 운영진과 현업 10년 이상 멘토님들과 함께 프로젝트·스터디·세미나·네트워킹으로 성장합니다." },
+      { q: "프로젝트는 어떻게 진행되나요?", a: "매년 2월부터 11월까지 10개월간 진행됩니다. 멘토님과 함께 기획·설계·구현·테스트·배포까지 SDLC 전 과정을 경험해요." },
+      { q: "졸업 후에도 참여할 수 있나요?", a: "네, Seeds는 졸업 후에도 정기모임이나 세미나에 참여하고 후배에게 도움을 줄 수 있는 지속 커뮤니티입니다." },
+    ],
+    ctaLabel: "전체 FAQ 보기",
+  },
+  cta: {
+    title: "함께 만들 학생 개발자를 기다립니다",
+    body: "지원서 작성에 20분이면 충분합니다. 지금까지 만들어 본 것과 만들어 보고 싶은 것을 솔직하게 적어주세요.",
+    ctaLabel: "지원하기",
   },
 };
 
 const ABOUT_DEFAULT = {
   title: "Seeds 소개",
   intro:
-    "Seeds는 함께 만들고 배우는 학생 개발자 동아리입니다. 정기 스터디·사이드 프로젝트·해커톤·선배 멘토링을 통해 학생들이 직접 손으로 제품을 만들어 보는 경험을 쌓아갑니다.",
+    "Seeds는 씨앗으로 시작해 새싹과 묘목을 지나 튼튼한 나무로 나아가는 과정이라는 의미를 담고 있습니다. 함께 배우고 도전하는 학생 개발자들의 작은 생태계예요.\n\n현업 10년차 이상의 학생 양성에 진심이신 멘토님들과, SW마에스트로 수료생 운영진이 함께하는 연합 코딩 동아리입니다.",
   sections: [
     {
-      heading: "우리의 미션",
-      body: "혼자 강의를 듣는 것을 넘어, 동료와 함께 코드를 짜고 제품을 끝까지 만들어 보는 경험을 제공합니다. 전공·학년·실력보다 호기심과 꾸준함을 더 중요하게 생각합니다.",
+      heading: "1. 창의도전 프로젝트를 통한 성장",
+      body: "매년 2월부터 11월까지 10개월간 진행되는 프로젝트를 통해 기획·설계·구현·테스트·배포로 이어지는 SDLC 전 과정을 경험합니다.\n\n현업 10년차 이상의 멘토님과 함께하여 수준 높은 프로젝트를 수행하며, 설계 같은 하드스킬뿐 아니라 의사소통 등 소프트스킬도 함께 배워요. 나아가 프로젝트를 고도화하며 필요한 기술을 고민하고 연구해 보는 기회도 가질 수 있어요.",
+    },
+    {
+      heading: "2. 각자에게 딱 맞는 스터디",
+      body: "언어·프레임워크 등 기초 스터디와 디자인 패턴, 아키텍처 스타일, DevOps, AI Agent, CV 등 기술 스터디까지 — 각자에게 맞는 스터디로 성장해요. 자유롭게 스터디 주제를 제안하고 진행할 수 있어요.",
+    },
+    {
+      heading: "3. 강의·세미나·콘테스트로 부스트업",
+      body: "AI 기술 특강, 서비스 기획 세미나 등 다양한 형식의 지식 공유회를 통해 멘토님·선배·동료 학생 사이에서 지식을 나눠요.\n\n팀 대항전·학교 대항전·개인전 등 콘테스트 형태로 디버깅, 성능 최적화, 코드 취약점, 디자인 패턴, IT 트렌드 같은 개발자에게 필요한 기술과 개념을 익혀요.",
+    },
+    {
+      heading: "4. 커뮤니티 네트워킹",
+      body: "프로젝트 활동 회원, 졸업 회원, 운영진, 멘토진까지 다양한 구성원으로 이루어진 Seeds는 네트워킹을 통해 멋진 시너지를 낸다고 믿어요.\n\n매월 알찬 콘텐츠로 준비된 정기모임을 통해 친분을 쌓고, 정규 활동에서 채우지 못한 인사이트 공유와 진로 고민에 대한 이야기를 나눠요.",
+    },
+    {
+      heading: "Seeds의 구성",
+      body: "SW마에스트로 멘토님과 IT 전문가로 이루어진 멘토진, 그리고 SW마에스트로 출신 운영진이 함께합니다.",
     },
   ],
   values: [
-    { label: "함께 짓기", desc: "혼자 빠른 것보다, 함께 끝까지 가는 것을 선택합니다." },
-    { label: "꾸준함", desc: "한 번의 폭발보다 매주의 작은 PR을 더 신뢰합니다." },
-    { label: "오픈", desc: "배운 것은 회고로, 만든 것은 오픈소스로 공유합니다." },
+    { label: "만들어보기", desc: "강의 대신 직접 손으로 만들어 보는 것을 더 신뢰합니다." },
+    { label: "함께 리뷰하기", desc: "코드는 혼자 쓰지만, 같이 읽을 때 더 좋아져요." },
+    { label: "꾸준히", desc: "한 번의 폭발보다 매주의 작은 PR을 더 신뢰합니다." },
   ],
 };
 
 const PROGRAM_DEFAULT = {
   title: "활동 안내",
   curriculum: {
-    heading: "한 학기 흐름",
+    heading: "10개월 프로젝트의 흐름",
     items: [
-      { title: "Week 1-2: 온보딩 & 팀 빌딩", desc: "OT, 자기소개, 관심 스택별 팀 매칭" },
-      { title: "Week 3-6: 정기 스터디", desc: "프론트/백엔드/CS 트랙별 주간 스터디 + 토이 프로젝트" },
-      { title: "Week 7-11: 사이드 프로젝트", desc: "팀별로 한 학기 제품을 기획·디자인·개발" },
-      { title: "Week 12: 데모 데이", desc: "한 학기 결과물을 부원·선배·외부 게스트에게 공유" },
+      { title: "2월 — 팀 빌딩 & 기획", desc: "관심 주제·기술 스택으로 팀을 꾸리고, 멘토와 함께 기획을 시작합니다." },
+      { title: "3-5월 — 설계 & 초기 구현", desc: "요구사항·아키텍처 설계를 거쳐 핵심 기능 구현에 들어가요." },
+      { title: "6-9월 — 본격 개발 & 멘토링", desc: "기능을 키우며 코드 품질·성능·배포까지 고민합니다. 정기 코드 리뷰가 진행돼요." },
+      { title: "10-11월 — 테스트·배포·공유", desc: "사용자 테스트와 배포를 마무리하고, 콘테스트·정기모임에서 결과를 공유합니다." },
     ],
   },
   benefits: {
-    heading: "활동 혜택",
+    heading: "함께 얻는 것",
     items: [
-      "교내 동아리방 자유 사용 + 정기 모임 장소 지원",
-      "현직 개발자 졸업생의 코드 리뷰 & 커리어 멘토링",
-      "외부 해커톤·컨퍼런스 참가비 일부 지원",
-      "스터디 도서/유료 강의 일부 지원",
-      "졸업생 알럼나이 채널 가입 자격",
+      "현업 10년차 이상 멘토님의 코드 리뷰와 설계 피드백",
+      "기획·설계·구현·테스트·배포 SDLC 전 과정 경험",
+      "기초·기술 스터디를 자유롭게 제안하고 운영할 권한",
+      "팀 대항전·개인전 콘테스트로 실력 점검",
+      "졸업 후에도 이어지는 정기모임과 네트워킹",
     ],
   },
 };
@@ -195,10 +199,15 @@ const PROGRAM_DEFAULT = {
 const FAQ_DEFAULT = {
   title: "자주 묻는 질문",
   items: [
-    { q: "지원 자격은 어떻게 되나요?", a: "고등학생·대학생 누구나 지원 가능합니다. 전공이나 학년 제한은 없으며, 비전공자도 환영합니다. 코드에 대한 호기심과 꾸준히 참여할 의지가 가장 중요합니다." },
-    { q: "면접은 어떻게 진행되나요?", a: "서류 통과자에 한해 운영진과 30분 정도의 가벼운 커피챗 형태로 진행됩니다. 지금까지 만들어 본 것이나 만들어 보고 싶은 것에 대해 자유롭게 이야기합니다." },
-    { q: "회비나 참가비가 있나요?", a: "Seeds는 학생 자치 동아리로 별도의 정기 회비는 없습니다. 일부 활동(외부 컨퍼런스 참가 등)은 자율적으로 분담합니다." },
-    { q: "해외에서도 활동할 수 있나요?", a: "정기 모임과 데모 데이가 한국 시간 기준으로 진행되며 일부 오프라인 행사가 있어, 원칙적으로 국내에서 활동 가능한 분을 우선 선발합니다." },
+    { q: "Seeds는 어떤 동아리인가요?", a: "Seeds는 학생 개발자들이 함께 배우고 도전하는 연합 코딩 동아리입니다. SW마에스트로 출신 운영진과 10년 이상의 현업 경험을 가진 멘토님들과 함께 프로젝트·스터디·세미나·네트워킹으로 성장할 수 있습니다." },
+    { q: "어떤 활동을 하나요?", a: "프로젝트 활동(기획부터 배포까지 SDLC 기반), 자유 제안 스터디(기초 언어부터 고급 기술까지), 세미나 & 콘테스트(AI·서비스 기획·IT 트렌드 강의와 실력 부스트업), 네트워킹(정기모임 교류)의 네 가지가 동시에 운영됩니다." },
+    { q: "프로젝트는 어떻게 진행되나요?", a: "2월부터 11월까지 10개월간 진행됩니다. 멘토님들과 함께 수준 높은 프로젝트를 수행하며 단순 기능 구현을 넘어 설계·코드 품질·배포까지 고려하고, 필요한 소프트스킬도 함께 배워요." },
+    { q: "스터디는 어떻게 참여하나요?", a: "Seeds 내에서 원하는 주제를 자유롭게 제안하고 팀을 꾸려 진행할 수 있습니다. 기초 스터디(언어·프레임워크)부터 AI·DevOps·디자인 패턴 같은 심화 주제까지 선택할 수 있어요. Java·TS·Spring Boot·React.js 같은 주축 언어/프레임워크 스터디는 기본 개설됩니다." },
+    { q: "정기 모임은 어떤 형식인가요?", a: "매월 진행되는 정기모임에서는 개발 강연, 프로젝트 공유, 진로 고민 상담 등 다양한 주제로 진행됩니다. Seeds 구성원 간 네트워킹의 중요한 자리예요." },
+    { q: "멘토링은 어떻게 이루어지나요?", a: "현업에서 10년 이상의 경험을 가진 멘토님들이 프로젝트와 세미나를 통해 기술적·커리어적 조언을 제공합니다. 직접 코드 리뷰를 받거나 특정 주제에 대한 심층 가이드를 받을 수도 있어요." },
+    { q: "졸업 후에도 참여할 수 있나요?", a: "네! Seeds는 단순한 학생 모임이 아니라 지속적으로 네트워킹할 수 있는 커뮤니티입니다. 졸업 후에도 정기모임이나 세미나에 참여하고, 후배에게 도움을 줄 수 있어요." },
+    { q: "가입은 어떻게 하나요?", a: "Seeds 모집 공고를 통해 지원서를 작성하고, 운영진과 간단한 인터뷰를 거쳐 최종 선발됩니다. 모집 일정은 공식 채널(홈페이지·SNS 등)을 통해 공지됩니다." },
+    { q: "문의처를 알려주세요!", a: "카카오톡 오픈채팅(https://open.kakao.com/o/sqpmEzEf) 또는 이메일(seeds.code@gmail.com)로 연락 주세요." },
   ],
 };
 
@@ -220,23 +229,23 @@ function isOldHomeShape(value: unknown): boolean {
   );
 }
 
-// Detect the legacy "leadership program" copy so we can overwrite it with the
-// new "student developer club" defaults. We look for the eyebrow string we
-// previously shipped — both English and the older "리더십" wording.
-function isLegacyLeadershipCopy(value: unknown): boolean {
+// Detect pre-Notion-rewrite copy so it can be overwritten with the new
+// student-developer-club defaults. We *only* match phrases that were verbatim
+// in the previously-shipped defaults and that an admin is extremely unlikely
+// to type by themselves — otherwise an admin-edited row could be silently
+// reset every boot. Common Korean words (데모 데이, 커피챗, 탁월함, 학기말, …)
+// are intentionally NOT in this list.
+const LEGACY_COPY_SIGNATURES = [
+  "Seeds Leadership Program",
+  "실천적 리더를 양성",
+  "글로벌 리더로 성장",
+  "프리미엄 교육 프로그램",
+] as const;
+
+function isPreNotionCopy(value: unknown): boolean {
   if (typeof value !== "object" || value === null) return false;
-  const v = value as Record<string, unknown>;
-  const hero = v.hero as Record<string, unknown> | undefined;
-  const eyebrow = (hero?.eyebrow as string | undefined) ?? "";
-  const intro = v.intro as Record<string, unknown> | undefined;
-  const introBody = (intro?.body as string | undefined) ?? "";
-  const aboutSection = v.about as Record<string, unknown> | undefined;
-  const aboutBody = (aboutSection?.body as string | undefined) ?? "";
-  return (
-    eyebrow.includes("Leadership") ||
-    introBody.includes("리더십") ||
-    aboutBody.includes("리더십")
-  );
+  const flat = JSON.stringify(value);
+  return LEGACY_COPY_SIGNATURES.some((sig) => flat.includes(sig));
 }
 
 export async function bootstrapSiteContents(
@@ -283,14 +292,14 @@ export async function bootstrapSiteContents(
     );
   }
 
-  // One-time positioning migration: if any page still has the legacy
-  // "leadership program" copy (eyebrow "Seeds Leadership Program" or body
-  // text containing "리더십"), reset it to the new student developer club
-  // defaults. This intentionally overwrites admin edits that still match the
-  // legacy copy — once an admin has customized away from it, we leave it.
+  // One-time positioning migration: if any page still has pre-Notion-rewrite
+  // copy (Leadership Program / 리더십 / 프리미엄 / placeholder student-club
+  // text), reset it to the new Notion-sourced defaults. This overwrites admin
+  // edits that still match the legacy copy — once an admin has customized
+  // away from it, we leave it.
   const fresh = await db.select().from(siteContentsTable);
   for (const row of fresh) {
-    if (!isLegacyLeadershipCopy(row.value)) continue;
+    if (!isPreNotionCopy(row.value)) continue;
     const key = row.key as SiteContentKey;
     if (!SITE_CONTENT_KEYS.includes(key)) continue;
     await db
