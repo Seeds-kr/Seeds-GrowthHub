@@ -30,6 +30,7 @@ export const peopleProfilesTable = pgTable(
     affiliation: text("affiliation"),
     bio: text("bio"),
     photoUrl: text("photo_url"),
+    phone: text("phone"),
     tags: text("tags").array().notNull().default([]),
     displayOrder: integer("display_order").notNull().default(0),
     isPublic: boolean("is_public").notNull().default(false),

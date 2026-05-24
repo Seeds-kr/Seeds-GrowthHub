@@ -193,12 +193,31 @@ function makeRequireRole(allowed: UserRole[]): RequestHandler {
 
 export const requireAuth: RequestHandler = makeRequireRole([
   "admin",
-  "evaluator",
+  "mentor",
   "student",
 ]);
 export const requireAdmin: RequestHandler = makeRequireRole(["admin"]);
-export const requireEvaluator: RequestHandler = makeRequireRole(["evaluator"]);
+export const requireMentor: RequestHandler = makeRequireRole(["mentor"]);
 export const requireStudent: RequestHandler = makeRequireRole(["student"]);
+// Anyone who can carry out an evaluation assignment. The evaluator-role concept
+// was removed (the club has no external evaluators); admins assign other
+// admins/mentors to evaluate applications. Per-application assignment ownership
+// is enforced inside the route handler.
+export const requireAdminOrMentor: RequestHandler = makeRequireRole([
+  "admin",
+  "mentor",
+]);
+
+/**
+ * optionalAuth: populate req.sessionUser if a valid session cookie is present,
+ * but do NOT 401 if none is — used for endpoints that return more data to
+ * logged-in members (e.g. /people including phone numbers).
+ */
+export const optionalAuth: RequestHandler = async (req, _res, next) => {
+  const user = await getCurrentUser(req);
+  if (user) req.sessionUser = user;
+  next();
+};
 
 /**
  * Bootstrap an admin user from ADMIN_EMAIL / ADMIN_PASSWORD env vars on startup.

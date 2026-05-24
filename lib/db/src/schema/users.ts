@@ -8,8 +8,26 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
-export const USER_ROLES = ["admin", "evaluator", "student"] as const;
+export const USER_ROLES = ["admin", "mentor", "student"] as const;
 export type UserRole = (typeof USER_ROLES)[number];
+
+/**
+ * Effective roles → can the user view other members' contact info
+ * (phone/email) on the /people directory page?
+ * Currently: any logged-in member (admin, mentor, student).
+ * Centralized so adding alumni / suspending a role later changes only one place.
+ */
+export function canViewMemberContacts(u: {
+  role: UserRole;
+  extraRoles?: UserRole[] | null;
+}): boolean {
+  const roles = getEffectiveRoles(u);
+  return (
+    roles.includes("admin") ||
+    roles.includes("mentor") ||
+    roles.includes("student")
+  );
+}
 
 export const usersTable = pgTable(
   "users",

@@ -26,7 +26,8 @@ router.post(
       res.status(400).json({ error: "Invalid assignment" });
       return;
     }
-    // Validate evaluator exists, is active, and is an evaluator
+    // Validate the assignee exists, is active, and is admin or mentor (the
+    // evaluator role was removed; only admins/mentors can carry out evaluations).
     const [evaluator] = await db
       .select()
       .from(usersTable)
@@ -35,9 +36,12 @@ router.post(
     if (
       !evaluator ||
       !evaluator.isActive ||
-      !getEffectiveRoles(evaluator).includes("evaluator")
+      !(
+        getEffectiveRoles(evaluator).includes("admin") ||
+        getEffectiveRoles(evaluator).includes("mentor")
+      )
     ) {
-      res.status(400).json({ error: "Invalid evaluator" });
+      res.status(400).json({ error: "Invalid evaluator (must be admin or mentor)" });
       return;
     }
     const [app] = await db

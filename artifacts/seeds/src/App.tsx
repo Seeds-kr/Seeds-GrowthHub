@@ -40,6 +40,9 @@ import AdminSiteContent from "@/pages/admin/site-content";
 import EvaluatorDashboard from "@/pages/evaluator/dashboard";
 import EvaluatorApplicationDetail from "@/pages/evaluator/application-detail";
 
+import MentorDashboard from "@/pages/mentor/dashboard";
+import MentorProfile from "@/pages/mentor/profile";
+
 import StudentLogin from "@/pages/student/login";
 import StudentDashboard from "@/pages/student/dashboard";
 import StudentSessions from "@/pages/student/sessions";
@@ -111,6 +114,9 @@ function Router() {
 
       <Route path="/evaluator" component={EvaluatorDashboard} />
       <Route path="/evaluator/applications/:id" component={EvaluatorApplicationDetail} />
+
+      <Route path="/mentor" component={MentorDashboard} />
+      <Route path="/mentor/profile" component={MentorProfile} />
 
       <Route path="/student/login" component={StudentLogin} />
       <Route path="/student" component={StudentDashboard} />

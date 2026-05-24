@@ -45,6 +45,7 @@ type FormState = {
   affiliation: string;
   bio: string;
   photoUrl: string;
+  phone: string;
   tagsCsv: string;
   displayOrder: number;
   isPublic: boolean;
@@ -57,6 +58,7 @@ const blank = (kind: PeopleKind): FormState => ({
   affiliation: "",
   bio: "",
   photoUrl: "",
+  phone: "",
   tagsCsv: "",
   displayOrder: 0,
   isPublic: false,
@@ -84,6 +86,7 @@ export default function AdminPeople() {
         affiliation: form.affiliation.trim() || null,
         bio: form.bio.trim() || null,
         photoUrl: form.photoUrl.trim() || null,
+        phone: form.phone.trim() || null,
         tags: form.tagsCsv
           .split(",")
           .map((s) => s.trim())
@@ -156,6 +159,7 @@ export default function AdminPeople() {
       affiliation: p.affiliation ?? "",
       bio: p.bio ?? "",
       photoUrl: p.photoUrl ?? "",
+      phone: p.phone ?? "",
       tagsCsv: p.tags.join(", "),
       displayOrder: p.displayOrder,
       isPublic: p.isPublic,
@@ -346,6 +350,15 @@ export default function AdminPeople() {
                 onChange={(e) =>
                   setForm({ ...form, photoUrl: e.target.value })
                 }
+              />
+            </div>
+            <div>
+              <Label className="text-xs">전화번호 (로그인 회원에게만 표시)</Label>
+              <Input
+                className="rounded-none"
+                placeholder="010-0000-0000"
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
               />
             </div>
             <div>

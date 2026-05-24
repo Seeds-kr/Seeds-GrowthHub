@@ -7,7 +7,7 @@ import { getAdminMeQueryKey } from "@workspace/api-client-react";
 import { Loader2 } from "lucide-react";
 import { RoleSwitcher, effectiveRoles, pickRedirectFor } from "./RoleSwitcher";
 
-export function EvaluatorLayout({ children }: { children: ReactNode }) {
+export function MentorLayout({ children }: { children: ReactNode }) {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const { data: me, isLoading, isError } = useAdminMe({
@@ -16,14 +16,7 @@ export function EvaluatorLayout({ children }: { children: ReactNode }) {
   const logout = useAdminLogout();
 
   const roles = me ? effectiveRoles(me) : [];
-  // The evaluator role was removed; evaluation work is performed by any admin
-  // or mentor that has been assigned to an application.
-  const allowed = roles.includes("admin") || roles.includes("mentor");
-  // RoleSwitcher needs a known role for `current`; show as mentor if the user
-  // has it, otherwise admin. Either way the switcher only renders OTHER roles.
-  const switcherCurrent: "admin" | "mentor" = roles.includes("mentor")
-    ? "mentor"
-    : "admin";
+  const allowed = roles.includes("mentor");
 
   useEffect(() => {
     if (isLoading) return;
@@ -58,13 +51,16 @@ export function EvaluatorLayout({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-50 w-full border-b border-border bg-card">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
-            <Link href="/evaluator" className="font-serif text-lg font-bold text-primary">Seeds 평가</Link>
+            <Link href="/mentor" className="font-serif text-lg font-bold text-primary">Seeds 멘토</Link>
             <nav className="hidden md:flex items-center gap-6">
-              <Link href="/evaluator" className="text-sm font-medium text-muted-foreground hover:text-primary">내 배정 목록</Link>
+              <Link href="/mentor" className="text-sm font-medium text-muted-foreground hover:text-primary">홈</Link>
+              <Link href="/mentor/profile" className="text-sm font-medium text-muted-foreground hover:text-primary">내 프로필</Link>
+              <Link href="/people" className="text-sm font-medium text-muted-foreground hover:text-primary">회원 디렉터리</Link>
+              <Link href="/evaluator" className="text-sm font-medium text-muted-foreground hover:text-primary">평가 배정</Link>
             </nav>
           </div>
           <div className="flex items-center gap-4">
-            <RoleSwitcher roles={roles} current={switcherCurrent} />
+            <RoleSwitcher roles={roles} current="mentor" />
             <span className="text-sm text-muted-foreground">{me.name} ({me.email})</span>
             <Button variant="outline" size="sm" onClick={handleLogout} disabled={logout.isPending}>
               {logout.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}

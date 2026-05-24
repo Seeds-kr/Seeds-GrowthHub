@@ -23,17 +23,19 @@ Shared proxy at `localhost:80` routes `/api/*` → API server, everything else �
 
 Public (Korean UI): `/`, `/about`, `/program`, `/faq`, `/recruit`, `/apply`, `/apply/success`, `/people` (탭 멘토/운영진/학생, 레거시 `/mentors`·`/staff`·`/members` 동일 페이지로 진입 시 탭 자동 선택, 탭 전환 시 URL `replace` 동기화), `/activate/:token` (no layout).
 
-Admin (`role=admin`): `/admin/login`, `/admin`, `/admin/applications[/:id]`, `/admin/evaluators`, `/admin/students[/:id]`, `/admin/cohorts`, `/admin/programs`, `/admin/sessions[/:id/attendance]`, `/admin/assignments[/:id]`, `/admin/announcements`, `/admin/people`, `/admin/site-content`, `/admin/activity-records`, `/admin/projects[/:id]`, `/admin/artifacts`, `/admin/feedback`, `/admin/tags`, `/admin/students/:id/timeline`, `/admin/students/:id/report`, `/admin/cohorts/:id/summary`.
+Admin (`role=admin`): `/admin/login`, `/admin`, `/admin/applications[/:id]`, `/admin/evaluators` (nav label "평가 담당자" — pool of mentors/admins assignable as evaluators), `/admin/students[/:id]`, `/admin/cohorts`, `/admin/programs`, `/admin/sessions[/:id/attendance]`, `/admin/assignments[/:id]`, `/admin/announcements`, `/admin/people`, `/admin/site-content`, `/admin/activity-records`, `/admin/projects[/:id]`, `/admin/artifacts`, `/admin/feedback`, `/admin/tags`, `/admin/students/:id/timeline`, `/admin/students/:id/report`, `/admin/cohorts/:id/summary`.
 
-Evaluator (`role=evaluator`): `/evaluator`, `/evaluator/applications/:id`.
+Mentor (`role=mentor`): `/mentor`, `/mentor/profile` (edits own `people_profiles` row where `userId=me, kind=mentor`; admin must create the row first — no lazy create).
+
+Evaluation surface (not a role, an access-controlled sub-task): `/evaluator`, `/evaluator/applications/:id` — open to any user whose effective roles include `admin` OR `mentor`. The `evaluator` role itself was removed (the club has no external evaluators); admins assign other admins/mentors to evaluate applications via `/admin/evaluators`.
 
 Student (`role=student`): `/student/login` (shared form), `/student`, `/student/sessions`, `/student/attendance`, `/student/assignments[/:id]`, `/student/announcements`, `/student/profile`, `/student/timeline`, `/student/projects[/:id]`, `/student/artifacts`, `/student/report`.
 
-Each role layout admits any user whose effective roles include its role and shows a header role-switcher (button row) to navigate between `/admin` · `/student` · `/evaluator`. Switching does not re-issue the session — access is purely role-membership-based.
+Each role layout admits any user whose effective roles include its role and shows a header role-switcher (button row) to navigate between `/admin` · `/mentor` · `/student`. Switching does not re-issue the session — access is purely role-membership-based.
 
 ## API endpoints (`/api/...`)
 
-Public: `GET /healthz`, `POST /applications`, `POST /admin/login`, `POST /admin/logout`, `GET /admin/me`, `GET /api/site-content[/:key]`, `GET /api/people/:kind` (kind ∈ `mentor|staff|member`, only `is_public=true`, sorted `display_order asc, id asc`), `GET|POST /api/activation/:token`.
+Public: `GET /healthz`, `POST /applications`, `POST /admin/login`, `POST /admin/logout`, `GET /admin/me`, `GET /api/site-content[/:key]`, `GET /api/people/:kind` (kind ∈ `mentor|staff|member`, only `is_public=true`, sorted `display_order asc, id asc`; uses `optionalAuth` — `phone` field is `null` for anonymous viewers, populated for any logged-in member per `canViewMemberContacts`), `GET|POST /api/activation/:token`.
 
 Admin (`requireAdmin`):
 - Applications: `GET /admin/applications` (filters `q,status,applicationStatus,finalDecision,interviewStatus,evaluationCompletion`), `/stats`, `/export` (CSV w/ formula-injection guard), `GET|PATCH /admin/applications/:id`, `POST|DELETE /admin/applications/:id/assignments[/:assignmentId]`, `PUT /admin/applications/:id/interview` (one per app), `PATCH /admin/applications/:id/final-decision` (writes `decision_logs`).
@@ -44,7 +46,9 @@ Admin (`requireAdmin`):
 - Storage: unauthenticated `GET /api/storage/objects/*` serves only objects stamped `visibility=public` via `objectAcl.canAccessObject` (private objects → 404). All other storage uploads go through admin-gated routes.
 - Site content: `GET /admin/site-content` (always returns all known keys, blanks included), `PUT /admin/site-content/:key`.
 
-Evaluator (`requireEvaluator`): `GET /evaluator/assignments`, `GET /evaluator/applications/:id` (only if assigned), `POST /evaluator/applications/:id/evaluations` (upsert per `(app,evaluator,stage)`, auto-marks assignment `completed`).
+Evaluator surface (`requireAdminOrMentor`): `GET /evaluator/assignments`, `GET /evaluator/applications/:id` (only if assigned), `POST /evaluator/applications/:id/evaluations` (upsert per `(app,evaluator,stage)`, auto-marks assignment `completed`). The route handler additionally enforces per-application assignment ownership — having admin/mentor role alone is not enough.
+
+Mentor (`requireMentor`): `GET|PATCH /mentor/profile` — fetches/updates the `people_profiles` row with `kind=mentor, userId=me`. Returns 404 if no such row exists (mentor profiles are NOT lazy-created; admin sets them up via `/admin/people` and links `userId`).
 
 Student (`requireStudent`): `GET /student/me`, `/sessions`, `/attendance`, `/assignments[/:id]` (only published/closed in my cohorts/programs; `mySubmission` populated), `POST /student/assignments/:id/submission` (upsert; auto `late` past `dueAt`; rejected once `closed`), `/announcements` (published only; `target=all` OR my cohort/program), `/timeline` (own + `student_visible` only), `/projects[/:id]` (only if member; artifacts ≠ admin_only, feedback `student_visible`), `/artifacts` (own non-admin_only ∪ project-member `student_visible`/`cohort_visible` ∪ same-cohort projects with `cohort_visible`), `/report` (admin_only feedback excluded), `GET|PATCH /student/profile` (lazy-creates `people_profiles` row `kind=member, isPublic=false` on first GET; student cannot change `kind`/`studentId`/`userId`/`displayOrder`).
 
@@ -57,7 +61,7 @@ Naming notes:
 
 Core (MVP1/2):
 - `applications` — MVP1 cols + `application_status` (submitted → document_review → interview → final_decision_made / withdrawn) + `final_decision` (pending|accepted|rejected|waitlisted|withdrawn). Legacy `status` enum preserved.
-- `users` — email unique, name, password_hash (bcrypt), role primary (`admin|evaluator|student`), `extra_roles text[] not null default '{}'` (multi-role), `is_active`, timestamps. Bootstrapped from `ADMIN_EMAIL`/`ADMIN_PASSWORD` on startup. Effective roles = unique union of `[role, ...extraRoles]`; helper `getEffectiveRoles(user)` from `@workspace/db`. Session payload `{userId, role, roles, exp}`; `verifySessionToken` falls back to `[role]` for older tokens. `/admin/login` and `/admin/me` return `{...user, role, roles}`. Admins toggle extra roles from `/admin/students/:id` via `PATCH /admin/users/:id { extraRoles }`.
+- `users` — email unique, name, password_hash (bcrypt), role primary (`admin|mentor|student`), `extra_roles text[] not null default '{}'` (multi-role), `is_active`, timestamps. Bootstrapped from `ADMIN_EMAIL`/`ADMIN_PASSWORD` on startup. Effective roles = unique union of `[role, ...extraRoles]`; helpers `getEffectiveRoles(user)` and `canViewMemberContacts(user)` from `@workspace/db`. Session payload `{userId, role, roles, exp}`; `verifySessionToken` falls back to `[role]` for older tokens. `/admin/login` and `/admin/me` return `{...user, role, roles}`. Admins toggle extra roles from `/admin/students/:id` via `PATCH /admin/users/:id { extraRoles }`. The legacy `evaluator` role was removed — evaluation work is performed by users with `admin` or `mentor` in their effective roles, assigned per-application via `/admin/evaluators`.
 - `evaluation_assignments` — `(application_id, evaluator_id, stage)` unique; status `assigned|in_progress|completed`.
 - `evaluations` — `(application_id, evaluator_id, stage)` unique; sub-scores (motivation, problem_awareness, initiative, collaboration, fit) + overall (1-5) + recommendation + comment.
 - `interviews` — `(application_id)` unique.
@@ -82,7 +86,7 @@ MVP4 (additive):
 - `tag_mappings(tag_id, target_type, target_id)` unique; target_type ∈ `{activity_record, project, artifact, feedback, student}`.
 - `site_contents(key unique, label, value jsonb, updated_by, timestamps)` — one row per public page.
 - `account_activation_tokens` — user_id (FK→users cascade), token_hash (sha256; plaintext only in response at issue time), expires_at (default 14d), used_at?, created_by, created_at. Indexes on `token_hash`, `user_id`. Drives the magic-link activation flow.
-- `people_profiles` — kind `mentor|staff|member`, user_id? (FK set null, unique), student_id? (FK set null, unique), name, role_title?, affiliation?, bio?, photo_url?, tags `text[] default '{}'`, display_order int default 0, is_public bool default false. Index `(kind, display_order)`. Max one row per student/user.
+- `people_profiles` — kind `mentor|staff|member`, user_id? (FK set null, unique), student_id? (FK set null, unique), name, role_title?, affiliation?, bio?, photo_url?, **phone?** (text, ≤30 chars; only surfaced to logged-in members on the public `/people` endpoint), tags `text[] default '{}'`, display_order int default 0, is_public bool default false. Index `(kind, display_order)`. Max one row per student/user.
 
 Student-side visibility rules in code:
 - `student/timeline`: `studentId = me` AND `visibility = student_visible`.
@@ -90,7 +94,7 @@ Student-side visibility rules in code:
 - `student/projects/:id` artifacts: own (≠ admin_only) ∪ other members' (`student_visible`/`cohort_visible`). Never expose another member's `private`.
 - `student/report.feedbackHighlights`: `visibility = student_visible` AND `studentId = me`.
 
-`users.role` is a text column (not pg enum) widened to `admin|evaluator|student`.
+`users.role` is a text column (not pg enum), enforced by app-level `USER_ROLES = ['admin','mentor','student']`.
 
 ## Activation magic-link flow
 

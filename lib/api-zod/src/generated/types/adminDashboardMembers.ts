@@ -9,5 +9,5 @@
 export type AdminDashboardMembers = {
   activeStudents: number;
   pendingActivation: number;
-  evaluators: number;
+  mentors: number;
 };

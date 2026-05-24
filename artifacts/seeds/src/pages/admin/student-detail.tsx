@@ -214,7 +214,7 @@ function ExtraRolesCard({ userId }: { userId: number }) {
       <CardHeader><CardTitle>겸직 권한 (추가 역할)</CardTitle></CardHeader>
       <CardContent className="space-y-3 text-sm">
         <p className="text-muted-foreground">
-          이 학생 계정에 추가 역할을 부여하면 같은 계정으로 운영진/평가위원 화면도 사용할 수 있습니다. 기본 역할(학생)은 항상 유지됩니다.
+          이 학생 계정에 추가 역할을 부여하면 같은 계정으로 운영진/멘토 화면도 사용할 수 있습니다. 기본 역할(학생)은 항상 유지됩니다.
         </p>
         <div className="flex gap-2 flex-wrap">
           <Button
@@ -226,12 +226,12 @@ function ExtraRolesCard({ userId }: { userId: number }) {
             운영진(admin) {has("admin") ? "✓" : ""}
           </Button>
           <Button
-            variant={has("evaluator") ? "default" : "outline"}
+            variant={has("mentor") ? "default" : "outline"}
             className="rounded-none"
             disabled={update.isPending}
-            onClick={() => toggle("evaluator")}
+            onClick={() => toggle("mentor")}
           >
-            평가위원(evaluator) {has("evaluator") ? "✓" : ""}
+            멘토(mentor) {has("mentor") ? "✓" : ""}
           </Button>
         </div>
       </CardContent>

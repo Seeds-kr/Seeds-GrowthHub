@@ -83,7 +83,7 @@ router.get("/admin/dashboard", requireAdmin, async (_req, res) => {
       .where(
         and(
           eq(usersTable.isActive, true),
-          sql`(${usersTable.role} = 'evaluator' or 'evaluator' = ANY(${usersTable.extraRoles}))`,
+          sql`(${usersTable.role} = 'mentor' or 'mentor' = ANY(${usersTable.extraRoles}))`,
         ),
       ),
     db
@@ -212,7 +212,7 @@ router.get("/admin/dashboard", requireAdmin, async (_req, res) => {
     members: {
       activeStudents: Number(activeStudentsRow[0]?.count ?? 0),
       pendingActivation: Number(pendingActivationRow[0]?.count ?? 0),
-      evaluators: Number(evaluatorsRow[0]?.count ?? 0),
+      mentors: Number(evaluatorsRow[0]?.count ?? 0),
     },
     cohorts: {
       activeCount: Number(activeCohortsRow[0]?.count ?? 0),

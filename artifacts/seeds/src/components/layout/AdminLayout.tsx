@@ -39,7 +39,7 @@ const NAV_SECTIONS: NavSection[] = [
     title: "모집",
     items: [
       { href: "/admin/applications", label: "지원서", icon: FileText },
-      { href: "/admin/evaluators", label: "평가위원", icon: UserCheck },
+      { href: "/admin/evaluators", label: "평가 담당자", icon: UserCheck },
     ],
   },
   {

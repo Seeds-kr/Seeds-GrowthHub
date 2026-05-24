@@ -8,11 +8,11 @@ import {
   evaluationsTable,
   usersTable,
 } from "@workspace/db";
-import { requireEvaluator } from "../lib/auth";
+import { requireAdminOrMentor } from "../lib/auth";
 
 const router: IRouter = Router();
 
-router.get("/evaluator/assignments", requireEvaluator, async (req, res) => {
+router.get("/evaluator/assignments", requireAdminOrMentor, async (req, res) => {
   const me = req.sessionUser!;
   const rows = await db
     .select({
@@ -90,7 +90,7 @@ async function getMyAssignments(evaluatorId: number, appId: number) {
 
 router.get(
   "/evaluator/applications/:id",
-  requireEvaluator,
+  requireAdminOrMentor,
   async (req, res) => {
     const me = req.sessionUser!;
     const appId = Number(req.params.id);
@@ -159,7 +159,7 @@ router.get(
 
 router.post(
   "/evaluator/applications/:id/evaluations",
-  requireEvaluator,
+  requireAdminOrMentor,
   async (req, res) => {
     const me = req.sessionUser!;
     const appId = Number(req.params.id);

@@ -319,6 +319,7 @@ export type PeopleProfile = {
   affiliation: string | null;
   bio: string | null;
   photoUrl: string | null;
+  phone: string | null;
   tags: string[];
   displayOrder: number;
   isPublic: boolean;
@@ -334,6 +335,9 @@ export type PublicPeopleProfile = {
   affiliation: string | null;
   bio: string | null;
   photoUrl: string | null;
+  // phone is only present when the request was authenticated as a member.
+  // Unauthenticated viewers see null.
+  phone: string | null;
   tags: string[];
   displayOrder: number;
 };

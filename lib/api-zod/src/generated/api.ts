@@ -74,8 +74,8 @@ export const AdminLoginResponse = zod.object({
   id: zod.number(),
   email: zod.string(),
   name: zod.string(),
-  role: zod.enum(["admin", "evaluator", "student"]),
-  roles: zod.array(zod.enum(["admin", "evaluator", "student"])),
+  role: zod.enum(["admin", "mentor", "student"]),
+  roles: zod.array(zod.enum(["admin", "mentor", "student"])),
 });
 
 /**
@@ -92,8 +92,8 @@ export const AdminMeResponse = zod.object({
   id: zod.number(),
   email: zod.string(),
   name: zod.string(),
-  role: zod.enum(["admin", "evaluator", "student"]),
-  roles: zod.array(zod.enum(["admin", "evaluator", "student"])),
+  role: zod.enum(["admin", "mentor", "student"]),
+  roles: zod.array(zod.enum(["admin", "mentor", "student"])),
 });
 
 /**
@@ -233,7 +233,7 @@ export const AdminDashboardResponse = zod.object({
   members: zod.object({
     activeStudents: zod.number(),
     pendingActivation: zod.number(),
-    evaluators: zod.number(),
+    mentors: zod.number(),
   }),
   cohorts: zod.object({
     activeCount: zod.number(),
@@ -524,7 +524,7 @@ export const UpdateApplicationResponse = zod.object({
  * @summary List users (evaluators + admins)
  */
 export const ListUsersQueryParams = zod.object({
-  role: zod.enum(["admin", "evaluator", "student"]).optional(),
+  role: zod.enum(["admin", "mentor", "student"]).optional(),
 });
 
 export const ListUsersResponse = zod.object({
@@ -533,8 +533,8 @@ export const ListUsersResponse = zod.object({
       id: zod.number(),
       name: zod.string(),
       email: zod.string(),
-      role: zod.enum(["admin", "evaluator", "student"]),
-      extraRoles: zod.array(zod.enum(["admin", "evaluator", "student"])),
+      role: zod.enum(["admin", "mentor", "student"]),
+      extraRoles: zod.array(zod.enum(["admin", "mentor", "student"])),
       isActive: zod.boolean(),
       createdAt: zod.coerce.date(),
       updatedAt: zod.coerce.date(),
@@ -562,8 +562,8 @@ export const CreateUserBody = zod.object({
     .string()
     .min(createUserBodyPasswordMin)
     .max(createUserBodyPasswordMax),
-  role: zod.enum(["admin", "evaluator", "student"]),
-  extraRoles: zod.array(zod.enum(["admin", "evaluator", "student"])).optional(),
+  role: zod.enum(["admin", "mentor", "student"]),
+  extraRoles: zod.array(zod.enum(["admin", "mentor", "student"])).optional(),
 });
 
 /**
@@ -589,15 +589,15 @@ export const UpdateUserBody = zod.object({
     .max(updateUserBodyPasswordMax)
     .optional(),
   isActive: zod.boolean().optional(),
-  extraRoles: zod.array(zod.enum(["admin", "evaluator", "student"])).optional(),
+  extraRoles: zod.array(zod.enum(["admin", "mentor", "student"])).optional(),
 });
 
 export const UpdateUserResponse = zod.object({
   id: zod.number(),
   name: zod.string(),
   email: zod.string(),
-  role: zod.enum(["admin", "evaluator", "student"]),
-  extraRoles: zod.array(zod.enum(["admin", "evaluator", "student"])),
+  role: zod.enum(["admin", "mentor", "student"]),
+  extraRoles: zod.array(zod.enum(["admin", "mentor", "student"])),
   isActive: zod.boolean(),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),

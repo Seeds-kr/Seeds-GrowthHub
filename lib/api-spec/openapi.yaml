@@ -562,7 +562,7 @@ components:
 
     UserRole:
       type: string
-      enum: [admin, evaluator, student]
+      enum: [admin, mentor, student]
 
     ApplicationStatus:
       type: string
@@ -821,8 +821,8 @@ components:
           properties:
             activeStudents: { type: integer }
             pendingActivation: { type: integer }
-            evaluators: { type: integer }
-          required: [activeStudents, pendingActivation, evaluators]
+            mentors: { type: integer }
+          required: [activeStudents, pendingActivation, mentors]
         cohorts:
           type: object
           properties:

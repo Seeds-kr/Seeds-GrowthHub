@@ -58,8 +58,8 @@ export default function AdminLogin() {
           queryClient.invalidateQueries({ queryKey: getAdminMeQueryKey() });
           const effective: string[] = (user as any).roles ?? [user.role];
           if (effective.includes("admin")) setLocation("/admin");
+          else if (effective.includes("mentor")) setLocation("/mentor");
           else if (effective.includes("student")) setLocation("/student");
-          else if (effective.includes("evaluator")) setLocation("/evaluator");
           else setLocation("/admin");
         },
         onError: (err: any) => {
@@ -145,7 +145,7 @@ export default function AdminLogin() {
             <div className="mb-10">
               <h1 className="text-3xl font-bold tracking-[-0.03em] mb-3">로그인</h1>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                관리자 · 평가위원 · 학생 모두 같은 계정으로 로그인합니다.
+                운영진 · 멘토 · 학생 모두 같은 계정으로 로그인합니다.
                 <br />
                 역할에 따라 자동으로 알맞은 화면으로 이동해요.
               </p>

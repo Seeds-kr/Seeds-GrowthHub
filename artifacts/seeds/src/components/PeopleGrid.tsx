@@ -9,6 +9,7 @@ import {
 } from "@/lib/mvp3-api";
 
 function Card({ p }: { p: PublicPeopleProfile }) {
+  const tel = p.phone ? p.phone.replace(/[^0-9+]/g, "") : "";
   return (
     <div className="bg-card border border-border p-6 flex flex-col">
       <div className="aspect-square w-full mb-4 bg-muted overflow-hidden">
@@ -42,6 +43,14 @@ function Card({ p }: { p: PublicPeopleProfile }) {
           <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-line">
             {p.bio}
           </p>
+        ) : null}
+        {p.phone ? (
+          <a
+            href={`tel:${tel}`}
+            className="text-sm text-primary hover:underline mt-3 inline-flex items-center gap-1"
+          >
+            📞 {p.phone}
+          </a>
         ) : null}
         {p.tags.length > 0 ? (
           <div className="flex flex-wrap gap-1.5 mt-4">

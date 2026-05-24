@@ -33,7 +33,7 @@ import { useToast } from "@/hooks/use-toast";
 export default function AdminEvaluators() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { data, isLoading } = useListUsers({ role: "evaluator" });
+  const { data, isLoading } = useListUsers({ role: "mentor" });
   const createUser = useCreateUser();
   const updateUser = useUpdateUser();
 
@@ -55,7 +55,7 @@ export default function AdminEvaluators() {
           name: name.trim(),
           email: email.trim(),
           password,
-          role: "evaluator",
+          role: "mentor",
         },
       },
       {
@@ -66,7 +66,7 @@ export default function AdminEvaluators() {
           setPassword("");
           setOpen(false);
           queryClient.invalidateQueries({
-            queryKey: getListUsersQueryKey({ role: "evaluator" }),
+            queryKey: getListUsersQueryKey({ role: "mentor" }),
           });
         },
         onError: (err: any) => {
@@ -86,7 +86,7 @@ export default function AdminEvaluators() {
       {
         onSuccess: () => {
           queryClient.invalidateQueries({
-            queryKey: getListUsersQueryKey({ role: "evaluator" }),
+            queryKey: getListUsersQueryKey({ role: "mentor" }),
           });
         },
       },

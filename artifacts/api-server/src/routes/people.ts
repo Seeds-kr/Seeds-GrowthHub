@@ -6,9 +6,15 @@ import {
   peopleProfilesTable,
   PEOPLE_KINDS,
   studentsTable,
+  canViewMemberContacts,
   type PeopleKind,
 } from "@workspace/db";
-import { requireAdmin, requireStudent } from "../lib/auth";
+import {
+  requireAdmin,
+  requireStudent,
+  requireMentor,
+  optionalAuth,
+} from "../lib/auth";
 
 const router: IRouter = Router();
 
@@ -20,7 +26,10 @@ function toIso(p: typeof peopleProfilesTable.$inferSelect) {
   };
 }
 
-function publicView(p: typeof peopleProfilesTable.$inferSelect) {
+function publicView(
+  p: typeof peopleProfilesTable.$inferSelect,
+  includeContact: boolean,
+) {
   return {
     id: p.id,
     kind: p.kind,
@@ -31,13 +40,18 @@ function publicView(p: typeof peopleProfilesTable.$inferSelect) {
     photoUrl: p.photoUrl,
     tags: p.tags,
     displayOrder: p.displayOrder,
+    // Phone is only included for authenticated members. Non-members never
+    // see it, even if a logged-in user reshares the JSON response.
+    phone: includeContact ? p.phone : null,
   };
 }
 
 const KindParam = z.enum(PEOPLE_KINDS);
 
 // Public: list profiles by kind, only public ones, ordered by displayOrder.
-router.get("/people/:kind", async (req, res) => {
+// If the request carries a valid session for a member-role user, phone numbers
+// are included; otherwise they are stripped.
+router.get("/people/:kind", optionalAuth, async (req, res) => {
   const parsed = KindParam.safeParse(req.params.kind);
   if (!parsed.success) {
     res.status(404).json({ error: "Unknown kind" });
@@ -53,7 +67,10 @@ router.get("/people/:kind", async (req, res) => {
       ),
     )
     .orderBy(asc(peopleProfilesTable.displayOrder), asc(peopleProfilesTable.id));
-  res.json({ items: rows.map(publicView) });
+  const includeContact = req.sessionUser
+    ? canViewMemberContacts(req.sessionUser)
+    : false;
+  res.json({ items: rows.map((r) => publicView(r, includeContact)) });
 });
 
 // Allow http(s) URLs or internal storage paths (/api/storage/objects/... or
@@ -83,6 +100,7 @@ const AdminBody = z.object({
   affiliation: z.string().trim().max(200).nullable().optional(),
   bio: z.string().max(5000).nullable().optional(),
   photoUrl: PhotoUrl,
+  phone: z.string().trim().max(30).nullable().optional(),
   tags: z.array(z.string().trim().min(1).max(60)).max(30).optional(),
   displayOrder: z.number().int().min(-10000).max(10000).optional(),
   isPublic: z.boolean().optional(),
@@ -124,6 +142,7 @@ router.post("/admin/people", requireAdmin, async (req, res) => {
         affiliation: parsed.data.affiliation ?? null,
         bio: parsed.data.bio ?? null,
         photoUrl: parsed.data.photoUrl ?? null,
+        phone: parsed.data.phone ?? null,
         tags: parsed.data.tags ?? [],
         displayOrder: parsed.data.displayOrder ?? 0,
         isPublic: parsed.data.isPublic ?? false,
@@ -153,7 +172,7 @@ router.patch("/admin/people/:id", requireAdmin, async (req, res) => {
   const patch: Record<string, unknown> = { updatedAt: new Date() };
   for (const k of [
     "kind", "userId", "studentId", "name", "roleTitle", "affiliation",
-    "bio", "photoUrl", "tags", "displayOrder", "isPublic",
+    "bio", "photoUrl", "phone", "tags", "displayOrder", "isPublic",
   ] as const) {
     if (k in parsed.data) patch[k] = (parsed.data as any)[k];
   }
@@ -243,6 +262,7 @@ const SelfBody = z.object({
   affiliation: z.string().trim().max(200).nullable().optional(),
   bio: z.string().max(5000).nullable().optional(),
   photoUrl: PhotoUrl,
+  phone: z.string().trim().max(30).nullable().optional(),
   tags: z.array(z.string().trim().min(1).max(60)).max(30).optional(),
   isPublic: z.boolean().optional(),
 });
@@ -260,7 +280,7 @@ router.patch("/student/profile", requireStudent, async (req, res) => {
   }
   const patch: Record<string, unknown> = { updatedAt: new Date() };
   for (const k of [
-    "name", "roleTitle", "affiliation", "bio", "photoUrl", "tags", "isPublic",
+    "name", "roleTitle", "affiliation", "bio", "photoUrl", "phone", "tags", "isPublic",
   ] as const) {
     if (k in parsed.data) patch[k] = (parsed.data as any)[k];
   }
@@ -268,6 +288,65 @@ router.patch("/student/profile", requireStudent, async (req, res) => {
     .update(peopleProfilesTable)
     .set(patch)
     .where(eq(peopleProfilesTable.id, r.profile.id))
+    .returning();
+  res.json(toIso(row));
+});
+
+// Mentor self-profile. Unlike students, mentor profiles are NOT lazy-created
+// — an admin must first create a `people_profiles` row with kind=mentor and
+// link it to the mentor's user via userId. Returns 404 with a friendly message
+// otherwise so the mentor can ask an admin to set them up.
+router.get("/mentor/profile", requireMentor, async (req, res) => {
+  const [row] = await db
+    .select()
+    .from(peopleProfilesTable)
+    .where(
+      and(
+        eq(peopleProfilesTable.userId, req.sessionUser!.id),
+        eq(peopleProfilesTable.kind, "mentor"),
+      ),
+    )
+    .limit(1);
+  if (!row) {
+    res.status(404).json({
+      error:
+        "Mentor profile not set up. Please ask an admin to create your profile in /admin/people.",
+    });
+    return;
+  }
+  res.json(toIso(row));
+});
+
+router.patch("/mentor/profile", requireMentor, async (req, res) => {
+  const parsed = SelfBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid body" });
+    return;
+  }
+  const [existing] = await db
+    .select()
+    .from(peopleProfilesTable)
+    .where(
+      and(
+        eq(peopleProfilesTable.userId, req.sessionUser!.id),
+        eq(peopleProfilesTable.kind, "mentor"),
+      ),
+    )
+    .limit(1);
+  if (!existing) {
+    res.status(404).json({ error: "Mentor profile not set up" });
+    return;
+  }
+  const patch: Record<string, unknown> = { updatedAt: new Date() };
+  for (const k of [
+    "name", "roleTitle", "affiliation", "bio", "photoUrl", "phone", "tags", "isPublic",
+  ] as const) {
+    if (k in parsed.data) patch[k] = (parsed.data as any)[k];
+  }
+  const [row] = await db
+    .update(peopleProfilesTable)
+    .set(patch)
+    .where(eq(peopleProfilesTable.id, existing.id))
     .returning();
   res.json(toIso(row));
 });

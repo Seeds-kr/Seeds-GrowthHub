@@ -3,13 +3,13 @@ import { Button } from "@/components/ui/button";
 
 const HOME_BY_ROLE: Record<string, string> = {
   admin: "/admin",
-  evaluator: "/evaluator",
+  mentor: "/mentor",
   student: "/student",
 };
 
 const LABEL_BY_ROLE: Record<string, string> = {
   admin: "운영진",
-  evaluator: "평가위원",
+  mentor: "멘토",
   student: "학생",
 };
 
@@ -18,7 +18,7 @@ export function RoleSwitcher({
   current,
 }: {
   roles: string[];
-  current: "admin" | "evaluator" | "student";
+  current: "admin" | "mentor" | "student";
 }) {
   const others = roles.filter((r) => r !== current && HOME_BY_ROLE[r]);
   if (others.length === 0) return null;
@@ -45,7 +45,7 @@ export function effectiveRoles(me: { role: string; roles?: string[] | null }): s
 
 export function pickRedirectFor(roles: string[]): string {
   if (roles.includes("admin")) return "/admin";
+  if (roles.includes("mentor")) return "/mentor";
   if (roles.includes("student")) return "/student";
-  if (roles.includes("evaluator")) return "/evaluator";
   return "/login";
 }

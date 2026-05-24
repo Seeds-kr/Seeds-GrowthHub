@@ -219,7 +219,7 @@ export default function AdminDashboard() {
             <KpiCard
               label="활성 학생"
               value={`${data.members.activeStudents}명`}
-              hint={`평가위원 ${data.members.evaluators}명`}
+              hint={`멘토 ${(data.members as any).mentors ?? 0}명`}
               icon={GraduationCap}
               href="/admin/students"
             />

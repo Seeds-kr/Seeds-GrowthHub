@@ -53,7 +53,13 @@ export default function AdminApplicationDetail() {
   const updateMutation = useUpdateApplication();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const evaluators = useListUsers({ role: "evaluator" });
+  const mentorsQ = useListUsers({ role: "mentor" });
+  const adminsQ = useListUsers({ role: "admin" });
+  const evaluatorItems = [
+    ...(adminsQ.data?.items ?? []),
+    ...(mentorsQ.data?.items ?? []),
+  ].filter((u, i, arr) => arr.findIndex((x) => x.id === u.id) === i);
+  const evaluators = { data: { items: evaluatorItems, total: evaluatorItems.length } };
   const createAssignment = useCreateAssignment();
   const deleteAssignment = useDeleteAssignment();
   const upsertInterview = useUpsertInterview();
