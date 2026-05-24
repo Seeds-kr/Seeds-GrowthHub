@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Loader2 } from "lucide-react";
 import {
   api,
@@ -9,9 +10,22 @@ import {
 } from "@/lib/mvp3-api";
 
 function Card({ p }: { p: PublicPeopleProfile }) {
+  const [, setLocation] = useLocation();
   const tel = p.phone ? p.phone.replace(/[^0-9+]/g, "") : "";
+  const href = `/people/${p.kind}/${p.id}`;
   return (
-    <div className="bg-card border border-border p-6 flex flex-col">
+    <div
+      role="link"
+      tabIndex={0}
+      onClick={() => setLocation(href)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          setLocation(href);
+        }
+      }}
+      className="bg-card border border-border p-6 flex flex-col hover:bg-accent/50 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+    >
       <div className="aspect-square w-full mb-4 bg-muted overflow-hidden">
         {p.photoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -47,6 +61,8 @@ function Card({ p }: { p: PublicPeopleProfile }) {
         {p.phone ? (
           <a
             href={`tel:${tel}`}
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
             className="text-sm text-primary hover:underline mt-3 inline-flex items-center gap-1"
           >
             📞 {p.phone}

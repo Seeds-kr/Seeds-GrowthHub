@@ -73,6 +73,37 @@ router.get("/people/:kind", optionalAuth, async (req, res) => {
   res.json({ items: rows.map((r) => publicView(r, includeContact)) });
 });
 
+// Public: a single profile by id (kind in path is for URL symmetry with the
+// frontend; the lookup is by id). Returns 404 unless the row exists, matches
+// the requested kind, AND is_public=true. Phone gating same as the list.
+router.get("/people/:kind/:id", optionalAuth, async (req, res) => {
+  const parsedKind = KindParam.safeParse(req.params.kind);
+  const id = Number(req.params.id);
+  if (!parsedKind.success || !Number.isFinite(id) || id <= 0) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  const [row] = await db
+    .select()
+    .from(peopleProfilesTable)
+    .where(
+      and(
+        eq(peopleProfilesTable.id, id),
+        eq(peopleProfilesTable.kind, parsedKind.data),
+        eq(peopleProfilesTable.isPublic, true),
+      ),
+    )
+    .limit(1);
+  if (!row) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  const includeContact = req.sessionUser
+    ? canViewMemberContacts(req.sessionUser)
+    : false;
+  res.json(publicView(row, includeContact));
+});
+
 // Allow http(s) URLs or internal storage paths (/api/storage/objects/... or
 // /objects/...). Blocks javascript:/data: vectors.
 const PhotoUrl = z

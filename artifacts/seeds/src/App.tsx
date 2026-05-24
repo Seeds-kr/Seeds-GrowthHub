@@ -57,6 +57,7 @@ import StudentArtifacts from "@/pages/student/artifacts";
 import StudentReportPage from "@/pages/student/report";
 import ActivatePage from "@/pages/activate";
 import PeoplePage from "@/pages/people";
+import PersonDetailPage from "@/pages/person-detail";
 import AdminPeople from "@/pages/admin/people";
 import StudentProfilePage from "@/pages/student/profile";
 
@@ -83,6 +84,7 @@ function Router() {
       <Route path="/mentors" component={PeoplePage} />
       <Route path="/staff" component={PeoplePage} />
       <Route path="/members" component={PeoplePage} />
+      <Route path="/people/:kind/:id" component={PersonDetailPage} />
 
       <Route path="/activate/:token" component={ActivatePage} />
       <Route path="/login" component={AdminLogin} />
