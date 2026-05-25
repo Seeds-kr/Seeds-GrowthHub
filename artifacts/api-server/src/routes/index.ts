@@ -31,6 +31,7 @@ import adminMeetingsRouter from "./admin-meetings";
 import adminOpsTasksRouter from "./admin-ops-tasks";
 import adminDocumentsRouter from "./admin-documents";
 import adminFinanceRouter from "./admin-finance";
+import adminOpsDashboardRouter from "./admin-ops-dashboard";
 
 const router: IRouter = Router();
 
@@ -66,5 +67,6 @@ router.use(adminMeetingsRouter);
 router.use(adminOpsTasksRouter);
 router.use(adminDocumentsRouter);
 router.use(adminFinanceRouter);
+router.use(adminOpsDashboardRouter);
 
 export default router;

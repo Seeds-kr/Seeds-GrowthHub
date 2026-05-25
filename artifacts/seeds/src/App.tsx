@@ -64,6 +64,7 @@ import AdminMeetings from "@/pages/admin/meetings";
 import AdminMeetingDetail from "@/pages/admin/meeting-detail";
 import AdminTasks from "@/pages/admin/tasks";
 import AdminFinance from "@/pages/admin/finance";
+import AdminOpsDashboard from "@/pages/admin/ops-dashboard";
 import AdminDocuments from "@/pages/admin/documents";
 import AdminDocumentDetail from "@/pages/admin/document-detail";
 import AdminSessionDetail from "@/pages/admin/session-detail";
@@ -127,6 +128,7 @@ function Router() {
       <Route path="/admin/meetings/:id" component={AdminMeetingDetail} />
       <Route path="/admin/tasks" component={AdminTasks} />
       <Route path="/admin/finance" component={AdminFinance} />
+      <Route path="/admin/ops-dashboard" component={AdminOpsDashboard} />
       <Route path="/admin/documents" component={AdminDocuments} />
       <Route path="/admin/documents/:id" component={AdminDocumentDetail} />
 

@@ -131,14 +131,7 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
       { href: "/admin/assignments", label: "과제(Assignments)", icon: ClipboardList },
       { href: "/admin/announcements", label: "공지(Announcements)", icon: Megaphone },
       { href: "/admin/finance", label: "재정(Finance)", icon: Wallet },
-      {
-        href: "/admin/ops-dashboard",
-        label: "운영 대시보드",
-        icon: Gauge,
-        placeholder: true,
-        description: "운영 전체 현황 대시보드 — 지연된 작업, 진행 중 모집, 임박한 행사, 미처리 회계, 문서/팀 지원 요청을 한눈에 봅니다.",
-        futureScope: "Meetings·Tasks·Finance·Documents 구현 후 영역별 위젯을 단계적으로 추가합니다.",
-      },
+      { href: "/admin/ops-dashboard", label: "운영 대시보드", icon: Gauge },
     ],
   },
   {

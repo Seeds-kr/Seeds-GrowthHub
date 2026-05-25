@@ -137,6 +137,14 @@ Deploy: `suggest_deploy`. Proxy auto-routes `/api/*` to API server in production
 - Routes (all `requireAdmin`): `GET|POST /admin/finance-records`, `GET /admin/finance-records/summary` (dashboard hooks: pendingReimbursements/awaitingApproval/approvedUnpaid), `GET|PATCH /admin/finance-records/:id`, `POST /admin/finance-records/:id/cancel` (no hard delete — audit preservation). PATCH auto-stamps `approved_at`+`approver_id` on transition to approved, `paid_at` on transition to paid.
 - Admin UI: `/admin/finance` (table + create dialog + inline status select). Students/mentors: 403. Anonymous: 401.
 
+## Ops Dashboard
+
+Admin-only operational overview at `/admin/ops-dashboard`. Read-only aggregator — no writes.
+- Endpoint: `GET /admin/ops-dashboard/summary` (`requireAdmin`). Single payload with independent sections; an empty data source returns `[]` rather than erroring the whole response.
+- Sections: overdue tasks (`ops_tasks.dueDate < today` AND status ∉ {done,canceled}), blocked tasks (status=blocked), upcoming sessions (next 14d, `isPublished=true`), checklist breakdown (`prepStatus` group over future sessions), evaluation progress (assignments grouped by status, restricted to apps in submitted/document_review/interview), pending finance (`status ∈ {requested, under_review, approved}` — exposes hooks + top-10 items), recently updated docs (non-archived, top 10), stale docs (non-archived, `updatedAt < now-90d`, top 10).
+- Frontend: `/admin/ops-dashboard` with section cards that deep-link to `/admin/tasks`, `/admin/sessions`, `/admin/applications`, `/admin/finance`, `/admin/documents`.
+- Students/mentors: 403. Anonymous: 401.
+
 ## User preferences
 
 - Korean UI for all student/public-facing copy.
