@@ -5,11 +5,15 @@ import { AdminLayout } from "@/components/layout/AdminLayout";
 import { api } from "@/lib/mvp3-api";
 import {
   type Meeting,
+  type OpsTask,
   MEETING_TYPES,
   MEETING_TYPE_LABEL,
   MEETING_VISIBILITIES,
   MEETING_VISIBILITY_LABEL,
+  OPS_TASK_PRIORITIES,
+  OPS_TASK_PRIORITY_LABEL,
 } from "@/lib/meetings-api";
+import { Trash2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,6 +50,13 @@ function toLocalInput(iso: string): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+type PendingAction = {
+  title: string;
+  assigneeId: string;
+  dueDate: string;
+  priority: (typeof OPS_TASK_PRIORITIES)[number];
+};
+
 function blankForm() {
   const now = new Date();
   now.setMinutes(0, 0, 0);
@@ -59,8 +70,16 @@ function blankForm() {
     decisionsMd: "",
     notesMd: "",
     pendingMd: "",
+    pendingActions: [] as PendingAction[],
   };
 }
+
+type AdminUserListItem = {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+};
 
 export default function AdminMeetingsPage() {
   const qc = useQueryClient();
@@ -72,9 +91,14 @@ export default function AdminMeetingsPage() {
     queryFn: () => api<{ items: Meeting[] }>("/admin/meetings"),
   });
 
+  const { data: usersData } = useQuery({
+    queryKey: ["admin-users-all"],
+    queryFn: () => api<{ items: AdminUserListItem[] }>("/admin/users"),
+  });
+
   const create = useMutation({
-    mutationFn: () =>
-      api<Meeting>("/admin/meetings", {
+    mutationFn: async () => {
+      const meeting = await api<Meeting>("/admin/meetings", {
         method: "POST",
         body: {
           title: form.title,
@@ -90,10 +114,43 @@ export default function AdminMeetingsPage() {
           notesMd: form.notesMd,
           pendingMd: form.pendingMd,
         },
-      }),
-    onSuccess: () => {
+      });
+      const validActions = form.pendingActions.filter((a) => a.title.trim());
+      const failed: string[] = [];
+      for (const a of validActions) {
+        try {
+          await api<OpsTask>(`/admin/meetings/${meeting.id}/action-items`, {
+            method: "POST",
+            body: {
+              title: a.title.trim(),
+              assigneeId: a.assigneeId ? Number(a.assigneeId) : null,
+              dueDate: a.dueDate || null,
+              priority: a.priority,
+            },
+          });
+        } catch (e: any) {
+          failed.push(`${a.title}: ${e?.data?.error ?? e.message}`);
+        }
+      }
+      return { meeting, actionCount: validActions.length, failed };
+    },
+    onSuccess: ({ actionCount, failed }) => {
       qc.invalidateQueries({ queryKey: ["admin-meetings"] });
-      toast({ title: "회의가 생성되었습니다." });
+      qc.invalidateQueries({ queryKey: ["admin-ops-tasks"] });
+      if (failed.length > 0) {
+        toast({
+          title: `회의 저장됨 (액션 ${actionCount - failed.length}/${actionCount} 추가)`,
+          description: failed.join("\n"),
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title:
+            actionCount > 0
+              ? `회의 생성됨 (후속 액션 ${actionCount}건 추가)`
+              : "회의가 생성되었습니다.",
+        });
+      }
       setOpen(false);
       setForm(blankForm());
     },
@@ -104,6 +161,27 @@ export default function AdminMeetingsPage() {
         variant: "destructive",
       }),
   });
+
+  const addAction = () =>
+    setForm((f) => ({
+      ...f,
+      pendingActions: [
+        ...f.pendingActions,
+        { title: "", assigneeId: "", dueDate: "", priority: "medium" },
+      ],
+    }));
+  const updateAction = (i: number, patch: Partial<PendingAction>) =>
+    setForm((f) => ({
+      ...f,
+      pendingActions: f.pendingActions.map((a, idx) =>
+        idx === i ? { ...a, ...patch } : a,
+      ),
+    }));
+  const removeAction = (i: number) =>
+    setForm((f) => ({
+      ...f,
+      pendingActions: f.pendingActions.filter((_, idx) => idx !== i),
+    }));
 
   return (
     <AdminLayout>
@@ -300,6 +378,92 @@ export default function AdminMeetingsPage() {
                 onChange={(e) => setForm({ ...form, notesMd: e.target.value })}
                 className="font-mono text-sm"
               />
+            </div>
+            <div className="border-t pt-4">
+              <div className="flex items-center justify-between mb-2">
+                <Label>후속 액션 아이템</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addAction}
+                  data-testid="btn-add-action"
+                >
+                  <Plus className="w-4 h-4 mr-1" /> 액션 추가
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mb-2">
+                회의에서 결정된 후속 작업을 함께 등록합니다. 저장 시 회의와 자동 연결되어 작업(Tasks) 목록에 나타납니다.
+              </p>
+              {form.pendingActions.length === 0 ? (
+                <p className="text-sm text-muted-foreground italic">
+                  등록된 액션이 없습니다.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {form.pendingActions.map((a, i) => (
+                    <div
+                      key={i}
+                      className="grid grid-cols-[1fr_140px_140px_100px_auto] gap-2 items-start border border-border p-2 rounded"
+                      data-testid={`row-action-${i}`}
+                    >
+                      <Input
+                        placeholder="액션 제목 *"
+                        value={a.title}
+                        onChange={(e) => updateAction(i, { title: e.target.value })}
+                        data-testid={`input-action-title-${i}`}
+                      />
+                      <Select
+                        value={a.assigneeId || "_none"}
+                        onValueChange={(v) =>
+                          updateAction(i, { assigneeId: v === "_none" ? "" : v })
+                        }
+                      >
+                        <SelectTrigger><SelectValue placeholder="담당자" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="_none">담당자 없음</SelectItem>
+                          {(usersData?.items ?? []).map((u) => (
+                            <SelectItem key={u.id} value={String(u.id)}>
+                              {u.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        type="date"
+                        value={a.dueDate}
+                        onChange={(e) => updateAction(i, { dueDate: e.target.value })}
+                      />
+                      <Select
+                        value={a.priority}
+                        onValueChange={(v) =>
+                          updateAction(i, {
+                            priority: v as (typeof OPS_TASK_PRIORITIES)[number],
+                          })
+                        }
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {OPS_TASK_PRIORITIES.map((p) => (
+                            <SelectItem key={p} value={p}>
+                              {OPS_TASK_PRIORITY_LABEL[p]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeAction(i)}
+                        data-testid={`btn-remove-action-${i}`}
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter>
