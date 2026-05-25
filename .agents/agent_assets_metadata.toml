@@ -36,3 +36,9 @@ id = "9n5p8KcmxaSDo2mkkHjhL"
 uri = "file://attached_assets/memoji_custom_male.png"
 type = "image"
 title = "사용자 지정 옵션 샘플 (남성 + 둘근안경 + 민트후드티 + \"콧수염 있음\")"
+
+[[outputs]]
+id = "4LXPdSh5oaosh7B9-ECSD"
+uri = "file://docs/ia-and-features.md"
+type = "text"
+title = "Seeds IA & 기능 명세 (역할별)"
