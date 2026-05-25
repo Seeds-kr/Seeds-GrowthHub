@@ -229,11 +229,285 @@
 
 ---
 
-## 7. 데이터 모델 핵심 요약
+## 7. 데이터 모델 (전체)
 
-- **MVP1/2**: `applications`, `users(role, extra_roles)`, `evaluation_assignments`, `evaluations`, `interviews`, `decision_logs`.
-- **MVP3**: `cohorts`, `programs`, `students`, `student_cohorts`, `student_programs`, `sessions`, `attendance_records`, `assignments`, `assignment_submissions`, `announcements`.
-- **MVP4**: `activity_records`, `projects`, `project_members`, `artifacts` (Drizzle `mvp4ArtifactsTable`), `feedback`, `skill_tags`, `tag_mappings`.
-- **공통**: `site_contents`, `account_activation_tokens`, `people_profiles (kind, user_id?, student_id?, phone?, ...)`.
+총 **24개 테이블** + 1 헬퍼 함수. PostgreSQL, Drizzle ORM. 모든 `enum` 값은 `text` 컬럼 + 앱-레벨 상수 화이트리스트로 강제(`$type<...>()`).
 
-자세한 컬럼/제약은 `replit.md`의 "Database schema" 섹션을 참조.
+### 7.0 도메인 클러스터 ER 개관 (요약)
+
+```
+사용자 / 인증
+  users ── (1:1) ── people_profiles
+   │   └── (1:N) ─ account_activation_tokens
+   │
+지원·평가 (MVP1/2)
+  applications ──(1:N)── evaluation_assignments ──(N:1)── users [evaluator]
+       │       ──(1:N)── evaluations               (stage별 1건/평가자)
+       │       ──(1:1)── interviews
+       │       ──(1:N)── decision_logs            (감사로그)
+       │
+학생 (MVP3)
+  applications ──(0..1:1)── students ──(N:1)── users
+                              │
+                              ├── student_cohorts ── cohorts ── programs
+                              ├── student_programs ── programs
+                              │
+활동 (MVP3)
+  cohorts ─── sessions ─── attendance_records ─── students
+  cohorts ─── assignments ─── assignment_submissions ─── students
+  cohorts ─── announcements   (target_type=all|cohort|program)
+  programs (cohort_id FK)
+  
+활동 기록·활용 (MVP4)
+  students ── activity_records (source_type=session|assignment|project|feedback|manual)
+  cohorts  ── projects ── project_members ── students
+                │
+                ├── artifacts        (= mvp4ArtifactsTable, 가시성 4단계)
+                └── feedback         (가시성 2단계, target_type=...)
+  skill_tags ── tag_mappings ── (activity_record|project|artifact|feedback|student)
+
+콘텐츠
+  site_contents (key whitelist 5개)
+```
+
+---
+
+### 7.1 사용자 & 인증
+
+#### `users`
+| 컬럼 | 타입 | 기본 / 제약 |
+|---|---|---|
+| `id` | serial PK | |
+| `name`, `email`, `password_hash` | text | `email` UNIQUE |
+| `role` | text | `admin\|mentor\|student` (앱-레벨 enum) |
+| `extra_roles` | text[] | `'{}'::text[]` — 다중 역할 |
+| `is_active` | bool | true |
+| `created_at`, `updated_at` | timestamptz | now() |
+
+**헬퍼 함수** (`lib/db/src/schema/users.ts`):
+- `getEffectiveRoles(u)` → `[role, ...extraRoles]` 유일집합
+- `canViewMemberContacts(u)` → admin∪mentor∪student 중 하나라도 포함 시 true (현재 = 모든 로그인 사용자)
+
+#### `account_activation_tokens`
+매직링크 활성화 토큰. plaintext는 발급 시점에만 응답, DB에는 `sha256` 해시만 저장.
+- `user_id` FK→users CASCADE, `token_hash` text + INDEX, `expires_at` (기본 14d), `used_at?`, `created_by`, INDEX `(user_id)`.
+- "Latest-wins": 재발급 시 기존 미사용 토큰은 used 처리.
+
+#### `people_profiles` — 공개 디렉터리 + 본인 프로필
+| 컬럼 | 비고 |
+|---|---|
+| `kind` | `mentor\|staff\|member` |
+| `user_id?` (FK set null) | **UNIQUE** — 1유저당 1프로필 |
+| `student_id?` (FK set null) | **UNIQUE** — 1학생당 1프로필 |
+| `name`, `role_title?`, `affiliation?`, `bio?`, `photo_url?` | 프로필 본문 |
+| `phone?` | text — 로그인 회원에게만 노출 |
+| `tags` | text[] (기본 `[]`) |
+| `display_order` | int (기본 0, INDEX `(kind, display_order)`) |
+| `is_public` | bool (기본 false) — true만 공개 노출 |
+
+생성 규칙:
+- 학생 본인 프로필은 `/student/profile` 첫 GET 시 lazy-create (race-safe upsert).
+- 멘토 프로필은 lazy-create 없음 — admin이 사전에 row 생성 + `user_id` 링크.
+
+---
+
+### 7.2 지원·평가 (MVP1/2)
+
+#### `applications` — 지원서 1건
+- 본문 필드: `name, email, phone, school, grade, birth_year, interest_area, motivation, experience, problem_awareness, expectation, privacy_consent`.
+- **이중 상태머신**:
+  - `status` (legacy MVP1): `submitted\|reviewing\|interview\|accepted\|rejected\|waitlisted\|withdrawn`
+  - `application_status` (MVP2 lifecycle): `submitted → document_review → document_review_completed → interview → interview_scheduled → interview_completed → final_decision_made / withdrawn`
+- `final_decision`: `pending\|accepted\|rejected\|waitlisted\|withdrawn`
+- `admin_note`, `submitted_at`, `updated_at`.
+
+#### `evaluation_assignments` — 누가 누구를 평가하는가
+- `(application_id, evaluator_id, stage)` **UNIQUE**.
+- `stage`: `document_review\|interview`.
+- `status`: `assigned\|in_progress\|completed`.
+- `assigned_by` (users FK), `assigned_at`.
+- 핸들러는 미들웨어(`requireAdminOrMentor`) 통과 후에도 본 테이블 소유권을 application 단위로 재확인.
+
+#### `evaluations` — 평가 본문 (upsert)
+- `(application_id, evaluator_id, stage)` **UNIQUE**.
+- 서브 점수 (1~5): `motivation_score, problem_awareness_score, initiative_score, collaboration_score, fit_score`.
+- `overall_score` (1~5, NOT NULL), `recommendation`: `strong_accept\|accept\|hold\|reject\|strong_reject`, `comment?`.
+- upsert 시 해당 assignment 자동 `completed`.
+
+#### `interviews` — 지원서당 1건
+- `(application_id)` **UNIQUE**.
+- `scheduled_at?`, `location_or_link?`, `interviewer_note?`, `status`: `not_scheduled\|scheduled\|completed\|no_show\|cancelled`.
+
+#### `decision_logs` — append-only 감사 로그
+- `application_id` FK CASCADE.
+- `previous_decision?`, `new_decision`, `changed_by` (users FK set null), `reason?`, `created_at`.
+- 변경 이력만 기록. 수정/삭제 API 없음.
+
+---
+
+### 7.3 활동 운영 (MVP3)
+
+#### `cohorts` — 기수
+- `name`, `description?`, `start_date?`, `end_date?`, `status`: `draft\|active\|completed\|archived`.
+
+#### `programs` — 기수 내 트랙
+- `cohort_id` FK CASCADE.
+- `name`, `description?`, `status`: `draft\|active\|completed\|archived`.
+
+#### `students` — 활성 학생 (≠ applications)
+- `user_id` (FK CASCADE) **UNIQUE** — 1유저당 1학생.
+- `application_id?` (FK set null) **UNIQUE** — 합격 변환 추적용.
+- 캐시 필드: `name, email, phone?, school?` + `is_active`.
+
+#### `student_cohorts`, `student_programs` — N:M 멤버십
+- 각각 `(student_id, cohort_id)`, `(student_id, program_id)` **UNIQUE**.
+- `joined_at`.
+
+#### `sessions` — 일정/모임
+- `cohort_id` FK CASCADE, `program_id?` (FK set null).
+- `title`, `description?`, `scheduled_at` (NOT NULL), `duration_minutes` (기본 60), `location_or_link?`.
+- `session_type`: `orientation\|workshop\|mentoring\|project_work\|presentation\|review\|other` (기본 `workshop`).
+- `status`: `scheduled\|completed\|cancelled`.
+
+#### `attendance_records`
+- `(session_id, student_id)` **UNIQUE**.
+- `status`: `present\|late\|absent\|excused`, `note?`, `marked_by` (users FK set null), `marked_at`.
+
+#### `assignments` — 과제
+- `cohort_id` FK CASCADE, `program_id?` (FK set null).
+- `title`, `description?`, `due_at?`, `status`: `draft\|published\|closed`, `created_by`.
+
+#### `assignment_submissions` — 제출 (upsert)
+- `(assignment_id, student_id)` **UNIQUE**.
+- 제출 본문: `content?`, `file_url?`, `external_url?` 중 자유.
+- `status`: `not_submitted\|submitted\|late\|reviewed` (기본 `submitted`, 마감 후 자동 `late`).
+- `submitted_at?`, `reviewed_by?` (users FK set null), `feedback?`.
+
+#### `announcements` — 공지
+- `title`, `content`, `target_type`: `all\|cohort\|program` (기본 `all`), `target_id?`.
+- `is_published`, `published_at?`, `created_by`.
+
+---
+
+### 7.4 활동 기록·활용 (MVP4)
+
+핵심: 각 테이블이 **자체 visibility 필드**를 갖고, 학생/관리자 쿼리에서 코드 레벨로 필터.
+
+#### `activity_records` — 학생별 활동 타임라인 항목
+- `student_id` FK CASCADE, `cohort_id` FK CASCADE, `program_id?` (FK set null).
+- `source_type`: `session\|assignment\|project\|feedback\|manual`, `source_id?` (원본 entity의 id 참조).
+- `title`, `description?`, `activity_date` (기본 now).
+- `visibility`: `private\|student_visible\|admin_only` (기본 `admin_only`).
+- `created_by` (users FK set null).
+
+#### `projects` — 사이드프로젝트
+- `cohort_id` FK CASCADE, `program_id?` (FK set null).
+- `title`, `description?`, `problem_statement?`, `solution_summary?`.
+- `status`: `ideation\|in_progress\|submitted\|presented\|completed\|archived`.
+- `started_at?`, `ended_at?`.
+
+#### `project_members`
+- `(project_id, student_id)` **UNIQUE**.
+- `role?` (e.g. "Lead", "Designer"), `contribution_summary?`.
+
+#### `artifacts` (Drizzle export `mvp4ArtifactsTable`)
+> ⚠️ DB 테이블명은 `artifacts`. 모노레포 `artifacts/` 디렉터리와 충돌 방지를 위해 JS 심볼은 `mvp4ArtifactsTable`.
+
+- `student_id?` (FK set null), `project_id?` (FK set null), `assignment_submission_id?` (FK set null) — 셋 중 하나 이상으로 출처 표현.
+- `title`, `description?`, `url` (NOT NULL).
+- `artifact_type`: `link\|document\|presentation\|video\|code\|image\|report\|other` (기본 `link`).
+- `visibility`: `private\|student_visible\|cohort_visible\|admin_only` (기본 `student_visible`) — **4단계**.
+- `created_by`.
+
+#### `feedback`
+- `target_type`: `student\|project\|assignment_submission\|activity_record\|session`.
+- `target_id`: polymorphic id (FK 없음 — 앱-레벨 정합성).
+- `student_id?`: 피드백이 누구에 관한 것인지 별도 기록 (target이 project인 경우에도 학생-필터링 가능하게).
+- `author_id?` (users FK set null).
+- `feedback_type`: `general\|strength\|improvement\|review\|mentor_note\|admin_note` (기본 `general`).
+- `content` (NOT NULL).
+- `visibility`: `student_visible\|admin_only` (기본 `admin_only`) — **2단계**.
+
+#### `skill_tags`
+- `name` UNIQUE, `description?`.
+
+#### `tag_mappings`
+- `(tag_id, target_type, target_id)` **UNIQUE**.
+- `target_type`: `activity_record\|project\|artifact\|feedback\|student` (polymorphic).
+- `tag_id` FK CASCADE, `created_by` (users FK set null).
+
+---
+
+### 7.5 사이트 콘텐츠
+
+#### `site_contents`
+- `key` UNIQUE (whitelist: `page.home\|page.recruit\|page.about\|page.program\|page.faq`).
+- `label`, `value jsonb`, `updated_by?`, `created_at`, `updated_at`.
+- 서버 시작 시 디폴트 부트스트랩 (`onConflictDoNothing` + label refresh + 1회 "leadership" → 현 카피 마이그레이션).
+
+---
+
+### 7.6 가시성·접근 규칙 매트릭스 (학생 측)
+
+| 영역 | 조건 |
+|---|---|
+| `student/timeline` (activity_records) | `studentId=me` AND `visibility=student_visible` |
+| `student/artifacts` | (소유 ≠ admin_only) ∪ (멤버인 프로젝트의 student_visible/cohort_visible) ∪ (같은 코호트 프로젝트의 cohort_visible) |
+| `student/projects/:id` 진입 | `project_members`에 포함된 경우만 |
+| `student/projects/:id` artifacts | 본인 소유(≠admin_only) ∪ 타 멤버의 (student_visible/cohort_visible). `private`은 절대 미노출. |
+| `student/report.feedbackHighlights` | `visibility=student_visible` AND `studentId=me` |
+
+비-MVP4 가시성:
+- 학생 과제: `status ∈ {published, closed}` AND 본인이 속한 코호트/프로그램만.
+- 학생 공지: `is_published=true` AND (`target=all` OR 본인 코호트/프로그램).
+
+---
+
+### 7.7 인덱스 & 유일제약 요약
+
+| 테이블 | 제약 |
+|---|---|
+| `users` | `email` UNIQUE |
+| `students` | `user_id` UNIQUE, `application_id` UNIQUE |
+| `people_profiles` | `user_id` UNIQUE, `student_id` UNIQUE, INDEX `(kind, display_order)` |
+| `student_cohorts` | `(student_id, cohort_id)` UNIQUE |
+| `student_programs` | `(student_id, program_id)` UNIQUE |
+| `attendance_records` | `(session_id, student_id)` UNIQUE |
+| `assignment_submissions` | `(assignment_id, student_id)` UNIQUE |
+| `evaluation_assignments` | `(application_id, evaluator_id, stage)` UNIQUE |
+| `evaluations` | `(application_id, evaluator_id, stage)` UNIQUE |
+| `interviews` | `(application_id)` UNIQUE |
+| `project_members` | `(project_id, student_id)` UNIQUE |
+| `skill_tags` | `name` UNIQUE |
+| `tag_mappings` | `(tag_id, target_type, target_id)` UNIQUE |
+| `site_contents` | `key` UNIQUE |
+| `account_activation_tokens` | INDEX `(token_hash)`, INDEX `(user_id)` |
+
+---
+
+### 7.8 ON DELETE 정책 요약
+
+| 부모 → 자식 | 동작 |
+|---|---|
+| `users` → `students` | CASCADE (학생은 유저 종속) |
+| `users` → `people_profiles.user_id` | SET NULL |
+| `users` → `evaluation_assignments.evaluator_id` | CASCADE |
+| `users` → `*.created_by / marked_by / assigned_by / reviewed_by / changed_by / author_id` | SET NULL (감사 흔적만 유지) |
+| `applications` → `students.application_id` | SET NULL (학생 변환 후 지원서 삭제 시 학생은 살아남음) |
+| `applications` → `evaluation_assignments, evaluations, interviews, decision_logs` | CASCADE |
+| `cohorts` → `programs, sessions, assignments, students_*, activity_records, projects` | CASCADE |
+| `programs` → `sessions.program_id 등` | SET NULL (코호트만 살리고 프로그램 분리 가능) |
+| `students` → `attendance_records, assignment_submissions, activity_records, project_members` | CASCADE |
+| `projects` → `project_members` | CASCADE; `artifacts.project_id` SET NULL |
+| `skill_tags` → `tag_mappings` | CASCADE |
+| `feedback.target_id, tag_mappings.target_id, activity_records.source_id` | FK 없음 (polymorphic, 앱 레벨에서 정합성 보장) |
+
+---
+
+### 7.9 설계 메모
+
+- **이중 status (applications)**: MVP1 → MVP2 전환을 비파괴적으로 하기 위해 legacy `status`를 보존. 향후 MVP1 호환이 필요 없어지면 단일 컬럼으로 축소 가능.
+- **Polymorphic id**: `feedback`, `tag_mappings`, `activity_records.source_id`는 FK 없이 `(target_type, target_id)` 페어로 다형성. DB-레벨 무결성 대신 어플리케이션 레벨에서 강제 (성능·유연성 ↔ 정합성 트레이드오프).
+- **Visibility 단계화**: 4단계(artifact) vs 2단계(feedback) — 산출물은 코호트 단위 가시성이 의미 있지만, 피드백은 본인/관리자 외 공개 의미가 없어 단순화.
+- **`canViewMemberContacts` 중앙화**: alumni·정지 등 정책 변경 시 한 곳만 수정.
+- **`mvp4ArtifactsTable` 이름 규약**: DB 테이블명 `artifacts`이지만 JS 심볼은 명시적으로 prefix해 모노레포 `artifacts/` 디렉터리와 혼동 방지.
