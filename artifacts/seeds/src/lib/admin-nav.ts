@@ -130,14 +130,7 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
       },
       { href: "/admin/assignments", label: "과제(Assignments)", icon: ClipboardList },
       { href: "/admin/announcements", label: "공지(Announcements)", icon: Megaphone },
-      {
-        href: "/admin/finance",
-        label: "재정(Finance)",
-        icon: Wallet,
-        placeholder: true,
-        description: "동아리 회계 — 수입/지출 기록, 영수증 첨부, 승인 흐름을 관리합니다.",
-        futureScope: "finance_records + attachments 테이블 도입 예정. 권한 분리(재정 담당자 역할), 영수증 ACL 게이팅 필요.",
-      },
+      { href: "/admin/finance", label: "재정(Finance)", icon: Wallet },
       {
         href: "/admin/ops-dashboard",
         label: "운영 대시보드",

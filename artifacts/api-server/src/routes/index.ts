@@ -30,6 +30,7 @@ import storageServeRouter from "./storage-serve";
 import adminMeetingsRouter from "./admin-meetings";
 import adminOpsTasksRouter from "./admin-ops-tasks";
 import adminDocumentsRouter from "./admin-documents";
+import adminFinanceRouter from "./admin-finance";
 
 const router: IRouter = Router();
 
@@ -64,5 +65,6 @@ router.use(storageServeRouter);
 router.use(adminMeetingsRouter);
 router.use(adminOpsTasksRouter);
 router.use(adminDocumentsRouter);
+router.use(adminFinanceRouter);
 
 export default router;

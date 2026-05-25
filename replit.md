@@ -130,6 +130,13 @@ Deploy: `suggest_deploy`. Proxy auto-routes `/api/*` to API server in production
 - All public form input server-side validated with generated Zod schemas + trimmed.
 - `decision_logs` append-only with changing user. CSV export has formula-injection guard.
 
+## Finance (GrowthHub Ops)
+
+`finance_records` — admin-only, lightweight reimbursement/expense ledger.
+- Cols: `record_type` (income|expense|reimbursement), `title`, `description`, `category`, `amount` numeric(14,2), `currency` (default KRW), `occurred_on` date, `status` (draft|requested|under_review|approved|paid|rejected|canceled), `requester_id`/`approver_id` (FK→users set null), `approved_at`/`paid_at`, `receipt_url` (text URL), polymorphic `linked_object_type` ∈ {session,cohort,project,document} + `linked_object_id` (no FK, UI tolerates missing).
+- Routes (all `requireAdmin`): `GET|POST /admin/finance-records`, `GET /admin/finance-records/summary` (dashboard hooks: pendingReimbursements/awaitingApproval/approvedUnpaid), `GET|PATCH /admin/finance-records/:id`, `POST /admin/finance-records/:id/cancel` (no hard delete — audit preservation). PATCH auto-stamps `approved_at`+`approver_id` on transition to approved, `paid_at` on transition to paid.
+- Admin UI: `/admin/finance` (table + create dialog + inline status select). Students/mentors: 403. Anonymous: 401.
+
 ## User preferences
 
 - Korean UI for all student/public-facing copy.
