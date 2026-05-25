@@ -1,0 +1,89 @@
+You are working on the Seeds GrowthHub project.
+
+Goal:
+Implement Markdown-based Documents, Templates, and Checklists for GrowthHub Ops.
+
+Relevant baseline documents:
+- Seeds GrowthHub - 운영시스템 기능 명세 v3
+- Seeds GrowthHub - Core 기반 구조 명세 v2
+- Seeds GrowthHub - 데이터 모델 및 ERD 상세 설계 v3
+- Seeds GrowthHub - 외부 도구 연계 설계
+
+Task:
+Implement a lightweight document system for internal GrowthHub operations.
+
+Scope:
+1. Documents
+- Create document
+- Edit document
+- Markdown editor
+- Markdown preview
+- Document detail page
+- Document list page
+- Visibility setting
+- Linked object fields where feasible
+
+2. Templates
+- Mark document as template
+- List templates
+- Clone template into a new document
+- Template types: meeting note, event checklist, recruitment checklist, finance template, onboarding document
+
+3. Versions
+- Create a version record when document content changes
+- Show version history
+- Allow viewing previous versions if feasible
+
+4. Checklists
+- Support checklist-style Markdown
+- Allow documents to be used as event/session checklists later
+
+Implementation constraints:
+- Markdown is the source of truth for internal operational documents.
+- Do not implement a DOCX editor.
+- External DOCX/PDF files can be handled later as attachments or links.
+- Do not replace Google Drive/Notion. GrowthHub stores internal docs and metadata.
+
+Acceptance Criteria:
+Functional:
+- Admin can create a Markdown document.
+- Admin can edit and preview Markdown.
+- Admin can mark a document as template.
+- Admin can clone a template into a new document.
+- Document versions are created when content changes.
+- Document can be linked to a related object if supported.
+- Document visibility can be set.
+
+Permission / Visibility:
+- Internal documents are not visible to students.
+- Visibility rules are enforced.
+- Unauthorized users receive a clear message.
+
+Data Integrity:
+- Document version history is preserved.
+- Cloned document retains template content but becomes a separate document.
+- Deleting or archiving a document does not break linked objects.
+
+UX / Error:
+- Empty state exists for documents and templates.
+- Editor save errors do not lose content.
+- Markdown preview is readable.
+
+Regression:
+- Existing Admin pages still work.
+- Existing Sessions, Assignments, Projects, Artifacts, Feedback pages still work.
+- Existing auth and role switching remain intact.
+
+Scenario Checks:
+1. Admin creates a 정기모임 체크리스트 template.
+2. Admin clones it into a new document.
+3. Admin edits the cloned document.
+4. Version history shows the previous version.
+5. Student cannot access internal document.
+
+Output:
+- Summary of implementation
+- Changed files
+- Database migrations if any
+- Acceptance Criteria checklist with pass/fail
+- Known limitations

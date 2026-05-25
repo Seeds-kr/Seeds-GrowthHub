@@ -1,0 +1,94 @@
+You are working on the Seeds GrowthHub project.
+
+Goal:
+Implement Meetings and Tasks / Action Items as the core of GrowthHub Ops.
+
+Relevant baseline documents:
+- Seeds GrowthHub - 운영시스템 기능 명세 v3
+- Seeds GrowthHub - 데이터 모델 및 ERD 상세 설계 v3
+- Seeds GrowthHub - IA 및 화면 구조 설계 v2
+- Seeds GrowthHub - 구현 로드맵 및 Phase 계획 v3
+
+Task:
+Implement Meetings and Tasks so that operational decisions can become trackable action items.
+
+Scope:
+1. Meetings
+- Create meeting
+- List meetings
+- View meeting detail
+- Edit meeting
+- Markdown fields for agenda, decisions, notes, pending items
+- Participants field
+- Visibility field
+- Link meeting to related objects where feasible
+
+2. Tasks / Action Items
+- Create task directly
+- Create task from meeting detail
+- List tasks
+- Kanban or status board view
+- Assign owner
+- Due date
+- Priority
+- Status
+- Source relation to meeting
+- Linked object relation where feasible
+
+Suggested task statuses:
+- todo
+- in_progress
+- review
+- blocked
+- done
+- canceled
+
+Implementation constraints:
+- Do not replace existing project issue management.
+- Tasks are for operational work, not student project sprint management.
+- Do not break existing admin pages.
+- Keep permissions conservative.
+
+Acceptance Criteria:
+Functional:
+- Admin can create a meeting.
+- Admin can write and preview Markdown meeting content.
+- Admin can create an action item from a meeting.
+- Created action item appears in the Tasks list/board.
+- Task stores assignee, due date, priority, status, and source meeting.
+- Task status can be updated.
+- Tasks can be filtered by status and assignee.
+
+Permission / Visibility:
+- Only authorized admin/ops users can create or edit meetings and tasks.
+- Internal meetings are not visible to students.
+- Unauthorized users receive a clear access-denied message.
+
+Data Integrity:
+- Task created from a meeting retains a source reference to that meeting.
+- If assignee is removed or inactive, task should not crash the page.
+- Required fields are validated.
+
+UX / Error:
+- Empty states exist for no meetings and no tasks.
+- Save errors do not lose user input.
+- Markdown preview is readable.
+
+Regression:
+- Existing Admin navigation still works.
+- Existing Applications/Evaluations flow still works.
+- Existing Student visibility rules are unchanged.
+
+Scenario Checks:
+1. Admin creates a meeting, writes Markdown decisions, and saves.
+2. Admin creates 3 action items from the meeting.
+3. Tasks appear on the task board.
+4. One overdue task appears as overdue.
+5. A non-admin user cannot access internal meeting details.
+
+Output:
+- Summary of implementation
+- Changed files
+- Database migrations if any
+- Acceptance Criteria checklist with pass/fail
+- Known limitations

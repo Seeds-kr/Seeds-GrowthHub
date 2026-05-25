@@ -1,0 +1,84 @@
+You are working on the Seeds GrowthHub project.
+
+Goal:
+Enhance the existing Sessions feature into GrowthHub Events/Sessions for operational use.
+
+Relevant baseline documents:
+- Seeds GrowthHub - 운영시스템 기능 명세 v3
+- Seeds GrowthHub - IA 및 화면 구조 설계 v2
+- Seeds GrowthHub - 데이터 모델 및 ERD 상세 설계 v3
+- Seeds GrowthHub - 외부 도구 연계 설계
+
+Task:
+Build on the existing sessions and attendance_records implementation. Do not rewrite the existing model unless necessary.
+
+Scope:
+1. Events/Sessions
+- Keep existing session list/detail behavior.
+- Add or improve event/session type if needed.
+- Connect session to cohort/program.
+- Add owner/responsible person if feasible.
+- Add preparation status if feasible.
+
+2. Checklists
+- Allow linking a document/template/checklist to a session.
+- Allow checklist completion tracking if feasible.
+- If full checklist completion is too large, support linking a checklist document first.
+
+3. Attendance
+- Preserve existing attendance behavior.
+- Status values should include present, late, absent, excused if already supported or feasible.
+
+4. Follow-up Actions
+- Allow creating tasks from a session/event detail page.
+
+5. Materials / External Links
+- Allow adding relevant links or documents to a session.
+- Do not duplicate Google Drive/Notion content; store links and metadata.
+
+Implementation constraints:
+- Existing student session views should not break.
+- Existing attendance records should remain valid.
+- Events/Sessions are operational objects, not full calendar replacement yet.
+
+Acceptance Criteria:
+Functional:
+- Admin can create or edit a session/event.
+- Admin can link a checklist document or template to the session.
+- Admin can record attendance.
+- Admin can create follow-up tasks from the session.
+- Admin can attach or link event materials.
+- Session can be connected to cohort/program.
+
+Permission / Visibility:
+- Students only see sessions relevant to their cohort/program and published/visible status.
+- Internal checklist documents are not visible to students unless explicitly allowed.
+- Admin can manage attendance and follow-up tasks.
+
+Data Integrity:
+- Existing attendance records remain valid.
+- Linked checklist/document relation does not break if the document is archived.
+- Created follow-up tasks retain source relation to the session.
+
+UX / Error:
+- Session detail shows checklist, attendance, linked materials, and follow-up actions clearly.
+- Empty states exist for no checklist, no attendance, no materials.
+
+Regression:
+- Existing student sessions and attendance views still work.
+- Existing assignments and announcements access rules remain unchanged.
+- Existing admin sessions page still works.
+
+Scenario Checks:
+1. Admin creates a 정기모임 session.
+2. Admin links a preparation checklist.
+3. Admin records student attendance.
+4. Admin creates two follow-up tasks.
+5. Student sees only the relevant published session, not internal checklist details.
+
+Output:
+- Summary of implementation
+- Changed files
+- Database migrations if any
+- Acceptance Criteria checklist with pass/fail
+- Known limitations

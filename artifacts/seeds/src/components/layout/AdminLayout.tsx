@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAdminMe, useAdminLogout } from "@workspace/api-client-react";
@@ -6,75 +6,22 @@ import { useQueryClient } from "@tanstack/react-query";
 import { getAdminMeQueryKey } from "@workspace/api-client-react";
 import {
   Loader2,
-  LayoutDashboard,
-  FileText,
-  UserCheck,
-  Users,
-  GraduationCap,
-  CalendarDays,
-  ClipboardList,
-  Megaphone,
-  Activity,
-  FolderKanban,
-  Package,
-  MessageSquare,
-  Tags,
-  FileEdit,
-  UserSquare2,
   LogOut,
   Menu,
   X,
+  ChevronDown,
+  Construction,
 } from "lucide-react";
 import { RoleSwitcher, effectiveRoles, pickRedirectFor } from "./RoleSwitcher";
-
-type NavItem = { href: string; label: string; icon: React.ComponentType<{ className?: string }> };
-type NavSection = { title: string; items: NavItem[] };
-
-const NAV_SECTIONS: NavSection[] = [
-  {
-    title: "",
-    items: [{ href: "/admin", label: "대시보드", icon: LayoutDashboard }],
-  },
-  {
-    title: "모집",
-    items: [
-      { href: "/admin/applications", label: "지원서", icon: FileText },
-      { href: "/admin/evaluators", label: "평가 담당자", icon: UserCheck },
-    ],
-  },
-  {
-    title: "기수 운영",
-    items: [
-      { href: "/admin/cohorts", label: "기수", icon: Users },
-      { href: "/admin/programs", label: "프로그램", icon: FolderKanban },
-      { href: "/admin/students", label: "학생", icon: GraduationCap },
-      { href: "/admin/sessions", label: "모임", icon: CalendarDays },
-      { href: "/admin/assignments", label: "과제", icon: ClipboardList },
-      { href: "/admin/announcements", label: "공지", icon: Megaphone },
-    ],
-  },
-  {
-    title: "활동 기록",
-    items: [
-      { href: "/admin/activity-records", label: "활동 기록", icon: Activity },
-      { href: "/admin/projects", label: "프로젝트", icon: FolderKanban },
-      { href: "/admin/artifacts", label: "아티팩트", icon: Package },
-      { href: "/admin/feedback", label: "피드백", icon: MessageSquare },
-      { href: "/admin/tags", label: "태그", icon: Tags },
-    ],
-  },
-  {
-    title: "사이트",
-    items: [
-      { href: "/admin/site-content", label: "홈페이지 콘텐츠", icon: FileEdit },
-      { href: "/admin/people", label: "사람들", icon: UserSquare2 },
-    ],
-  },
-];
+import { ADMIN_NAV_SECTIONS, type NavSection } from "@/lib/admin-nav";
 
 function isActive(currentPath: string, href: string): boolean {
   if (href === "/admin") return currentPath === "/admin";
   return currentPath === href || currentPath.startsWith(href + "/");
+}
+
+function sectionHasActive(section: NavSection, currentPath: string): boolean {
+  return section.items.some((item) => isActive(currentPath, item.href));
 }
 
 function SidebarContent({
@@ -84,39 +31,93 @@ function SidebarContent({
   currentPath: string;
   onNavigate?: () => void;
 }) {
+  // Track collapsed/expanded state per section; default = expanded if active item lives inside.
+  const initialExpanded = useMemo(() => {
+    const map: Record<string, boolean> = {};
+    for (const section of ADMIN_NAV_SECTIONS) {
+      // Home section (no title) is always shown.
+      if (!section.title) {
+        map[section.key] = true;
+        continue;
+      }
+      map[section.key] = sectionHasActive(section, currentPath);
+    }
+    return map;
+  }, [currentPath]);
+
+  const [expanded, setExpanded] = useState<Record<string, boolean>>(initialExpanded);
+
+  // When route changes, auto-open the matching section without collapsing others the user opened.
+  useEffect(() => {
+    setExpanded((prev) => {
+      const next = { ...prev };
+      for (const section of ADMIN_NAV_SECTIONS) {
+        if (!section.title) continue;
+        if (sectionHasActive(section, currentPath)) next[section.key] = true;
+      }
+      return next;
+    });
+  }, [currentPath]);
+
+  const toggle = (key: string) =>
+    setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
+
   return (
-    <nav className="flex-1 overflow-y-auto px-3 py-6 space-y-7">
-      {NAV_SECTIONS.map((section, idx) => (
-        <div key={idx}>
-          {section.title ? (
-            <div className="px-3 mb-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold">
-              {section.title}
-            </div>
-          ) : null}
-          <ul className="space-y-0.5">
-            {section.items.map((item) => {
-              const active = isActive(currentPath, item.href);
-              const Icon = item.icon;
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    onClick={onNavigate}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-                      active
-                        ? "bg-primary/10 text-primary font-semibold"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                    }`}
-                  >
-                    <Icon className="w-4 h-4 shrink-0" />
-                    <span className="truncate">{item.label}</span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      ))}
+    <nav className="flex-1 overflow-y-auto px-3 py-6 space-y-5">
+      {ADMIN_NAV_SECTIONS.map((section) => {
+        const isOpen = expanded[section.key];
+        const hasTitle = Boolean(section.title);
+        return (
+          <div key={section.key}>
+            {hasTitle ? (
+              <button
+                type="button"
+                onClick={() => toggle(section.key)}
+                className="w-full flex items-center justify-between px-3 mb-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold hover:text-foreground transition-colors"
+                aria-expanded={isOpen}
+              >
+                <span>{section.title}</span>
+                <ChevronDown
+                  className={`w-3.5 h-3.5 transition-transform ${
+                    isOpen ? "" : "-rotate-90"
+                  }`}
+                />
+              </button>
+            ) : null}
+            {!hasTitle || isOpen ? (
+              <ul className="space-y-0.5">
+                {section.items.map((item) => {
+                  const active = isActive(currentPath, item.href);
+                  const Icon = item.icon;
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        onClick={onNavigate}
+                        className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+                          active
+                            ? "bg-primary/10 text-primary font-semibold"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        }`}
+                        data-testid={`admin-nav-${item.href.replace(/\//g, "-")}`}
+                      >
+                        <Icon className="w-4 h-4 shrink-0" />
+                        <span className="truncate">{item.label}</span>
+                        {item.placeholder ? (
+                          <Construction
+                            className="w-3 h-3 ml-auto shrink-0 opacity-60"
+                            aria-label="준비 중"
+                          />
+                        ) : null}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : null}
+          </div>
+        );
+      })}
     </nav>
   );
 }

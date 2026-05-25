@@ -59,6 +59,8 @@ import ActivatePage from "@/pages/activate";
 import PeoplePage from "@/pages/people";
 import PersonDetailPage from "@/pages/person-detail";
 import AdminPeople from "@/pages/admin/people";
+import AdminPlaceholderPage from "@/pages/admin/_placeholder";
+import { ADMIN_PLACEHOLDER_ITEMS } from "@/lib/admin-nav";
 import StudentProfilePage from "@/pages/student/profile";
 
 const queryClient = new QueryClient({
@@ -113,6 +115,10 @@ function Router() {
       <Route path="/admin/cohorts/:id/summary" component={AdminCohortSummary} />
       <Route path="/admin/site-content" component={AdminSiteContent} />
       <Route path="/admin/people" component={AdminPeople} />
+
+      {ADMIN_PLACEHOLDER_ITEMS.map((item) => (
+        <Route key={item.href} path={item.href} component={AdminPlaceholderPage} />
+      ))}
 
       <Route path="/evaluator" component={EvaluatorDashboard} />
       <Route path="/evaluator/applications/:id" component={EvaluatorApplicationDetail} />
