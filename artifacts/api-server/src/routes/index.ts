@@ -27,6 +27,8 @@ import activationRouter from "./activation";
 import peopleRouter from "./people";
 import adminPeopleAvatarsRouter from "./admin-people-avatars";
 import storageServeRouter from "./storage-serve";
+import adminMeetingsRouter from "./admin-meetings";
+import adminOpsTasksRouter from "./admin-ops-tasks";
 
 const router: IRouter = Router();
 
@@ -58,5 +60,7 @@ router.use(activationRouter);
 router.use(peopleRouter);
 router.use(adminPeopleAvatarsRouter);
 router.use(storageServeRouter);
+router.use(adminMeetingsRouter);
+router.use(adminOpsTasksRouter);
 
 export default router;

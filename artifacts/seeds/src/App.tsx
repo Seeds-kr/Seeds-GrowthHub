@@ -60,6 +60,9 @@ import PeoplePage from "@/pages/people";
 import PersonDetailPage from "@/pages/person-detail";
 import AdminPeople from "@/pages/admin/people";
 import AdminPlaceholderPage from "@/pages/admin/_placeholder";
+import AdminMeetings from "@/pages/admin/meetings";
+import AdminMeetingDetail from "@/pages/admin/meeting-detail";
+import AdminTasks from "@/pages/admin/tasks";
 import { ADMIN_PLACEHOLDER_ITEMS } from "@/lib/admin-nav";
 import StudentProfilePage from "@/pages/student/profile";
 
@@ -115,6 +118,9 @@ function Router() {
       <Route path="/admin/cohorts/:id/summary" component={AdminCohortSummary} />
       <Route path="/admin/site-content" component={AdminSiteContent} />
       <Route path="/admin/people" component={AdminPeople} />
+      <Route path="/admin/meetings" component={AdminMeetings} />
+      <Route path="/admin/meetings/:id" component={AdminMeetingDetail} />
+      <Route path="/admin/tasks" component={AdminTasks} />
 
       {ADMIN_PLACEHOLDER_ITEMS.map((item) => (
         <Route key={item.href} path={item.href} component={AdminPlaceholderPage} />

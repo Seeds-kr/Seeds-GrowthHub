@@ -1,0 +1,322 @@
+import { useState } from "react";
+import { Link } from "wouter";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AdminLayout } from "@/components/layout/AdminLayout";
+import { api } from "@/lib/mvp3-api";
+import {
+  type Meeting,
+  MEETING_TYPES,
+  MEETING_TYPE_LABEL,
+  MEETING_VISIBILITIES,
+  MEETING_VISIBILITY_LABEL,
+} from "@/lib/meetings-api";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { toast } from "@/hooks/use-toast";
+import { Loader2, CalendarCheck } from "lucide-react";
+
+function toLocalInput(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function blankForm() {
+  const now = new Date();
+  now.setMinutes(0, 0, 0);
+  return {
+    title: "",
+    meetingType: "general" as (typeof MEETING_TYPES)[number],
+    meetingDate: toLocalInput(now.toISOString()),
+    participantsText: "",
+    visibility: "admin_only" as (typeof MEETING_VISIBILITIES)[number],
+    agendaMd: "",
+    decisionsMd: "",
+    notesMd: "",
+    pendingMd: "",
+  };
+}
+
+export default function AdminMeetingsPage() {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState(blankForm());
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin-meetings"],
+    queryFn: () => api<{ items: Meeting[] }>("/admin/meetings"),
+  });
+
+  const create = useMutation({
+    mutationFn: () =>
+      api<Meeting>("/admin/meetings", {
+        method: "POST",
+        body: {
+          title: form.title,
+          meetingType: form.meetingType,
+          meetingDate: new Date(form.meetingDate).toISOString(),
+          participants: form.participantsText
+            .split(/[\n,]/)
+            .map((s) => s.trim())
+            .filter(Boolean),
+          visibility: form.visibility,
+          agendaMd: form.agendaMd,
+          decisionsMd: form.decisionsMd,
+          notesMd: form.notesMd,
+          pendingMd: form.pendingMd,
+        },
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-meetings"] });
+      toast({ title: "회의가 생성되었습니다." });
+      setOpen(false);
+      setForm(blankForm());
+    },
+    onError: (e: any) =>
+      toast({
+        title: "저장 실패",
+        description: e?.data?.error ?? e.message,
+        variant: "destructive",
+      }),
+  });
+
+  return (
+    <AdminLayout>
+      <div className="mb-8 flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-serif font-bold flex items-center gap-2">
+            <CalendarCheck className="w-7 h-7 text-primary" />
+            회의록
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            운영진 회의를 기록하고 후속 액션을 작업(Tasks)으로 전환합니다.
+          </p>
+        </div>
+        <Button onClick={() => setOpen(true)} data-testid="btn-new-meeting">
+          + 새 회의
+        </Button>
+      </div>
+
+      <div className="bg-card border border-border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>제목</TableHead>
+              <TableHead className="w-24">유형</TableHead>
+              <TableHead className="w-40">일시</TableHead>
+              <TableHead className="w-40">참석자</TableHead>
+              <TableHead className="w-32">공개 범위</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={5} className="h-24 text-center">
+                  <Loader2 className="animate-spin mx-auto" />
+                </TableCell>
+              </TableRow>
+            ) : !data || data.items.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
+                  아직 회의록이 없습니다. 첫 회의록을 만들어 보세요.
+                </TableCell>
+              </TableRow>
+            ) : (
+              data.items.map((m) => (
+                <TableRow key={m.id} className="hover:bg-muted/40">
+                  <TableCell>
+                    <Link
+                      href={`/admin/meetings/${m.id}`}
+                      className="font-medium text-primary hover:underline"
+                      data-testid={`link-meeting-${m.id}`}
+                    >
+                      {m.title}
+                    </Link>
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {MEETING_TYPE_LABEL[m.meetingType] ?? m.meetingType}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {new Date(m.meetingDate).toLocaleString("ko-KR")}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground truncate max-w-40">
+                    {m.participants.length > 0 ? m.participants.join(", ") : "—"}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline">
+                      {MEETING_VISIBILITY_LABEL[m.visibility] ?? m.visibility}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>새 회의록 작성</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="title">제목 *</Label>
+              <Input
+                id="title"
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                placeholder="예: 2026년 2월 운영진 정기회의"
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <Label>유형</Label>
+                <Select
+                  value={form.meetingType}
+                  onValueChange={(v) =>
+                    setForm({ ...form, meetingType: v as (typeof MEETING_TYPES)[number] })
+                  }
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {MEETING_TYPES.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {MEETING_TYPE_LABEL[t]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>공개 범위</Label>
+                <Select
+                  value={form.visibility}
+                  onValueChange={(v) =>
+                    setForm({
+                      ...form,
+                      visibility: v as (typeof MEETING_VISIBILITIES)[number],
+                    })
+                  }
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {MEETING_VISIBILITIES.map((v) => (
+                      <SelectItem key={v} value={v}>
+                        {MEETING_VISIBILITY_LABEL[v]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="date">일시 *</Label>
+                <Input
+                  id="date"
+                  type="datetime-local"
+                  value={form.meetingDate}
+                  onChange={(e) =>
+                    setForm({ ...form, meetingDate: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="participants">참석자 (쉼표 또는 줄바꿈으로 구분)</Label>
+              <Textarea
+                id="participants"
+                rows={2}
+                value={form.participantsText}
+                onChange={(e) =>
+                  setForm({ ...form, participantsText: e.target.value })
+                }
+                placeholder="홍길동, 김철수, 이영희"
+              />
+            </div>
+            <div>
+              <Label htmlFor="agenda">안건 (Markdown)</Label>
+              <Textarea
+                id="agenda"
+                rows={4}
+                value={form.agendaMd}
+                onChange={(e) => setForm({ ...form, agendaMd: e.target.value })}
+                placeholder="- 2월 행사 회고&#10;- 신입 모집 일정"
+                className="font-mono text-sm"
+              />
+            </div>
+            <div>
+              <Label htmlFor="decisions">결정사항 (Markdown)</Label>
+              <Textarea
+                id="decisions"
+                rows={4}
+                value={form.decisionsMd}
+                onChange={(e) =>
+                  setForm({ ...form, decisionsMd: e.target.value })
+                }
+                className="font-mono text-sm"
+              />
+            </div>
+            <div>
+              <Label htmlFor="pending">보류 / 후속 논의 (Markdown)</Label>
+              <Textarea
+                id="pending"
+                rows={3}
+                value={form.pendingMd}
+                onChange={(e) => setForm({ ...form, pendingMd: e.target.value })}
+                className="font-mono text-sm"
+              />
+            </div>
+            <div>
+              <Label htmlFor="notes">메모 (Markdown)</Label>
+              <Textarea
+                id="notes"
+                rows={3}
+                value={form.notesMd}
+                onChange={(e) => setForm({ ...form, notesMd: e.target.value })}
+                className="font-mono text-sm"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              취소
+            </Button>
+            <Button
+              onClick={() => create.mutate()}
+              disabled={!form.title.trim() || !form.meetingDate || create.isPending}
+              data-testid="btn-save-meeting"
+            >
+              {create.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              저장
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </AdminLayout>
+  );
+}

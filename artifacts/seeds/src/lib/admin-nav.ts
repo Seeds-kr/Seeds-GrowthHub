@@ -106,22 +106,8 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
     title: "Ops · 운영",
     key: "ops",
     items: [
-      {
-        href: "/admin/meetings",
-        label: "회의(Meetings)",
-        icon: CalendarCheck,
-        placeholder: true,
-        description: "운영진 회의록 — 안건, 결정사항, 보류사항을 기록하고 후속 액션을 작업(Tasks)으로 전환합니다.",
-        futureScope: "Markdown 본문 + 회의록 ↔ 작업(Tasks) 연결. 회의 유형·참석자·일자별 검색 지원 예정.",
-      },
-      {
-        href: "/admin/tasks",
-        label: "작업(Tasks / Action Items)",
-        icon: CheckSquare,
-        placeholder: true,
-        description: "운영 작업·액션 아이템 — 회의에서 도출된 후속 액션, 행사 준비 작업, 일반 운영 업무를 칸반으로 관리합니다.",
-        futureScope: "학생 과제(/admin/assignments)와는 별개의 운영 작업입니다. 담당자·기한·우선순위·연결 객체(회의/세션/프로젝트)로 추적합니다.",
-      },
+      { href: "/admin/meetings", label: "회의(Meetings)", icon: CalendarCheck },
+      { href: "/admin/tasks", label: "작업(Tasks / Action Items)", icon: CheckSquare },
       {
         href: "/admin/documents",
         label: "문서 & 템플릿",
