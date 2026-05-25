@@ -1,0 +1,95 @@
+You are working on the Seeds GrowthHub project.
+
+Goal:
+Reorganize the Admin navigation according to the GrowthHub IA baseline, without breaking existing routes or features.
+
+Relevant baseline documents:
+- Seeds GrowthHub - 문서 체계 및 용어 표준
+- Seeds GrowthHub - IA 및 화면 구조 설계 v2
+- Seeds GrowthHub - 운영시스템 기능 명세 v3
+- Seeds GrowthHub - 데이터 모델 및 ERD 상세 설계 v3
+
+Task:
+Refactor the Admin navigation into the following groups:
+
+Admin
+- Home
+- Core
+- Ops
+- Growth
+- Content
+- System
+
+Target grouping:
+Core:
+- Users
+- People Profiles
+- Roles & Permissions
+- Cohorts
+- Programs
+- Members
+
+Ops:
+- Meetings
+- Tasks
+- Documents & Templates
+- Recruitment
+- Evaluations
+- Interviews
+- Events / Sessions
+- Attendance
+- Assignments
+- Announcements
+- Finance
+- Operations Dashboard
+
+Growth:
+- Students
+- Projects
+- Studies
+- Activity Records
+- Artifacts
+- Feedback
+- Reflections
+- Tags
+- Reports
+
+Content:
+- Site Content
+- Public Pages
+- Media / Links
+
+System:
+- Integrations
+- Audit Logs
+- Settings
+
+Implementation requirements:
+- Preserve existing routes where possible.
+- Existing pages should continue to work.
+- For not-yet-implemented features, create placeholder pages or clear empty states.
+- Placeholder pages should explain the feature purpose and expected future scope.
+- Do not implement full Meetings, Tasks, Documents, Finance, Studies, or Reflections yet unless already present.
+- Keep role switching behavior intact.
+- Keep existing admin/mentor/student access behavior intact.
+
+Acceptance Criteria:
+Functional:
+- Admin navigation displays grouped sections: Home, Core, Ops, Growth, Content, System.
+- Existing admin pages remain accessible.
+- Placeholder pages exist for missing core GrowthHub pages.
+- Page titles and labels use the terminology from the baseline documents.
+
+Permission / Visibility:
+- Only authorized admin users can access Admin workspace.
+- Existing role switching behavior remains intact.
+
+Regression:
+- Existing Applications, Evaluators, Students, Cohorts, Programs, Sessions, Assignments, Announcements, People, Site Content, Activity Records, Projects, Artifacts, Feedback, and Tags pages still work.
+- Existing evaluator surface is not affected.
+- Existing student and mentor routes are not affected.
+
+Verification:
+- Manually verify each Admin nav item opens the expected page or placeholder.
+- Verify no existing route returns an unexpected error.
+- Summarize changed files and remaining TODOs.
