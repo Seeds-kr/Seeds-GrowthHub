@@ -73,23 +73,9 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
     title: "Core · 코어",
     key: "core",
     items: [
-      {
-        href: "/admin/users",
-        label: "사용자(Users)",
-        icon: UserCog,
-        placeholder: true,
-        description: "플랫폼 계정 단위로 사용자(Users)를 관리합니다. 계정 생성·비활성화, 기본/추가 역할(extra_roles) 부여, 활성화 토큰 재발급 등이 모일 자리입니다.",
-        futureScope: "현재는 학생 화면(/admin/students/:id)과 합격자 전환 흐름에서 분산되어 있는 사용자 관리 기능을 한 화면으로 모읍니다.",
-      },
+      { href: "/admin/users", label: "사용자(Users)", icon: UserCog },
       { href: "/admin/people", label: "사람들 프로필", icon: UserSquare2 },
-      {
-        href: "/admin/roles",
-        label: "역할 & 권한",
-        icon: ShieldCheck,
-        placeholder: true,
-        description: "역할 코드(admin/mentor/student)와 추가 역할(extra_roles), 향후 도입 검토 중인 scope 기반 권한(role_assignments)을 관리할 자리입니다.",
-        futureScope: "현재 권한 모델은 단일 role + extra_roles 배열입니다. 운영진 세부 역할(모집장·재정장 등) 분리 요구가 발생하면 scope 기반 모델로 확장합니다.",
-      },
+      { href: "/admin/roles", label: "역할 & 권한", icon: ShieldCheck },
       { href: "/admin/cohorts", label: "기수(Cohorts)", icon: Users },
       { href: "/admin/programs", label: "프로그램(Programs)", icon: FolderKanban },
       {

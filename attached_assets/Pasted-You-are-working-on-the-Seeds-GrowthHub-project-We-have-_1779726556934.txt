@@ -1,0 +1,202 @@
+You are working on the Seeds GrowthHub project.
+
+We have completed implementation prompts 0 through 6:
+0. Baseline Audit & Gap Register
+1. Admin IA / Navigation regrouping
+2. Meetings + Tasks
+3. Documents / Templates / Checklists
+4. Events / Sessions enhancement
+5. Finance / Attachments
+6. Ops Dashboard
+
+Before moving to UX polish or full scenario verification, perform a Baseline Compliance Self-Audit and Functional Gap Fix Pass.
+
+Goal:
+Audit your own implementation against the GrowthHub Baseline documents and the Acceptance Criteria from prompts 0 through 6. Find and fix functional gaps that should already have been implemented.
+
+This is not a visual polish task.
+This is not a Growth feature task.
+This is a baseline compliance and functional completeness task for Core and Ops.
+
+Relevant baseline documents:
+- Seeds GrowthHub - 문서 체계 및 용어 표준
+- Seeds GrowthHub - Overview v3
+- Seeds GrowthHub - Core 기반 구조 명세 v2
+- Seeds GrowthHub - 외부 도구 연계 설계
+- Seeds GrowthHub - 운영시스템 기능 명세 v3
+- Seeds GrowthHub - IA 및 화면 구조 설계 v2
+- Seeds GrowthHub - 데이터 모델 및 ERD 상세 설계 v3
+- Seeds GrowthHub - 구현 로드맵 및 Phase 계획 v3
+- Current Replit implementation summary
+
+Important rules:
+- Do not start Growth features yet.
+- Do not implement Studies, Reflections, Mentor My Teams, Growth reports, or Growth-specific features in this step.
+- Do not rewrite the architecture.
+- Do not make destructive migrations.
+- Do not break existing auth, role switching, evaluator surface, student visibility rules, or existing Admin/Mentor/Student routes.
+- Preserve existing implemented features.
+- If a feature is intentionally deferred according to the baseline, label it clearly as Deferred / Future Scope and explain why.
+- If a feature was required by prompts 0~6 and is missing, fix it.
+
+Part 1. Self-Audit
+
+Create a compliance checklist for prompts 0~6.
+
+For each implemented area, report:
+- Requirement / Acceptance Criteria
+- Current status: Pass / Partial / Fail / Deferred
+- Evidence: route, screen, file, table, or behavior
+- Fix needed: yes/no
+- Risk level
+
+Audit these areas:
+
+A. Admin IA / Navigation
+- Admin navigation is grouped into Home, Core, Ops, Growth, Content, System.
+- Existing routes are preserved.
+- Existing implemented pages are not replaced by placeholders.
+- Placeholder pages only exist for truly unimplemented future features.
+- Placeholder pages clearly explain purpose, current status, and why deferred.
+- Core/Ops/Growth terminology matches the baseline.
+
+B. Core section
+- Users/Members route to actual existing user/member functionality if available.
+- People Profiles route to actual existing people/profile management.
+- Cohorts route to actual existing cohort management.
+- Programs route to actual existing program management, with note that Program meaning may be redefined later.
+- Students/Members route to existing student/member management if already implemented.
+- Roles & Permissions at least shows a read-only overview of the current role model:
+  - admin
+  - mentor
+  - student
+  - extra_roles
+  - effective roles
+  - evaluator surface is assignment-based, not a separate role
+  - scope-based role_assignments are deferred/future scope.
+- Core should not appear incomplete where existing functionality already exists.
+
+C. Meetings + Tasks
+- Admin can create meeting.
+- Admin can edit meeting.
+- Meeting supports Markdown fields for agenda, decisions, notes, pending items.
+- Meeting detail page allows creating follow-up Action Items directly.
+- Created Action Items automatically store source_type=meeting and source_id=current meeting.
+- Related Action Items appear on Meeting detail page.
+- Created Action Items appear in Tasks list/board.
+- Task has title, assignee, due date, priority, status.
+- Task supports statuses: todo, in_progress, review, blocked, done, canceled.
+- Overdue and blocked tasks are identifiable.
+- Tasks are operational tasks, not student project issue tracking.
+
+D. Documents / Templates / Checklists
+- Admin can create Markdown document.
+- Admin can edit and preview Markdown.
+- Admin can mark document as template.
+- Admin can clone template into a new document.
+- Version history is created when content changes.
+- Document visibility exists and is enforced.
+- Checklist-style documents are usable for operations.
+- Internal documents are not visible to students.
+- DOCX editor is not implemented; this is intentional.
+
+E. Events / Sessions
+- Existing sessions still work.
+- Session/event can be connected to cohort/program.
+- Session/event detail can link checklist document/template.
+- Attendance behavior remains compatible with existing student views.
+- Admin can create follow-up tasks from session/event detail.
+- Materials/external links can be attached or linked if implemented.
+- Students only see sessions relevant to their cohort/program and visibility rules.
+
+F. Finance / Attachments
+- Admin/Finance user can create finance record.
+- Finance record includes amount, category, date, description, requester, status.
+- Receipt URL or attachment exists.
+- Finance record can link to event/session, cohort, project, or document if feasible.
+- Status values exist: draft, requested, under_review, approved, paid, rejected, canceled.
+- Finance information is not visible to students.
+- Restricted access is enforced.
+
+G. Ops Dashboard
+- Dashboard shows overdue tasks.
+- Dashboard shows blocked tasks.
+- Dashboard shows upcoming events/sessions.
+- Dashboard shows pending finance records if finance is implemented.
+- Dashboard links to detail pages.
+- Dashboard handles empty data sources without crashing.
+- Dashboard is operational support, not surveillance.
+
+H. Regression checks
+- Existing Applications page still works.
+- Existing Evaluator surface still works and still uses assignment ownership.
+- Existing Student visibility rules remain intact.
+- Existing Mentor routes remain intact.
+- Existing Student routes remain intact.
+- Existing Project/Artifact/Feedback pages remain intact.
+- Existing role switching remains intact.
+- Existing phone masking / contact visibility rules remain intact if implemented.
+- Existing activation token latest-wins behavior remains intact if implemented.
+
+Part 2. Fix Functional Gaps
+
+After completing the self-audit, fix all Fail or Partial items that:
+- were required by prompts 0~6, and
+- are within the Ops/Core implementation scope, and
+- do not require destructive migration or major architecture redesign.
+
+Examples of gaps that should be fixed:
+- Meeting detail page cannot create follow-up Action Items.
+- Created tasks do not show back on Meeting detail.
+- Existing Core functionality appears as placeholder.
+- Events/Sessions cannot create follow-up tasks.
+- Finance records do not link to source objects.
+- Dashboard does not reflect overdue/blocked/pending items.
+- Document template cloning exists but is hard-broken.
+- Internal document visibility is not enforced.
+
+Part 3. Mark Deferred Items Clearly
+
+For any item not implemented because it is intentionally future scope, label it clearly as Deferred / Future Scope.
+
+Examples:
+- Scope-based role_assignments editing UI
+- Full integrations API sync
+- Audit logs if not yet implemented
+- Advanced Calendar two-way sync
+- DOCX editor
+- Full ERP accounting
+- Growth-specific features
+
+Part 4. Output
+
+Provide:
+
+1. Compliance checklist table for prompts 0~6
+   Columns:
+   - Area
+   - Requirement
+   - Status: Pass / Partial / Fail / Deferred
+   - Evidence
+   - Action taken
+   - Remaining risk
+
+2. Summary of functional gaps found
+
+3. Summary of gaps fixed
+
+4. Summary of deferred items and why they are deferred
+
+5. Changed files
+
+6. Database migrations, if any
+
+7. Acceptance Criteria pass/fail summary
+
+8. Regression risks
+
+9. Manual verification steps
+
+10. Clear recommendation:
+   - Safe to proceed to Prompt 6.5 Ops UX Polish Pass: Yes/No
+   - If No, list blockers

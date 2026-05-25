@@ -1,0 +1,133 @@
+You are working on the Seeds GrowthHub project.
+
+We have completed prompts 0 through 6:
+- Baseline Audit
+- Admin IA / Navigation
+- Meetings + Tasks
+- Documents / Templates / Checklists
+- Events / Sessions
+- Finance / Attachments
+- Ops Dashboard
+
+Before running the UX Polish Pass or Ops Scenario Verification, perform a Functional Gap Fix Pass for Ops and Core.
+
+Goal:
+Fix functional gaps where the current implementation does not satisfy the GrowthHub Baseline or the previous Acceptance Criteria.
+
+Important:
+- Do not start Growth features yet.
+- Do not implement Studies, Reflections, Mentor My Teams, or Growth-specific features in this step.
+- Do not rewrite the architecture.
+- Do not break existing auth, role switching, evaluator surface, student visibility rules, or existing Admin/Mentor/Student routes.
+- Focus on functional completion and baseline alignment, not visual redesign.
+
+Primary Issues to Check and Fix:
+
+1. Meeting → Action Item / Task flow
+
+Current observed issue:
+- A meeting can be linked when creating a To-do/Task.
+- But from the Meeting detail page, users cannot directly create follow-up Action Items.
+
+Expected behavior:
+- On the Meeting detail page, Admin/Ops user should be able to create follow-up Action Items directly.
+- Created Action Items should automatically retain source_type = meeting and source_id = current meeting.
+- Created Action Items should appear:
+  1. On the Meeting detail page under Related Tasks / Action Items.
+  2. In the Tasks list/board.
+  3. On the Ops Dashboard if overdue or blocked.
+- It is okay to keep the existing Task → Meeting linking flow, but Meeting → Task creation must exist and be obvious.
+
+Acceptance Criteria:
+- Admin can open a meeting detail page and create an Action Item from that page.
+- The Action Item has title, assignee, due date, priority, and status.
+- The Action Item is automatically linked to the source meeting.
+- The Meeting detail page shows related Action Items.
+- The Tasks board/list shows the Action Item.
+- Deleting or archiving a meeting must not crash the Tasks page.
+- Unauthorized users cannot create meeting Action Items.
+
+2. Core section completion
+
+Current observed issue:
+- Some Core pages still show unfinished/placeholder states.
+
+Expected behavior:
+- Core should be complete enough for the GrowthHub Baseline.
+- Existing implemented functionality should not appear as “coming soon” or empty placeholder.
+- If the data/functionality already exists, the Core navigation should route to the actual working page.
+- If a feature is intentionally deferred, the page should clearly say “Deferred / Future Scope” and explain why.
+
+Core pages that should be functional now:
+- Users or Members: show existing users/members if available.
+- People Profiles: route to existing people/profile management.
+- Cohorts: route to existing cohort management.
+- Programs: route to existing program management, with note that Program meaning may be redefined later.
+- Students/Members: route to existing student/member management if already implemented.
+- Roles & Permissions: at minimum provide a read-only overview of current role model:
+  - admin
+  - mentor
+  - student
+  - extra_roles
+  - effective roles
+  - evaluator surface is assignment-based, not a separate role
+  - scope-based role_assignments are deferred/future scope.
+
+Acceptance Criteria:
+- Existing Core-related pages are not replaced by placeholders.
+- Core navigation labels match the GrowthHub terminology.
+- Roles & Permissions page shows current implemented role model even if advanced editing is deferred.
+- Deferred Core features are clearly marked as deferred, not as broken or missing.
+- No existing admin pages are broken.
+- Existing role switching behavior remains intact.
+
+3. Placeholder quality check
+
+Expected behavior:
+- Placeholder pages should only exist for truly unimplemented future features.
+- Placeholder pages should include:
+  - feature purpose
+  - current status
+  - why it is deferred
+  - related baseline document section if useful
+  - no misleading “broken” feeling
+
+Acceptance Criteria:
+- No implemented feature is hidden behind a placeholder.
+- Placeholder pages are clearly differentiated from incomplete bugs.
+- Admin users can understand what exists now and what is future scope.
+
+4. Ops feature completeness check
+
+Review these flows for missing functional links:
+- Meeting → Task
+- Session/Event → Checklist
+- Session/Event → Follow-up Task
+- Finance Record → Linked Object
+- Finance Record → Dashboard
+- Document Template → Clone → Linked Object
+- Task → Dashboard overdue/blocked state
+
+Fix functional gaps if they are within the implemented scope.
+
+Acceptance Criteria:
+- Meeting, Task, Document, Event/Session, Finance, and Dashboard features are functionally connected enough for Prompt 7 scenario verification.
+- If a connection is intentionally not implemented yet, document it as a known limitation with reason.
+
+Regression Requirements:
+- Existing Applications page still works.
+- Existing Evaluator surface still works.
+- Existing Student visibility rules remain intact.
+- Existing Mentor routes remain intact.
+- Existing Project/Artifact/Feedback pages remain intact.
+- Existing role switching remains intact.
+
+Output:
+1. Summary of functional gaps found
+2. Gaps fixed
+3. Gaps intentionally deferred
+4. Changed files
+5. Database migrations if any
+6. Acceptance Criteria checklist with pass/fail
+7. Regression risks
+8. Whether it is safe to run the Ops UX Polish Pass next
