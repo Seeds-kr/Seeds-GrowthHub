@@ -97,8 +97,21 @@ router.get("/student/sessions", requireStudent, async (req, res) => {
     return;
   }
   // Sessions belonging to my cohorts; if a session has programId, only include if I'm in that program.
+  // Explicit projection: internal planning fields (ownerId, prepStatus,
+  // checklistDocumentId, materials, isPublished) MUST NOT leak to students.
   const rows = await db
-    .select()
+    .select({
+      id: sessionsTable.id,
+      cohortId: sessionsTable.cohortId,
+      programId: sessionsTable.programId,
+      title: sessionsTable.title,
+      description: sessionsTable.description,
+      scheduledAt: sessionsTable.scheduledAt,
+      durationMinutes: sessionsTable.durationMinutes,
+      locationOrLink: sessionsTable.locationOrLink,
+      sessionType: sessionsTable.sessionType,
+      status: sessionsTable.status,
+    })
     .from(sessionsTable)
     .where(
       and(
@@ -109,6 +122,7 @@ router.get("/student/sessions", requireStudent, async (req, res) => {
             ? inArray(sessionsTable.programId, programIds)
             : sql`false`,
         ),
+        eq(sessionsTable.isPublished, true),
       ),
     )
     .orderBy(asc(sessionsTable.scheduledAt));
@@ -116,8 +130,6 @@ router.get("/student/sessions", requireStudent, async (req, res) => {
     items: rows.map((r) => ({
       ...r,
       scheduledAt: r.scheduledAt.toISOString(),
-      createdAt: r.createdAt.toISOString(),
-      updatedAt: r.updatedAt.toISOString(),
     })),
     total: rows.length,
   });

@@ -5,11 +5,27 @@ import {
   text,
   timestamp,
   uniqueIndex,
+  boolean,
+  jsonb,
 } from "drizzle-orm/pg-core";
 import { cohortsTable } from "./cohorts";
 import { programsTable } from "./programs";
 import { studentsTable } from "./students";
 import { usersTable } from "./users";
+import { documentsTable } from "./documents";
+
+export const SESSION_PREP_STATUSES = [
+  "not_started",
+  "in_progress",
+  "ready",
+] as const;
+export type SessionPrepStatus = (typeof SESSION_PREP_STATUSES)[number];
+
+/** External link/material attached to a session. URL-only; no file upload. */
+export type SessionMaterial = {
+  label: string;
+  url: string;
+};
 
 export const SESSION_TYPES = [
   "orientation",
@@ -47,6 +63,23 @@ export const sessionsTable = pgTable("sessions", {
     .default("workshop")
     .$type<SessionType>(),
   status: text("status").notNull().default("scheduled").$type<SessionStatus>(),
+  /** GrowthHub additions (Wave 4) — all additive with safe defaults */
+  ownerId: integer("owner_id").references(() => usersTable.id, {
+    onDelete: "set null",
+  }),
+  prepStatus: text("prep_status")
+    .notNull()
+    .default("not_started")
+    .$type<SessionPrepStatus>(),
+  isPublished: boolean("is_published").notNull().default(true),
+  checklistDocumentId: integer("checklist_document_id").references(
+    () => documentsTable.id,
+    { onDelete: "set null" },
+  ),
+  materials: jsonb("materials")
+    .$type<SessionMaterial[]>()
+    .notNull()
+    .default([]),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

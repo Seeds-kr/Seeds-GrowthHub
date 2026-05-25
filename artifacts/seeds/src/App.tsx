@@ -65,6 +65,7 @@ import AdminMeetingDetail from "@/pages/admin/meeting-detail";
 import AdminTasks from "@/pages/admin/tasks";
 import AdminDocuments from "@/pages/admin/documents";
 import AdminDocumentDetail from "@/pages/admin/document-detail";
+import AdminSessionDetail from "@/pages/admin/session-detail";
 import { ADMIN_PLACEHOLDER_ITEMS } from "@/lib/admin-nav";
 import StudentProfilePage from "@/pages/student/profile";
 
@@ -106,6 +107,7 @@ function Router() {
       <Route path="/admin/programs" component={AdminPrograms} />
       <Route path="/admin/sessions" component={AdminSessions} />
       <Route path="/admin/sessions/:id/attendance" component={AdminSessionAttendance} />
+      <Route path="/admin/sessions/:id" component={AdminSessionDetail} />
       <Route path="/admin/assignments" component={AdminAssignments} />
       <Route path="/admin/assignments/:id" component={AdminAssignmentDetail} />
       <Route path="/admin/announcements" component={AdminAnnouncements} />

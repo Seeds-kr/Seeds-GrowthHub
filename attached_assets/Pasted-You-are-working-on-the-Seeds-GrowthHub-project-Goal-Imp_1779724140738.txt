@@ -1,0 +1,97 @@
+You are working on the Seeds GrowthHub project.
+
+Goal:
+Implement lightweight Finance / Reimbursement management for GrowthHub Ops.
+
+Relevant baseline documents:
+- Seeds GrowthHub - 운영시스템 기능 명세 v3
+- Seeds GrowthHub - 데이터 모델 및 ERD 상세 설계 v3
+- Seeds GrowthHub - 외부 도구 연계 설계
+- Seeds GrowthHub - 문서 체계 및 용어 표준
+
+Task:
+Implement finance_records and basic receipt attachment support.
+
+Scope:
+1. Finance Records
+- Create finance record
+- List finance records
+- View detail
+- Edit record
+- Record type: income / expense / reimbursement if feasible
+- Amount
+- Category
+- Date
+- Description
+- Requester
+- Approver
+- Status
+- Linked object: event/session, cohort, project, document if feasible
+
+2. Status Flow
+Use these statuses:
+- draft
+- requested
+- under_review
+- approved
+- paid
+- rejected
+- canceled
+
+3. Attachments
+- Support receipt attachment or receipt URL.
+- If file upload is too large for this step, implement receipt_url first and leave file upload as TODO.
+- Attachments must respect permissions.
+
+4. Dashboard hooks
+- Prepare data so Ops Dashboard can show pending reimbursements, approval waiting items, and unpaid approved items later.
+
+Implementation constraints:
+- Do not build a full ERP.
+- Do not overcomplicate accounting.
+- Finance information is sensitive.
+- Access should be conservative.
+
+Acceptance Criteria:
+Functional:
+- Admin/Finance user can create a finance record.
+- Finance record has amount, category, date, description, requester, status.
+- Receipt URL or attachment can be added.
+- Finance record can be linked to event/session, cohort, or project if feasible.
+- Status can move through requested, under_review, approved, paid, rejected, canceled.
+
+Permission / Visibility:
+- Students cannot see finance records.
+- Non-finance users should have limited or no access depending on existing role model.
+- Admin can access finance records.
+- Receipt/attachment access is restricted.
+
+Data Integrity:
+- Amount must be valid.
+- Status values must be constrained.
+- Linked object references should not break the page if missing.
+- Canceled/rejected records are preserved, not hard-deleted.
+
+UX / Error:
+- Empty state exists for no finance records.
+- Invalid amount or missing required fields show clear errors.
+- Unauthorized access shows a clear message.
+
+Regression:
+- Existing Admin pages still work.
+- Existing Events/Sessions pages still work.
+- Existing auth and role switching remain intact.
+
+Scenario Checks:
+1. Admin creates an expense record for an event.
+2. Admin adds a receipt URL.
+3. Finance user changes status from requested to approved.
+4. Finance user marks it as paid.
+5. Student cannot access the finance detail page.
+
+Output:
+- Summary of implementation
+- Changed files
+- Database migrations if any
+- Acceptance Criteria checklist with pass/fail
+- Known limitations

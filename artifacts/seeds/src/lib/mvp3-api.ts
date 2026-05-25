@@ -69,6 +69,9 @@ export type Student = {
   createdAt: string;
 };
 
+export type SessionPrepStatus = "not_started" | "in_progress" | "ready";
+export type SessionMaterial = { label: string; url: string };
+
 export type SessionItem = {
   id: number;
   cohortId: number;
@@ -82,6 +85,52 @@ export type SessionItem = {
   locationOrLink: string | null;
   sessionType: string;
   status: "scheduled" | "completed" | "cancelled";
+  ownerId?: number | null;
+  ownerName?: string | null;
+  prepStatus?: SessionPrepStatus;
+  isPublished?: boolean;
+  checklistDocumentId?: number | null;
+};
+
+export type SessionDetail = SessionItem & {
+  description: string | null;
+  ownerEmail: string | null;
+  materials: SessionMaterial[];
+  checklist: {
+    id: number;
+    title: string;
+    docType: string;
+    archivedAt: string | null;
+  } | null;
+  attendanceSummary: {
+    total: number;
+    present: number;
+    late: number;
+    absent: number;
+    excused: number;
+  };
+  followUps: Array<{
+    id: number;
+    title: string;
+    status: string;
+    priority: string;
+    assigneeId: number | null;
+    assigneeName: string | null;
+    dueDate: string | null;
+    createdAt: string;
+  }>;
+};
+
+export type SessionActionItem = {
+  id: number;
+  title: string;
+  description: string;
+  status: string;
+  priority: string;
+  assigneeId: number | null;
+  assigneeName: string | null;
+  dueDate: string | null;
+  createdAt: string;
 };
 
 export type AssignmentItem = {

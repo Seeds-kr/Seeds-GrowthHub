@@ -1,0 +1,70 @@
+You are working on the Seeds GrowthHub project.
+
+Goal:
+Implement or enhance the GrowthHub Ops Dashboard so that operations status and risks can be seen at a glance.
+
+Relevant baseline documents:
+- Seeds GrowthHub - 운영시스템 기능 명세 v3
+- Seeds GrowthHub - 구현 로드맵 및 Phase 계획 v3
+- Seeds GrowthHub - IA 및 화면 구조 설계 v2
+- Seeds GrowthHub - 데이터 모델 및 ERD 상세 설계 v3
+
+Task:
+Build an Ops Dashboard using existing and newly implemented operational data.
+
+Dashboard sections:
+1. Overdue Tasks
+2. Blocked Tasks
+3. Upcoming Events/Sessions
+4. Event checklist status if available
+5. Evaluation progress if existing data supports it
+6. Pending finance records
+7. Recently updated documents
+8. Missing or outdated operational documents if feasible
+9. Team/project support requests if available
+
+Implementation constraints:
+- Dashboard is an operational support tool, not a surveillance tool.
+- Do not show sensitive data to unauthorized users.
+- Do not overbuild analytics.
+- Use available data; show empty states when data is missing.
+
+Acceptance Criteria:
+Functional:
+- Admin can view Ops Dashboard.
+- Dashboard shows overdue tasks.
+- Dashboard shows blocked tasks.
+- Dashboard shows upcoming sessions/events.
+- Dashboard shows pending finance records if finance is implemented.
+- Dashboard links to the relevant detail pages.
+- Empty states are clear and helpful.
+
+Permission / Visibility:
+- Only authorized admin/ops users can access the dashboard.
+- Sensitive finance/evaluation details are not exposed beyond allowed scope.
+
+Data Integrity:
+- Dashboard does not crash if one data source is empty or unavailable.
+- Counts and links match underlying records.
+
+UX / Error:
+- Dashboard is readable and grouped by operational area.
+- Loading and error states are handled.
+
+Regression:
+- Existing admin dashboard route still works or redirects cleanly.
+- Existing Admin navigation still works.
+- Existing Student/Mentor pages are unaffected.
+
+Scenario Checks:
+1. Create an overdue task and verify it appears on the dashboard.
+2. Create a blocked task and verify it appears.
+3. Create an upcoming session and verify it appears.
+4. Create a pending finance record and verify it appears.
+5. Click dashboard item and verify navigation to detail page.
+
+Output:
+- Summary of implementation
+- Changed files
+- Acceptance Criteria checklist with pass/fail
+- Known limitations

@@ -17,6 +17,18 @@ import { toast } from "@/hooks/use-toast";
 
 const TYPES = ["orientation", "workshop", "mentoring", "project_work", "presentation", "review", "other"] as const;
 const STATUSES = ["scheduled", "completed", "cancelled"] as const;
+const PREP_STATUSES = ["not_started", "in_progress", "ready"] as const;
+
+const PREP_LABEL: Record<(typeof PREP_STATUSES)[number], string> = {
+  not_started: "준비 전",
+  in_progress: "준비 중",
+  ready: "준비 완료",
+};
+const PREP_TONE: Record<(typeof PREP_STATUSES)[number], string> = {
+  not_started: "bg-muted text-muted-foreground border-border",
+  in_progress: "bg-amber-50 text-amber-700 border-amber-200",
+  ready: "bg-primary/10 text-primary border-primary/20",
+};
 
 const TYPE_LABEL: Record<(typeof TYPES)[number], string> = {
   orientation: "오리엔테이션",
@@ -63,6 +75,7 @@ export default function AdminSessions() {
     cohortId: "", programId: "", title: "", description: "",
     scheduledAt: "", durationMinutes: "60", locationOrLink: "",
     sessionType: "workshop" as (typeof TYPES)[number], status: "scheduled" as (typeof STATUSES)[number],
+    ownerId: "", prepStatus: "not_started" as (typeof PREP_STATUSES)[number], isPublished: true,
   });
 
   const params = new URLSearchParams();
@@ -74,6 +87,17 @@ export default function AdminSessions() {
   });
   const { data: cohorts } = useQuery({ queryKey: ["admin-cohorts"], queryFn: () => api<{ items: Cohort[] }>("/admin/cohorts") });
   const { data: programs } = useQuery({ queryKey: ["admin-programs"], queryFn: () => api<{ items: Program[] }>("/admin/programs") });
+  const { data: owners } = useQuery({
+    queryKey: ["admin-users", "owner-pool"],
+    queryFn: async () => {
+      const [admins, mentors] = await Promise.all([
+        api<{ items: { id: number; name: string; email: string }[] }>("/admin/users?role=admin"),
+        api<{ items: { id: number; name: string; email: string }[] }>("/admin/users?role=mentor"),
+      ]);
+      const seen = new Set<number>();
+      return [...admins.items, ...mentors.items].filter((u) => (seen.has(u.id) ? false : (seen.add(u.id), true)));
+    },
+  });
 
   const save = useMutation({
     mutationFn: () => {
@@ -87,6 +111,9 @@ export default function AdminSessions() {
         locationOrLink: form.locationOrLink || null,
         sessionType: form.sessionType,
         status: form.status,
+        ownerId: form.ownerId ? Number(form.ownerId) : null,
+        prepStatus: form.prepStatus,
+        isPublished: form.isPublished,
       };
       return editing ? api(`/admin/sessions/${editing.id}`, { method: "PATCH", body }) : api(`/admin/sessions`, { method: "POST", body });
     },
@@ -96,7 +123,7 @@ export default function AdminSessions() {
 
   const openNew = () => {
     setEditing(null);
-    setForm({ cohortId: "", programId: "", title: "", description: "", scheduledAt: "", durationMinutes: "60", locationOrLink: "", sessionType: "workshop", status: "scheduled" });
+    setForm({ cohortId: "", programId: "", title: "", description: "", scheduledAt: "", durationMinutes: "60", locationOrLink: "", sessionType: "workshop", status: "scheduled", ownerId: "", prepStatus: "not_started", isPublished: true });
     setOpen(true);
   };
   const openEdit = (s: SessionItem) => {
@@ -108,6 +135,9 @@ export default function AdminSessions() {
       durationMinutes: String(s.durationMinutes),
       locationOrLink: s.locationOrLink ?? "",
       sessionType: s.sessionType as any, status: s.status,
+      ownerId: s.ownerId ? String(s.ownerId) : "",
+      prepStatus: (s.prepStatus ?? "not_started") as (typeof PREP_STATUSES)[number],
+      isPublished: s.isPublished ?? true,
     });
     setOpen(true);
   };
@@ -136,22 +166,31 @@ export default function AdminSessions() {
       </div>
       <div className="bg-card border border-border">
         <Table>
-          <TableHeader><TableRow><TableHead>제목</TableHead><TableHead>기수/프로그램</TableHead><TableHead>일시</TableHead><TableHead>유형</TableHead><TableHead>상태</TableHead><TableHead></TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>제목</TableHead><TableHead>기수/프로그램</TableHead><TableHead>일시</TableHead><TableHead>담당자</TableHead><TableHead>준비</TableHead><TableHead>상태</TableHead><TableHead></TableHead></TableRow></TableHeader>
           <TableBody>
-            {isLoading ? <TableRow><TableCell colSpan={6} className="h-24 text-center"><Loader2 className="animate-spin mx-auto" /></TableCell></TableRow>
-            : data?.items.length === 0 ? <TableRow><TableCell colSpan={6} className="h-24 text-center text-muted-foreground">모임이 없습니다.</TableCell></TableRow>
+            {isLoading ? <TableRow><TableCell colSpan={7} className="h-24 text-center"><Loader2 className="animate-spin mx-auto" /></TableCell></TableRow>
+            : data?.items.length === 0 ? <TableRow><TableCell colSpan={7} className="h-24 text-center text-muted-foreground">모임이 없습니다.</TableCell></TableRow>
             : data?.items.map((s) => (
               <TableRow key={s.id}>
-                <TableCell className="font-medium">{s.title}</TableCell>
+                <TableCell className="font-medium">
+                  <Link href={`/admin/sessions/${s.id}`}><a className="hover:underline">{s.title}</a></Link>
+                  {s.isPublished === false && <Badge variant="outline" className="ml-2 bg-muted text-muted-foreground border-border">비공개</Badge>}
+                </TableCell>
                 <TableCell>{s.cohortName} {s.programName ? `/ ${s.programName}` : ""}</TableCell>
                 <TableCell className="tabular-nums">{formatKoreanDateTime(s.scheduledAt)}</TableCell>
-                <TableCell>{TYPE_LABEL[s.sessionType as (typeof TYPES)[number]] ?? s.sessionType}</TableCell>
+                <TableCell className="text-sm">{s.ownerName ?? <span className="text-muted-foreground">—</span>}</TableCell>
+                <TableCell>
+                  <Badge variant="outline" className={PREP_TONE[(s.prepStatus ?? "not_started") as (typeof PREP_STATUSES)[number]]}>
+                    {PREP_LABEL[(s.prepStatus ?? "not_started") as (typeof PREP_STATUSES)[number]]}
+                  </Badge>
+                </TableCell>
                 <TableCell>
                   <Badge variant="outline" className={STATUS_TONE[s.status as (typeof STATUSES)[number]] ?? ""}>
                     {STATUS_LABEL[s.status as (typeof STATUSES)[number]] ?? s.status}
                   </Badge>
                 </TableCell>
                 <TableCell className="space-x-2">
+                  <Link href={`/admin/sessions/${s.id}`}><Button variant="outline" size="sm">상세</Button></Link>
                   <Button variant="outline" size="sm" onClick={() => openEdit(s)}>수정</Button>
                   <Link href={`/admin/sessions/${s.id}/attendance`}><Button size="sm">출석</Button></Link>
                 </TableCell>
@@ -232,6 +271,31 @@ export default function AdminSessions() {
                 </Select>
               </div>
             </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>담당자 <span className="text-muted-foreground font-normal">(선택)</span></Label>
+                <Select value={form.ownerId || "none"} onValueChange={(v) => setForm({ ...form, ownerId: v === "none" ? "" : v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">미지정</SelectItem>
+                    {owners?.map((u) => <SelectItem key={u.id} value={String(u.id)}>{u.name} ({u.email})</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>준비 상태</Label>
+                <Select value={form.prepStatus} onValueChange={(v) => setForm({ ...form, prepStatus: v as any })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{PREP_STATUSES.map((p) => <SelectItem key={p} value={p}>{PREP_LABEL[p]}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={form.isPublished} onChange={(e) => setForm({ ...form, isPublished: e.target.checked })} />
+              <span>학생에게 공개 (체크 해제 시 학생 화면에서 보이지 않음)</span>
+            </label>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>취소</Button>
