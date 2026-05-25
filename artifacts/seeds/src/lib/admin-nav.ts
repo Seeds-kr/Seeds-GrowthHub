@@ -108,14 +108,7 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
     items: [
       { href: "/admin/meetings", label: "회의(Meetings)", icon: CalendarCheck },
       { href: "/admin/tasks", label: "작업(Tasks / Action Items)", icon: CheckSquare },
-      {
-        href: "/admin/documents",
-        label: "문서 & 템플릿",
-        icon: FileStack,
-        placeholder: true,
-        description: "운영 문서와 템플릿 — Markdown 기반의 운영 가이드, 체크리스트, 회의록 템플릿 등을 보관하는 자리입니다.",
-        futureScope: "documents + document_versions 테이블로 버전 관리, is_template 플래그로 템플릿 복제, 객체 연결(linked_object) 지원 예정.",
-      },
+      { href: "/admin/documents", label: "문서 & 템플릿", icon: FileStack },
       { href: "/admin/applications", label: "모집(Recruitment)", icon: FileText },
       { href: "/admin/evaluators", label: "평가 담당자(Evaluations)", icon: UserCheck },
       {

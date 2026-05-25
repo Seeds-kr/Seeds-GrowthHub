@@ -63,6 +63,8 @@ import AdminPlaceholderPage from "@/pages/admin/_placeholder";
 import AdminMeetings from "@/pages/admin/meetings";
 import AdminMeetingDetail from "@/pages/admin/meeting-detail";
 import AdminTasks from "@/pages/admin/tasks";
+import AdminDocuments from "@/pages/admin/documents";
+import AdminDocumentDetail from "@/pages/admin/document-detail";
 import { ADMIN_PLACEHOLDER_ITEMS } from "@/lib/admin-nav";
 import StudentProfilePage from "@/pages/student/profile";
 
@@ -121,6 +123,8 @@ function Router() {
       <Route path="/admin/meetings" component={AdminMeetings} />
       <Route path="/admin/meetings/:id" component={AdminMeetingDetail} />
       <Route path="/admin/tasks" component={AdminTasks} />
+      <Route path="/admin/documents" component={AdminDocuments} />
+      <Route path="/admin/documents/:id" component={AdminDocumentDetail} />
 
       {ADMIN_PLACEHOLDER_ITEMS.map((item) => (
         <Route key={item.href} path={item.href} component={AdminPlaceholderPage} />

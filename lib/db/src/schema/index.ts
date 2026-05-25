@@ -25,3 +25,4 @@ export * from "./account-activation-tokens";
 export * from "./people-profiles";
 export * from "./meetings";
 export * from "./ops-tasks";
+export * from "./documents";
