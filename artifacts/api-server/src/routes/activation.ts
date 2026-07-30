@@ -7,6 +7,7 @@ import {
   consumeActivationToken,
 } from "../lib/activation";
 import { hashPassword, requireAdmin } from "../lib/auth";
+import { audit } from "../lib/audit";
 
 const router: IRouter = Router();
 
@@ -118,6 +119,14 @@ router.post(
     const { token, expiresAt } = await issueActivationToken({
       userId: id,
       createdBy: req.sessionUser!.id,
+    });
+    // The token itself is never audited — only the fact that one was issued.
+    audit({
+      action: "account_activation",
+      req,
+      targetType: "user",
+      targetId: id,
+      note: "activation token re-issued (latest-wins)",
     });
     res.status(201).json({
       activationToken: token,

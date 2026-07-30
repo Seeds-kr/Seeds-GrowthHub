@@ -11,6 +11,7 @@ import {
   usersTable,
 } from "@workspace/db";
 import { requireAdmin } from "../lib/auth";
+import { templateBodyFor } from "../lib/meeting-templates";
 
 const router: IRouter = Router();
 
@@ -19,10 +20,8 @@ const CreateMeeting = z.object({
   meetingType: z.enum(MEETING_TYPES).optional(),
   meetingDate: z.string().min(1), // ISO date/time
   participants: z.array(z.string().trim().min(1).max(120)).max(200).optional(),
-  agendaMd: z.string().max(20000).optional(),
+  bodyMd: z.string().max(60000).optional(),
   decisionsMd: z.string().max(20000).optional(),
-  notesMd: z.string().max(20000).optional(),
-  pendingMd: z.string().max(20000).optional(),
   visibility: z.enum(MEETING_VISIBILITIES).optional(),
   linkedObjectType: z.string().trim().max(40).nullable().optional(),
   linkedObjectId: z.number().int().positive().nullable().optional(),
@@ -87,17 +86,18 @@ router.post("/admin/meetings", requireAdmin, async (req, res) => {
     res.status(400).json({ error: "Invalid meetingDate" });
     return;
   }
+  const meetingType = d.meetingType ?? "general";
   const [row] = await db
     .insert(meetingsTable)
     .values({
       title: d.title,
-      meetingType: d.meetingType ?? "general",
+      meetingType,
       meetingDate: date,
       participants: d.participants ?? [],
-      agendaMd: d.agendaMd ?? "",
+      // ADR-006: a new meeting starts from its type's template (editable by
+      // ops at /admin/documents, so no deploy is needed to change it).
+      bodyMd: d.bodyMd ?? (await templateBodyFor(meetingType)),
       decisionsMd: d.decisionsMd ?? "",
-      notesMd: d.notesMd ?? "",
-      pendingMd: d.pendingMd ?? "",
       visibility: d.visibility ?? "admin_only",
       linkedObjectType: d.linkedObjectType ?? null,
       linkedObjectId: d.linkedObjectId ?? null,
@@ -131,10 +131,8 @@ router.patch("/admin/meetings/:id", requireAdmin, async (req, res) => {
     updates.meetingDate = date;
   }
   if (d.participants !== undefined) updates.participants = d.participants;
-  if (d.agendaMd !== undefined) updates.agendaMd = d.agendaMd;
+  if (d.bodyMd !== undefined) updates.bodyMd = d.bodyMd;
   if (d.decisionsMd !== undefined) updates.decisionsMd = d.decisionsMd;
-  if (d.notesMd !== undefined) updates.notesMd = d.notesMd;
-  if (d.pendingMd !== undefined) updates.pendingMd = d.pendingMd;
   if (d.visibility !== undefined) updates.visibility = d.visibility;
   if (d.linkedObjectType !== undefined) updates.linkedObjectType = d.linkedObjectType;
   if (d.linkedObjectId !== undefined) updates.linkedObjectId = d.linkedObjectId;

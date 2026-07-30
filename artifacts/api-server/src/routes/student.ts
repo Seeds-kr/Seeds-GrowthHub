@@ -271,15 +271,20 @@ router.get(
     }
     const { cohortIds, programIds } = await getMembership(student.id);
     if (!cohortIds.includes(a.cohortId)) {
-      res.status(403).json({ error: "Not assigned" });
+      // 404, not 403: a differing status code lets a student enumerate which
+      // assignment ids exist in other cohorts. Same rule as mentor scope.
+      res.status(404).json({ error: "Not found" });
       return;
     }
     if (a.programId && !programIds.includes(a.programId)) {
-      res.status(403).json({ error: "Not assigned" });
+      // 404, not 403: a differing status code lets a student enumerate which
+      // assignment ids exist in other cohorts. Same rule as mentor scope.
+      res.status(404).json({ error: "Not found" });
       return;
     }
     if (a.status === "draft") {
-      res.status(403).json({ error: "Not yet published" });
+      // Draft assignments must not be distinguishable from absent ones.
+      res.status(404).json({ error: "Not found" });
       return;
     }
     const [mySub] = await db
@@ -359,15 +364,20 @@ router.post(
     }
     const { cohortIds, programIds } = await getMembership(student.id);
     if (!cohortIds.includes(a.cohortId)) {
-      res.status(403).json({ error: "Not assigned" });
+      // 404, not 403: a differing status code lets a student enumerate which
+      // assignment ids exist in other cohorts. Same rule as mentor scope.
+      res.status(404).json({ error: "Not found" });
       return;
     }
     if (a.programId && !programIds.includes(a.programId)) {
-      res.status(403).json({ error: "Not assigned" });
+      // 404, not 403: a differing status code lets a student enumerate which
+      // assignment ids exist in other cohorts. Same rule as mentor scope.
+      res.status(404).json({ error: "Not found" });
       return;
     }
     if (a.status === "draft") {
-      res.status(403).json({ error: "Not yet published" });
+      // Draft assignments must not be distinguishable from absent ones.
+      res.status(404).json({ error: "Not found" });
       return;
     }
     if (a.status !== "published") {

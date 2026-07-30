@@ -1,5 +1,6 @@
 import {
   LayoutDashboard,
+  LayoutGrid,
   FileText,
   UserCheck,
   Users,
@@ -23,7 +24,6 @@ import {
   Wallet,
   Gauge,
   BookOpen,
-  NotebookPen,
   BarChart3,
   Globe,
   ImageIcon,
@@ -33,10 +33,51 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+/** Functional ops roles (ADR-002). Mirrors OPS_ROLES in @workspace/db. */
+export type OpsRoleCode =
+  | "program_lead"
+  | "ops"
+  | "recruiting"
+  | "finance"
+  | "growth"
+  | "community"
+  | "system";
+
+export const OPS_ROLE_LABELS: Record<OpsRoleCode, string> = {
+  program_lead: "총괄",
+  ops: "운영",
+  recruiting: "모집/선발",
+  finance: "회계/행정",
+  growth: "성장경험",
+  community: "커뮤니티",
+  system: "시스템/데이터",
+};
+
+/** `program_lead` satisfies every check. Mirrors hasOpsRole() on the server. */
+export function hasOpsRole(
+  held: readonly string[] | null | undefined,
+  code: OpsRoleCode,
+): boolean {
+  const list = held ?? [];
+  return list.includes("program_lead") || list.includes(code);
+}
+
 export type NavItem = {
   href: string;
   label: string;
   icon: LucideIcon;
+  /**
+   * Restricted-read menu: hidden unless the viewer holds this ops role.
+   * Cosmetic only — the server gate in requireOpsRole() is the real boundary.
+   * Omitted = read-wide (visible to every admin).
+   */
+  requiredOpsRole?: OpsRoleCode;
+  /**
+   * Which counter from the ops-dashboard summary to show beside this item.
+   * Badges are "currently open" counts, not an inbox — there is deliberately
+   * no read state (design/05 §5.3), so no notifications table is needed.
+   */
+  badgeKey?: "tasks" | "teamSupport" | "finance";
   /** If true, page is a placeholder (not-yet-implemented feature). */
   placeholder?: boolean;
   /** Short description used by placeholder pages. */
@@ -93,15 +134,19 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
     key: "ops",
     items: [
       { href: "/admin/meetings", label: "회의(Meetings)", icon: CalendarCheck },
-      { href: "/admin/tasks", label: "작업(Tasks / Action Items)", icon: CheckSquare },
+      { href: "/admin/tasks", label: "작업(Tasks / Action Items)", icon: CheckSquare, badgeKey: "tasks" },
       { href: "/admin/documents", label: "문서 & 템플릿", icon: FileStack },
-      { href: "/admin/applications", label: "모집(Recruitment)", icon: FileText },
+      { href: "/admin/applications", label: "모집(Recruitment)", icon: FileText, requiredOpsRole: "recruiting" },
+      // Read-wide on purpose: this page lists mentor ACCOUNTS, not applicants.
+      // Its mutations (create/update user) are gated on `system`, and the
+      // per-application assignment routes on `recruiting`.
       { href: "/admin/evaluators", label: "평가 담당자(Evaluations)", icon: UserCheck },
       {
         href: "/admin/interviews",
         label: "면접(Interviews)",
         icon: Mic,
         placeholder: true,
+        requiredOpsRole: "recruiting",
         description: "면접 일정·결과 통합 관리 화면입니다.",
         futureScope: "현재 면접 결과는 지원서 상세(/admin/applications/:id)에서 입력합니다. 일정·면접관 캘린더 뷰와 결과 일괄 조회 화면을 추가할 예정입니다.",
       },
@@ -116,8 +161,8 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
       },
       { href: "/admin/assignments", label: "과제(Assignments)", icon: ClipboardList },
       { href: "/admin/announcements", label: "공지(Announcements)", icon: Megaphone },
-      { href: "/admin/finance", label: "재정(Finance)", icon: Wallet },
-      { href: "/admin/ops-dashboard", label: "운영 대시보드", icon: Gauge },
+      { href: "/admin/finance", label: "재정(Finance)", icon: Wallet, requiredOpsRole: "finance", badgeKey: "finance" },
+      { href: "/admin/ops-dashboard", label: "운영 대시보드", icon: Gauge, badgeKey: "teamSupport" },
     ],
   },
   {
@@ -126,25 +171,11 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
     items: [
       { href: "/admin/students", label: "학생(Students)", icon: GraduationCap },
       { href: "/admin/projects", label: "프로젝트(Projects)", icon: FolderKanban },
-      {
-        href: "/admin/studies",
-        label: "스터디(Studies)",
-        icon: BookOpen,
-        placeholder: true,
-        description: "학생 주도 스터디 그룹 — 모임 단위로 학습 주제·구성원·산출물을 기록합니다.",
-        futureScope: "studies + study_members 테이블 도입 예정. 프로젝트(projects)와 유사한 라이프사이클을 따르되 가벼운 운영을 지향합니다.",
-      },
+      { href: "/admin/studies", label: "스터디(Studies)", icon: BookOpen },
+      { href: "/admin/team-status", label: "팀 상태 보드", icon: LayoutGrid },
       { href: "/admin/activity-records", label: "활동 기록(Activity Records)", icon: Activity },
       { href: "/admin/artifacts", label: "산출물(Artifacts)", icon: Package },
       { href: "/admin/feedback", label: "피드백(Feedback)", icon: MessageSquare },
-      {
-        href: "/admin/reflections",
-        label: "회고(Reflections)",
-        icon: NotebookPen,
-        placeholder: true,
-        description: "학생 회고록 — 주차별/프로젝트별 회고와 멘토·운영진의 코멘트가 모이는 자리입니다.",
-        futureScope: "reflections 테이블 도입 예정. 가시성 정책(private / mentor_visible / student_visible 등) 합의 후 진행합니다.",
-      },
       { href: "/admin/tags", label: "태그(Tags)", icon: Tags },
       {
         href: "/admin/reports",
@@ -195,9 +226,7 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
         href: "/admin/audit-logs",
         label: "감사 로그(Audit Logs)",
         icon: ScrollText,
-        placeholder: true,
-        description: "민감 작업(권한 변경, 회계 승인, 가시성 변경 등) 감사 로그를 조회합니다.",
-        futureScope: "현재는 decision_logs(최종 합격 결정 변경)만 append-only로 기록됩니다. audit_logs 테이블 도입 후 확장합니다.",
+        requiredOpsRole: "system",
       },
       {
         href: "/admin/settings",
@@ -210,6 +239,21 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
     ],
   },
 ];
+
+/**
+ * Sections with restricted-read items removed for this viewer.
+ * Sections left with no items are dropped entirely.
+ */
+export function visibleNavSections(
+  opsRoles: readonly string[] | null | undefined,
+): NavSection[] {
+  return ADMIN_NAV_SECTIONS.map((section) => ({
+    ...section,
+    items: section.items.filter(
+      (item) => !item.requiredOpsRole || hasOpsRole(opsRoles, item.requiredOpsRole),
+    ),
+  })).filter((section) => section.items.length > 0);
+}
 
 /** Flattened list of placeholder items — used by App.tsx to register routes. */
 export const ADMIN_PLACEHOLDER_ITEMS: NavItem[] = ADMIN_NAV_SECTIONS.flatMap(

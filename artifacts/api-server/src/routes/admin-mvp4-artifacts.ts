@@ -16,6 +16,7 @@ const router: IRouter = Router();
 const Body = z.object({
   studentId: z.number().int().positive().nullable().optional(),
   projectId: z.number().int().positive().nullable().optional(),
+  studyId: z.number().int().positive().nullable().optional(),
   assignmentSubmissionId: z.number().int().positive().nullable().optional(),
   title: z.string().trim().min(1).max(300),
   description: z.string().max(8000).nullable().optional(),
@@ -42,6 +43,9 @@ router.get("/admin/artifacts", requireAdmin, async (req, res) => {
   const filters = [];
   if (studentId) filters.push(eq(mvp4ArtifactsTable.studentId, studentId));
   if (projectId) filters.push(eq(mvp4ArtifactsTable.projectId, projectId));
+  const studyId = req.query.studyId ? Number(req.query.studyId) : undefined;
+  if (studyId && Number.isFinite(studyId))
+    filters.push(eq(mvp4ArtifactsTable.studyId, studyId));
   const rows = await db
     .select({
       a: mvp4ArtifactsTable,
@@ -74,6 +78,7 @@ router.post("/admin/artifacts", requireAdmin, async (req, res) => {
     .values({
       studentId: parsed.data.studentId ?? null,
       projectId: parsed.data.projectId ?? null,
+      studyId: parsed.data.studyId ?? null,
       assignmentSubmissionId: parsed.data.assignmentSubmissionId ?? null,
       title: parsed.data.title,
       description: parsed.data.description ?? null,

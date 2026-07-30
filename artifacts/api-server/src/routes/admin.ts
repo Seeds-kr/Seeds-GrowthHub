@@ -21,14 +21,19 @@ import {
   decisionLogsTable,
   usersTable,
   getEffectiveRoles,
+  getOpsRoles,
 } from "@workspace/db";
+import { audit } from "../lib/audit";
 import {
   authenticateUser,
   clearSessionCookie,
   getCurrentUser,
-  requireAdmin,
+  requireOpsRole,
   setSessionCookie,
 } from "../lib/auth";
+
+// ADR-002: 모집/선발 데이터는 recruiting 담당 + program_lead 만 접근.
+const requireRecruiting = requireOpsRole("recruiting");
 
 const router: IRouter = Router();
 
@@ -51,6 +56,7 @@ router.post("/admin/login", async (req, res) => {
     name: user.name,
     role: user.role,
     roles,
+    opsRoles: getOpsRoles(user),
   });
 });
 
@@ -71,6 +77,7 @@ router.get("/admin/me", async (req, res) => {
     name: user.name,
     role: user.role,
     roles: getEffectiveRoles(user),
+    opsRoles: getOpsRoles(user),
   });
 });
 
@@ -93,7 +100,7 @@ function isInterviewStatus(v: unknown): v is InterviewStatus {
   return typeof v === "string" && (INTERVIEW_STATUSES as readonly string[]).includes(v);
 }
 
-router.get("/admin/applications/stats", requireAdmin, async (_req, res) => {
+router.get("/admin/applications/stats", requireRecruiting, async (_req, res) => {
   const rows = await db
     .select({
       status: applicationsTable.status,
@@ -123,7 +130,7 @@ function csvEscape(value: unknown): string {
   return str;
 }
 
-router.get("/admin/applications/export", requireAdmin, async (_req, res) => {
+router.get("/admin/applications/export", requireRecruiting, async (req, res) => {
   const rows = await db
     .select()
     .from(applicationsTable)
@@ -185,10 +192,18 @@ router.get("/admin/applications/export", requireAdmin, async (_req, res) => {
       .toISOString()
       .slice(0, 10)}.csv"`,
   );
+  // Exporting the applicant roster is exactly the kind of sensitive action the
+  // audit trail exists for. Row count only — never the rows themselves.
+  audit({
+    action: "data_export",
+    req,
+    targetType: "application",
+    note: `applications CSV export · ${rows.length} rows`,
+  });
   res.send(csv);
 });
 
-router.get("/admin/applications", requireAdmin, async (req, res) => {
+router.get("/admin/applications", requireRecruiting, async (req, res) => {
   const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
   const filters = [] as ReturnType<typeof eq>[];
   if (q.length > 0) {
@@ -428,7 +443,7 @@ async function loadApplicationDetail(id: number) {
   };
 }
 
-router.get("/admin/applications/:id", requireAdmin, async (req, res) => {
+router.get("/admin/applications/:id", requireRecruiting, async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) {
     res.status(404).json({ error: "Not found" });
@@ -442,7 +457,7 @@ router.get("/admin/applications/:id", requireAdmin, async (req, res) => {
   res.json(detail);
 });
 
-router.patch("/admin/applications/:id", requireAdmin, async (req, res) => {
+router.patch("/admin/applications/:id", requireRecruiting, async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) {
     res.status(404).json({ error: "Not found" });

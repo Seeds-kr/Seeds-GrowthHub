@@ -41,6 +41,9 @@ import EvaluatorDashboard from "@/pages/evaluator/dashboard";
 import EvaluatorApplicationDetail from "@/pages/evaluator/application-detail";
 
 import MentorDashboard from "@/pages/mentor/dashboard";
+import MentorTeams from "@/pages/mentor/teams";
+import MentorProjectDetail from "@/pages/mentor/project-detail";
+import MentorFeedback from "@/pages/mentor/feedback";
 import MentorProfile from "@/pages/mentor/profile";
 
 import StudentLogin from "@/pages/student/login";
@@ -54,6 +57,10 @@ import StudentTimeline from "@/pages/student/timeline";
 import StudentProjects from "@/pages/student/projects";
 import StudentProjectDetail from "@/pages/student/project-detail";
 import StudentArtifacts from "@/pages/student/artifacts";
+import StudentStudies from "@/pages/student/studies";
+import StudentStudyDetail from "@/pages/student/study-detail";
+import StudentReflections from "@/pages/student/reflections";
+import StudentFeedback from "@/pages/student/feedback";
 import StudentReportPage from "@/pages/student/report";
 import ActivatePage from "@/pages/activate";
 import PeoplePage from "@/pages/people";
@@ -65,6 +72,9 @@ import AdminMeetingDetail from "@/pages/admin/meeting-detail";
 import AdminTasks from "@/pages/admin/tasks";
 import AdminFinance from "@/pages/admin/finance";
 import AdminOpsDashboard from "@/pages/admin/ops-dashboard";
+import AdminAuditLogs from "@/pages/admin/audit-logs";
+import AdminStudies from "@/pages/admin/studies";
+import AdminTeamStatus from "@/pages/admin/team-status";
 import AdminUsers from "@/pages/admin/users";
 import AdminRoles from "@/pages/admin/roles";
 import AdminDocuments from "@/pages/admin/documents";
@@ -131,6 +141,9 @@ function Router() {
       <Route path="/admin/tasks" component={AdminTasks} />
       <Route path="/admin/finance" component={AdminFinance} />
       <Route path="/admin/ops-dashboard" component={AdminOpsDashboard} />
+      <Route path="/admin/audit-logs" component={AdminAuditLogs} />
+      <Route path="/admin/studies" component={AdminStudies} />
+      <Route path="/admin/team-status" component={AdminTeamStatus} />
       <Route path="/admin/users" component={AdminUsers} />
       <Route path="/admin/roles" component={AdminRoles} />
       <Route path="/admin/documents" component={AdminDocuments} />
@@ -144,6 +157,9 @@ function Router() {
       <Route path="/evaluator/applications/:id" component={EvaluatorApplicationDetail} />
 
       <Route path="/mentor" component={MentorDashboard} />
+      <Route path="/mentor/teams" component={MentorTeams} />
+      <Route path="/mentor/projects/:id" component={MentorProjectDetail} />
+      <Route path="/mentor/feedback" component={MentorFeedback} />
       <Route path="/mentor/profile" component={MentorProfile} />
 
       <Route path="/student/login" component={StudentLogin} />
@@ -157,6 +173,10 @@ function Router() {
       <Route path="/student/projects" component={StudentProjects} />
       <Route path="/student/projects/:id" component={StudentProjectDetail} />
       <Route path="/student/artifacts" component={StudentArtifacts} />
+      <Route path="/student/studies" component={StudentStudies} />
+      <Route path="/student/studies/:id" component={StudentStudyDetail} />
+      <Route path="/student/reflections" component={StudentReflections} />
+      <Route path="/student/feedback" component={StudentFeedback} />
       <Route path="/student/report" component={StudentReportPage} />
       <Route path="/student/profile" component={StudentProfilePage} />
 

@@ -2,7 +2,8 @@ import { ReactNode, useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAdminMe, useAdminLogout } from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { api } from "@/lib/mvp3-api";
 import { getAdminMeQueryKey } from "@workspace/api-client-react";
 import {
   Loader2,
@@ -13,7 +14,7 @@ import {
   Construction,
 } from "lucide-react";
 import { RoleSwitcher, effectiveRoles, pickRedirectFor } from "./RoleSwitcher";
-import { ADMIN_NAV_SECTIONS, type NavSection } from "@/lib/admin-nav";
+import { visibleNavSections, type NavSection } from "@/lib/admin-nav";
 
 function isActive(currentPath: string, href: string): boolean {
   if (href === "/admin") return currentPath === "/admin";
@@ -24,17 +25,25 @@ function sectionHasActive(section: NavSection, currentPath: string): boolean {
   return section.items.some((item) => isActive(currentPath, item.href));
 }
 
+type BadgeCounts = { tasks: number; teamSupport: number; finance: number };
+
 function SidebarContent({
   currentPath,
+  opsRoles,
+  badges,
   onNavigate,
 }: {
   currentPath: string;
+  /** Restricted-read menus are hidden unless the viewer holds the role. */
+  opsRoles: readonly string[];
+  badges: BadgeCounts;
   onNavigate?: () => void;
 }) {
+  const sections = useMemo(() => visibleNavSections(opsRoles), [opsRoles]);
   // Track collapsed/expanded state per section; default = expanded if active item lives inside.
   const initialExpanded = useMemo(() => {
     const map: Record<string, boolean> = {};
-    for (const section of ADMIN_NAV_SECTIONS) {
+    for (const section of sections) {
       // Home section (no title) is always shown.
       if (!section.title) {
         map[section.key] = true;
@@ -43,7 +52,7 @@ function SidebarContent({
       map[section.key] = sectionHasActive(section, currentPath);
     }
     return map;
-  }, [currentPath]);
+  }, [currentPath, sections]);
 
   const [expanded, setExpanded] = useState<Record<string, boolean>>(initialExpanded);
 
@@ -51,20 +60,20 @@ function SidebarContent({
   useEffect(() => {
     setExpanded((prev) => {
       const next = { ...prev };
-      for (const section of ADMIN_NAV_SECTIONS) {
+      for (const section of sections) {
         if (!section.title) continue;
         if (sectionHasActive(section, currentPath)) next[section.key] = true;
       }
       return next;
     });
-  }, [currentPath]);
+  }, [currentPath, sections]);
 
   const toggle = (key: string) =>
     setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
 
   return (
     <nav className="flex-1 overflow-y-auto px-3 py-6 space-y-5">
-      {ADMIN_NAV_SECTIONS.map((section) => {
+      {sections.map((section) => {
         const isOpen = expanded[section.key];
         const hasTitle = Boolean(section.title);
         return (
@@ -103,7 +112,14 @@ function SidebarContent({
                       >
                         <Icon className="w-4 h-4 shrink-0" />
                         <span className="truncate">{item.label}</span>
-                        {item.placeholder ? (
+                        {item.badgeKey && badges[item.badgeKey] > 0 ? (
+                          <span
+                            className="ml-auto shrink-0 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold leading-none text-primary-foreground"
+                            aria-label={`${badges[item.badgeKey]}건 처리 필요`}
+                          >
+                            {badges[item.badgeKey] > 99 ? "99+" : badges[item.badgeKey]}
+                          </span>
+                        ) : item.placeholder ? (
                           <Construction
                             className="w-3 h-3 ml-auto shrink-0 opacity-60"
                             aria-label="준비 중"
@@ -133,6 +149,29 @@ export function AdminLayout({ children }: { children: ReactNode }) {
 
   const roles = admin ? effectiveRoles(admin) : [];
   const allowed = roles.includes("admin");
+  const opsRoles = admin?.opsRoles ?? [];
+
+  // Badges reuse the ops-dashboard aggregate rather than adding a notifications
+  // table (design/05 §5.3). They show what is currently OPEN, not unread.
+  const { data: summary } = useQuery({
+    queryKey: ["admin-nav-badges"],
+    queryFn: () =>
+      api<{
+        overdueTasks: unknown[];
+        blockedTasks: unknown[];
+        teamSupport: { openCount: number };
+        finance: { hooks: { pendingCount: number } };
+      }>("/admin/ops-dashboard/summary"),
+    enabled: allowed,
+    staleTime: 60_000,
+    retry: false,
+  });
+
+  const badges = {
+    tasks: (summary?.overdueTasks.length ?? 0) + (summary?.blockedTasks.length ?? 0),
+    teamSupport: summary?.teamSupport.openCount ?? 0,
+    finance: summary?.finance.hooks.pendingCount ?? 0,
+  };
 
   useEffect(() => {
     if (isLoading) return;
@@ -171,7 +210,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
             Seeds <span className="text-muted-foreground font-normal">Admin</span>
           </Link>
         </div>
-        <SidebarContent currentPath={location} />
+        <SidebarContent currentPath={location} opsRoles={opsRoles} badges={badges} />
         <div className="border-t border-border p-3 space-y-2">
           <div className="px-3 py-1">
             <div className="text-xs text-muted-foreground">로그인 계정</div>
@@ -231,6 +270,8 @@ export function AdminLayout({ children }: { children: ReactNode }) {
             </div>
             <SidebarContent
               currentPath={location}
+              opsRoles={opsRoles}
+              badges={badges}
               onNavigate={() => setMobileOpen(false)}
             />
             <div className="border-t border-border p-3 space-y-2">

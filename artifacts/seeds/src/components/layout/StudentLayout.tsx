@@ -59,7 +59,10 @@ export function StudentLayout({ children }: { children: ReactNode }) {
               <Link href="/student/attendance" className="text-sm font-medium text-muted-foreground hover:text-primary">출석</Link>
               <Link href="/student/timeline" className="text-sm font-medium text-muted-foreground hover:text-primary">타임라인</Link>
               <Link href="/student/projects" className="text-sm font-medium text-muted-foreground hover:text-primary">프로젝트</Link>
+              <Link href="/student/studies" className="text-sm font-medium text-muted-foreground hover:text-primary">스터디</Link>
               <Link href="/student/artifacts" className="text-sm font-medium text-muted-foreground hover:text-primary">아티팩트</Link>
+              <Link href="/student/reflections" className="text-sm font-medium text-muted-foreground hover:text-primary">회고</Link>
+              <Link href="/student/feedback" className="text-sm font-medium text-muted-foreground hover:text-primary">피드백</Link>
               <Link href="/student/report" className="text-sm font-medium text-muted-foreground hover:text-primary">리포트</Link>
               <Link href="/student/profile" className="text-sm font-medium text-muted-foreground hover:text-primary">내 프로필</Link>
             </nav>

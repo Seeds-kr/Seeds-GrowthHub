@@ -54,6 +54,8 @@ export function MentorLayout({ children }: { children: ReactNode }) {
             <Link href="/mentor" className="font-serif text-lg font-bold text-primary">Seeds 멘토</Link>
             <nav className="hidden md:flex items-center gap-6">
               <Link href="/mentor" className="text-sm font-medium text-muted-foreground hover:text-primary">홈</Link>
+              <Link href="/mentor/teams" className="text-sm font-medium text-muted-foreground hover:text-primary">담당 팀</Link>
+              <Link href="/mentor/feedback" className="text-sm font-medium text-muted-foreground hover:text-primary">내 피드백</Link>
               <Link href="/mentor/profile" className="text-sm font-medium text-muted-foreground hover:text-primary">내 프로필</Link>
               <Link href="/people" className="text-sm font-medium text-muted-foreground hover:text-primary">회원 디렉터리</Link>
               <Link href="/evaluator" className="text-sm font-medium text-muted-foreground hover:text-primary">평가 배정</Link>

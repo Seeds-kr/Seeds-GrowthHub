@@ -36,6 +36,15 @@ export const projectsTable = pgTable("projects", {
     .notNull()
     .default("ideation")
     .$type<ProjectStatus>(),
+  /**
+   * Identity links (Growth v3 §7.2). These three are pinned to the top of the
+   * project view, which is why they are columns rather than external_links rows.
+   * Incidental links belong in external_links.
+   */
+  githubUrl: text("github_url"),
+  demoUrl: text("demo_url"),
+  deckUrl: text("deck_url"),
+  targetUsers: text("target_users"),
   startedAt: timestamp("started_at", { withTimezone: true }),
   endedAt: timestamp("ended_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })

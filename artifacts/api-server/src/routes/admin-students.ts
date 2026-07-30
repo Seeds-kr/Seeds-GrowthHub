@@ -15,10 +15,15 @@ import {
   assignmentSubmissionsTable,
   assignmentsTable,
 } from "@workspace/db";
-import { requireAdmin, hashPassword } from "../lib/auth";
+import { requireAdmin, hashPassword, requireOpsRole } from "../lib/auth";
 import { issueActivationToken } from "../lib/activation";
 
 const router: IRouter = Router();
+
+// ADR-002: these two return applicant roster data (name/email/school/decision),
+// the same class the recruiting gate protects elsewhere. Student CRUD below
+// stays on requireAdmin (read-wide).
+const requireRecruiting = requireOpsRole("recruiting");
 
 // MVP4: password is now optional. When omitted, the user is created in an
 // inactive state with a random unguessable placeholder hash, and an activation
@@ -30,7 +35,7 @@ const ConvertBody = z.object({
 
 router.post(
   "/admin/applications/:id/convert-to-student",
-  requireAdmin,
+  requireRecruiting,
   async (req, res) => {
     const appId = Number(req.params.id);
     if (!Number.isFinite(appId)) {
@@ -421,7 +426,7 @@ router.post(
 // List accepted applications not yet converted (for the convert UI)
 router.get(
   "/admin/applications-accepted-pending",
-  requireAdmin,
+  requireRecruiting,
   async (_req, res) => {
     const rows = await db
       .select({

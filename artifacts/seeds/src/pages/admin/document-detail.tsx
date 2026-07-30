@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "wouter";
 import ReactMarkdown from "react-markdown";
+import { MarkdownEditor } from "@/components/markdown/MarkdownEditor";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { api, ApiError } from "@/lib/mvp3-api";
@@ -338,13 +339,13 @@ export default function AdminDocumentDetailPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <Textarea
+              <MarkdownEditor
                 rows={28}
                 value={draft.contentMd}
-                onChange={(e) =>
-                  setDraft({ ...draft, contentMd: e.target.value })
-                }
-                className="font-mono text-sm"
+                onChange={(contentMd) => setDraft({ ...draft, contentMd })}
+                showPreviewToggle={false}
+                uploadTarget={{ linkedObjectType: "document", linkedObjectId: Number(id) }}
+                data-testid="doc-editor"
               />
             </CardContent>
           </Card>

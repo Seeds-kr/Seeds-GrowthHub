@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { and, asc, desc, eq, gte, isNotNull, lt, ne, sql, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, gte, isNotNull, isNull, lt, ne, sql, inArray } from "drizzle-orm";
 import {
   db,
   opsTasksTable,
@@ -11,6 +11,8 @@ import {
   evaluationAssignmentsTable,
   applicationsTable,
   usersTable,
+  projectStatusChecksTable,
+  projectsTable,
 } from "@workspace/db";
 import { requireAdmin } from "../lib/auth";
 
@@ -40,6 +42,8 @@ router.get("/admin/ops-dashboard/summary", requireAdmin, async (_req, res) => {
     pendingFinanceList,
     recentDocs,
     staleDocs,
+    openSupportRequests,
+    staleStatusChecks,
   ] = await Promise.all([
     // 1. Overdue tasks — dueDate < today AND not done/canceled
     db
@@ -212,6 +216,57 @@ router.get("/admin/ops-dashboard/summary", requireAdmin, async (_req, res) => {
       )
       .orderBy(asc(documentsTable.updatedAt))
       .limit(10),
+    // 9. Open team-support requests — the mentor → ops signal (design/03 §2).
+    //    This is the whole point of the 30-second status check: if it does not
+    //    surface here, mentors learn that asking changes nothing.
+    db
+      .select({
+        checkId: projectStatusChecksTable.id,
+        projectId: projectStatusChecksTable.projectId,
+        projectTitle: projectsTable.title,
+        cohortId: projectsTable.cohortId,
+        teamStatus: projectStatusChecksTable.teamStatus,
+        note: projectStatusChecksTable.opsSupportNote,
+        blocker: projectStatusChecksTable.blocker,
+        checkedAt: projectStatusChecksTable.checkedAt,
+        authorName: usersTable.name,
+      })
+      .from(projectStatusChecksTable)
+      .innerJoin(
+        projectsTable,
+        eq(projectStatusChecksTable.projectId, projectsTable.id),
+      )
+      .leftJoin(usersTable, eq(projectStatusChecksTable.authorId, usersTable.id))
+      .where(
+        and(
+          eq(projectStatusChecksTable.needsOpsSupport, true),
+          isNull(projectStatusChecksTable.opsResolvedAt),
+        ),
+      )
+      .orderBy(desc(projectStatusChecksTable.checkedAt))
+      .limit(20),
+
+    // 10. Active projects whose most recent status check is older than 14 days
+    //     (or that have none at all) — drives the weekly mentor nudge.
+    db
+      .select({
+        projectId: projectsTable.id,
+        projectTitle: projectsTable.title,
+        cohortId: projectsTable.cohortId,
+        lastCheckedAt: sql<Date | null>`max(${projectStatusChecksTable.checkedAt})`,
+      })
+      .from(projectsTable)
+      .leftJoin(
+        projectStatusChecksTable,
+        eq(projectStatusChecksTable.projectId, projectsTable.id),
+      )
+      .where(inArray(projectsTable.status, ["ideation", "in_progress", "submitted"]))
+      .groupBy(projectsTable.id, projectsTable.title, projectsTable.cohortId)
+      .having(
+        sql`max(${projectStatusChecksTable.checkedAt}) IS NULL
+            OR max(${projectStatusChecksTable.checkedAt}) < ${past14d}`,
+      )
+      .limit(20),
   ]);
 
   void past14d;
@@ -290,6 +345,20 @@ router.get("/admin/ops-dashboard/summary", requireAdmin, async (_req, res) => {
     staleDocuments: staleDocs.map((d) => ({
       ...d,
       updatedAt: d.updatedAt.toISOString(),
+    })),
+    teamSupport: {
+      openCount: openSupportRequests.length,
+      items: openSupportRequests.map((r) => ({
+        ...r,
+        checkedAt: r.checkedAt.toISOString(),
+        authorName: r.authorName ?? null,
+      })),
+    },
+    staleStatusChecks: staleStatusChecks.map((r) => ({
+      ...r,
+      lastCheckedAt: r.lastCheckedAt
+        ? new Date(r.lastCheckedAt).toISOString()
+        : null,
     })),
   });
 });

@@ -5,6 +5,7 @@
  * Seeds API
  * OpenAPI spec version: 0.2.0
  */
+import type { OpsRole } from "./opsRole";
 import type { UserRole } from "./userRole";
 
 export interface SessionUser {
@@ -13,4 +14,5 @@ export interface SessionUser {
   name: string;
   role: UserRole;
   roles: UserRole[];
+  opsRoles: OpsRole[];
 }

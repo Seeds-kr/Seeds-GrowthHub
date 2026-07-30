@@ -1,7 +1,27 @@
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShieldCheck, Info } from "lucide-react";
+import { ShieldCheck, Info, Wrench } from "lucide-react";
+import { Link } from "wouter";
+import { OPS_ROLE_LABELS, type OpsRoleCode } from "@/lib/admin-nav";
+
+type OpsRoleRow = {
+  code: OpsRoleCode;
+  staffRole: string;
+  unlocks: string;
+  restricted?: boolean;
+};
+
+/** Mirrors docs/design/01-role-permissions.md §3.1. */
+const OPS_ROLE_ROWS: OpsRoleRow[] = [
+  { code: "program_lead", staffRole: "Program Lead", unlocks: "전체 접근 — 다른 모든 기능 역할을 포함합니다." },
+  { code: "ops", staffRole: "Ops Manager", unlocks: "회의 · 작업 · 행사/세션 · 운영 문서 · 운영 대시보드" },
+  { code: "recruiting", staffRole: "Recruiting Lead", unlocks: "모집 · 지원자 · 평가 배정 · 면접 · 최종 결정", restricted: true },
+  { code: "finance", staffRole: "Finance/Admin Lead", unlocks: "재정 · 정산 · 증빙", restricted: true },
+  { code: "growth", staffRole: "Growth/Experience Lead", unlocks: "프로젝트 · 활동기록 · 피드백 · 스터디" },
+  { code: "community", staffRole: "Community Lead", unlocks: "공지 · 사람 디렉터리 · 사이트 콘텐츠" },
+  { code: "system", staffRole: "System/Product Lead", unlocks: "계정 생성 · 역할 변경 · 감사 로그", restricted: true },
+];
 
 type RoleRow = {
   code: string;
@@ -59,7 +79,8 @@ export default function AdminRoles() {
             역할 & 권한
           </h1>
           <p className="text-sm text-muted-foreground">
-            현재 권한 모델 — 단일 기본 역할(role) + 추가 역할 배열(extra_roles)을 사용합니다. 읽기 전용 개요입니다.
+            권한은 두 축입니다 — <strong>워크스페이스 접근</strong>(role + extra_roles)과{" "}
+            <strong>운영 기능 권한</strong>(ops_roles). 아래는 읽기 전용 개요입니다.
           </p>
         </div>
 
@@ -89,6 +110,79 @@ export default function AdminRoles() {
             </Card>
           ))}
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Wrench className="h-4 w-4 text-primary" />
+              운영 기능 권한(ops_roles)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <p className="text-muted-foreground">
+              <code className="rounded bg-muted px-1 text-xs">users.ops_roles text[]</code> — 운영진 세부 역할입니다.
+              위의 워크스페이스 역할과 <strong>독립된 축</strong>이며, <Badge variant="outline">admin</Badge> 역할을 가진
+              계정에만 적용됩니다. 멘토·학생은 이 값이 무엇이든 관리자 기능을 얻지 못합니다.
+            </p>
+
+            <div className="overflow-x-auto rounded-lg border">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/30 text-xs uppercase text-muted-foreground">
+                  <tr>
+                    <th className="px-3 py-2 text-left">코드</th>
+                    <th className="px-3 py-2 text-left">운영진 역할</th>
+                    <th className="px-3 py-2 text-left">열리는 영역</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {OPS_ROLE_ROWS.map((r) => (
+                    <tr key={r.code} className="border-t">
+                      <td className="px-3 py-2 align-top">
+                        <Badge
+                          variant="outline"
+                          className={r.code === "program_lead" ? "border-primary text-primary" : ""}
+                        >
+                          {OPS_ROLE_LABELS[r.code]}
+                        </Badge>
+                        <div className="mt-0.5 font-mono text-[11px] text-muted-foreground">{r.code}</div>
+                      </td>
+                      <td className="px-3 py-2 align-top text-xs text-muted-foreground">{r.staffRole}</td>
+                      <td className="px-3 py-2 align-top text-xs">
+                        {r.unlocks}
+                        {r.restricted && (
+                          <span className="ml-1.5 rounded bg-amber-500/10 px-1.5 py-0.5 text-[11px] text-amber-700 dark:text-amber-400">
+                            제한 열람
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="space-y-1 text-xs text-muted-foreground">
+              <p>
+                • <strong>제한 열람</strong> 영역은 담당 기능 역할 + 총괄만 접근합니다. 그 외 관리자 화면은 모든 운영진이 읽을 수 있습니다
+                (운영 투명성 우선).
+              </p>
+              <p>
+                • 총괄(<code>program_lead</code>)은 모든 검사를 통과하며, <strong>마지막 1명은 해제·비활성화할 수 없습니다.</strong>
+              </p>
+              <p>
+                • 평가 표면(<code>/evaluator/*</code>)은 <code>recruiting</code>과 <strong>별개 축</strong>입니다 —
+                배정받은 멘토는 기능 역할 없이도 평가를 수행합니다.
+              </p>
+              <p>
+                • 부여·회수는{" "}
+                <Link href="/admin/users" className="underline underline-offset-2">
+                  사용자(Users)
+                </Link>{" "}
+                화면에서 하며 <code>system</code> 기능 역할이 필요합니다.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
@@ -141,7 +235,7 @@ export default function AdminRoles() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-1 text-sm text-muted-foreground">
-            <p>• scope 기반 권한(role_assignments) — 모집장·재정장 등 세부 운영 역할 분리 요구가 발생하면 도입.</p>
+            <p>• scope 기반 권한(role_assignments) — 기능 역할은 도입했으나 <strong>담당 범위</strong>는 아직 표현하지 못합니다. "3기 담당 회계"처럼 기수·프로젝트 단위 제한이 필요해지면 도입합니다.</p>
             <p>• 권한 변경 감사 로그 — 현재 최종 합격 결정만 decision_logs에 기록됨. audit_logs 테이블 도입 후 확장.</p>
             <p>• UI에서 추가 역할 일괄 부여/회수.</p>
           </CardContent>

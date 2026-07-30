@@ -1,20 +1,32 @@
 import crypto from "node:crypto";
 import bcrypt from "bcryptjs";
 import type { Request, Response, NextFunction, RequestHandler } from "express";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import {
   db,
   usersTable,
   USER_ROLES,
   getEffectiveRoles,
+  getOpsRoles,
+  hasOpsRole,
   type User,
   type UserRole,
+  type OpsRole,
 } from "@workspace/db";
 import { logger } from "./logger";
+import { audit } from "./audit";
 
 const COOKIE_NAME = "seeds_admin";
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
 
+/**
+ * Session payload. Identity only — NOT an authority record.
+ *
+ * `opsRoles` is deliberately NOT carried here. Every capability check reads the
+ * user row fresh via getCurrentUser(), so revoking an ops role takes effect on
+ * the next request rather than the next login. A copy in the cookie would be a
+ * stale grant with no upside (the UI already reads /admin/me).
+ */
 export type Session = {
   userId: number;
   role: UserRole;
@@ -26,6 +38,7 @@ export type SessionUser = {
   name: string;
   role: UserRole;
   roles: UserRole[];
+  opsRoles: OpsRole[];
 };
 
 function getSessionSecret(): string {
@@ -209,6 +222,50 @@ export const requireAdminOrMentor: RequestHandler = makeRequireRole([
 ]);
 
 /**
+ * Gate a route on a functional ops role (ADR-002). Implies requireAdmin.
+ *
+ * Capability is read from the DB on every request — never from the session
+ * cookie — so role changes take effect immediately. `program_lead` passes
+ * every check.
+ *
+ * NOTE: do NOT use this on /evaluator/*. The evaluation surface is a separate
+ * axis (requireAdminOrMentor + per-application assignment ownership); gating it
+ * on `recruiting` would lock out the mentors who were assigned to evaluate.
+ */
+export function requireOpsRole(code: OpsRole): RequestHandler {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    const user = await getCurrentUser(req);
+    if (!user) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+    if (!getEffectiveRoles(user).includes("admin")) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    if (!hasOpsRole(user, code)) {
+      logger.warn(
+        { userId: user.id, required: code, held: getOpsRoles(user) },
+        "ops role denied",
+      );
+      // Repeated denials usually mean a role was mis-assigned, not an attack.
+      req.sessionUser = user;
+      audit({
+        action: "permission_denied",
+        req,
+        targetType: "user",
+        targetId: user.id,
+        note: `required=${code} held=${getOpsRoles(user).join(",") || "none"} path=${req.path}`,
+      });
+      res.status(403).json({ error: "Forbidden", requiredOpsRole: code });
+      return;
+    }
+    req.sessionUser = user;
+    next();
+  };
+}
+
+/**
  * optionalAuth: populate req.sessionUser if a valid session cookie is present,
  * but do NOT 401 if none is — used for endpoints that return more data to
  * logged-in members (e.g. /people including phone numbers).
@@ -218,6 +275,40 @@ export const optionalAuth: RequestHandler = async (req, _res, next) => {
   if (user) req.sessionUser = user;
   next();
 };
+
+/**
+ * One-time backfill for ADR-002: grant `program_lead` to every existing admin
+ * so that introducing requireOpsRole() does not lock anyone out.
+ *
+ * MUST run before any requireOpsRole gate serves traffic — index.ts calls it
+ * during startup, ahead of listen().
+ *
+ * Runs only while NOT A SINGLE user holds any ops role, i.e. exactly once, on
+ * the first boot after the column is pushed. Guarding on "this user has none"
+ * instead would silently re-grant program_lead to an admin whose roles were
+ * deliberately narrowed to zero — a privilege escalation.
+ */
+export async function backfillOpsRolesOnce(): Promise<void> {
+  const [{ withRoles }] = await db
+    .select({
+      withRoles: sql<number>`count(*)::int`,
+    })
+    .from(usersTable)
+    .where(sql`cardinality(${usersTable.opsRoles}) > 0`);
+
+  if (withRoles > 0) return; // already initialised — never run again
+
+  const result = await db
+    .update(usersTable)
+    .set({ opsRoles: ["program_lead"], updatedAt: new Date() })
+    .where(sql`${usersTable.role} = 'admin' OR 'admin' = ANY(${usersTable.extraRoles})`)
+    .returning({ id: usersTable.id });
+
+  logger.info(
+    { count: result.length },
+    "backfilled ops_roles=program_lead for existing admins",
+  );
+}
 
 /**
  * Bootstrap an admin user from ADMIN_EMAIL / ADMIN_PASSWORD env vars on startup.
@@ -243,6 +334,9 @@ export async function bootstrapAdminFromEnv(): Promise<void> {
       email: adminEmail,
       passwordHash,
       role: "admin",
+      // The bootstrap admin must always be able to administer ops roles,
+      // otherwise a misconfigured backfill could lock everyone out.
+      opsRoles: ["program_lead"],
       isActive: true,
     });
     logger.info({ email: adminEmail }, "bootstrapped admin user");
@@ -253,6 +347,11 @@ export async function bootstrapAdminFromEnv(): Promise<void> {
   if (!ok) updates.passwordHash = await hashPassword(adminPassword);
   if (existing.role !== "admin") updates.role = "admin";
   if (!existing.isActive) updates.isActive = true;
+  if (!(existing.opsRoles ?? []).includes("program_lead")) {
+    updates.opsRoles = Array.from(
+      new Set<OpsRole>([...(existing.opsRoles ?? []), "program_lead"]),
+    );
+  }
   if (Object.keys(updates).length > 0) {
     await db
       .update(usersTable)
