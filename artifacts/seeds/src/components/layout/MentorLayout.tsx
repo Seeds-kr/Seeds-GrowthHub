@@ -6,6 +6,17 @@ import { useQueryClient } from "@tanstack/react-query";
 import { getAdminMeQueryKey } from "@workspace/api-client-react";
 import { Loader2 } from "lucide-react";
 import { RoleSwitcher, effectiveRoles, pickRedirectFor } from "./RoleSwitcher";
+import { MobileNav } from "./MobileNav";
+
+/** 데스크톱 헤더와 모바일 드로어가 같은 목록을 쓴다. */
+const MENTOR_NAV = [
+  { href: "/mentor", label: "홈" },
+  { href: "/mentor/teams", label: "담당 팀" },
+  { href: "/mentor/feedback", label: "내 피드백" },
+  { href: "/mentor/profile", label: "내 프로필" },
+  { href: "/people", label: "회원 디렉터리" },
+  { href: "/evaluator", label: "평가 배정" },
+];
 
 export function MentorLayout({ children }: { children: ReactNode }) {
   const [, setLocation] = useLocation();
@@ -53,21 +64,51 @@ export function MentorLayout({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-8">
             <Link href="/mentor" className="font-serif text-lg font-bold text-primary">Seeds 멘토</Link>
             <nav className="hidden md:flex items-center gap-6">
-              <Link href="/mentor" className="text-sm font-medium text-muted-foreground hover:text-primary">홈</Link>
-              <Link href="/mentor/teams" className="text-sm font-medium text-muted-foreground hover:text-primary">담당 팀</Link>
-              <Link href="/mentor/feedback" className="text-sm font-medium text-muted-foreground hover:text-primary">내 피드백</Link>
-              <Link href="/mentor/profile" className="text-sm font-medium text-muted-foreground hover:text-primary">내 프로필</Link>
-              <Link href="/people" className="text-sm font-medium text-muted-foreground hover:text-primary">회원 디렉터리</Link>
-              <Link href="/evaluator" className="text-sm font-medium text-muted-foreground hover:text-primary">평가 배정</Link>
+              {MENTOR_NAV.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="text-sm font-medium text-muted-foreground hover:text-primary"
+                >
+                  {item.label}
+                </Link>
+              ))}
             </nav>
           </div>
           <div className="flex items-center gap-4">
             <RoleSwitcher roles={roles} current="mentor" />
-            <span className="text-sm text-muted-foreground">{me.name} ({me.email})</span>
-            <Button variant="outline" size="sm" onClick={handleLogout} disabled={logout.isPending}>
+            <span className="hidden md:inline text-sm text-muted-foreground">{me.name} ({me.email})</span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="hidden sm:inline-flex"
+              onClick={handleLogout}
+              disabled={logout.isPending}
+            >
               {logout.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               로그아웃
             </Button>
+            <MobileNav
+              items={MENTOR_NAV}
+              title="Seeds 멘토"
+              footer={
+                <div className="space-y-2">
+                  <p className="px-3 text-xs text-muted-foreground break-all">
+                    {me.name} ({me.email})
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={handleLogout}
+                    disabled={logout.isPending}
+                  >
+                    {logout.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                    로그아웃
+                  </Button>
+                </div>
+              }
+            />
           </div>
         </div>
       </header>

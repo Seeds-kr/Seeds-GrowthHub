@@ -5,6 +5,25 @@ import { useAdminMe, useAdminLogout, getAdminMeQueryKey } from "@workspace/api-c
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { RoleSwitcher, effectiveRoles, pickRedirectFor } from "./RoleSwitcher";
+import { MobileNav } from "./MobileNav";
+
+/** 데스크톱 헤더와 모바일 드로어가 같은 목록을 쓴다 — 갈라지면 폰에서만
+ *  빠지는 메뉴가 생긴다. */
+const STUDENT_NAV = [
+  { href: "/student", label: "대시보드" },
+  { href: "/student/sessions", label: "모임" },
+  { href: "/student/assignments", label: "과제" },
+  { href: "/student/announcements", label: "공지사항" },
+  { href: "/student/attendance", label: "출석" },
+  { href: "/student/timeline", label: "타임라인" },
+  { href: "/student/projects", label: "프로젝트" },
+  { href: "/student/studies", label: "스터디" },
+  { href: "/student/artifacts", label: "아티팩트" },
+  { href: "/student/reflections", label: "회고" },
+  { href: "/student/feedback", label: "피드백" },
+  { href: "/student/report", label: "리포트" },
+  { href: "/student/profile", label: "내 프로필" },
+];
 
 export function StudentLayout({ children }: { children: ReactNode }) {
   const [, setLocation] = useLocation();
@@ -51,29 +70,55 @@ export function StudentLayout({ children }: { children: ReactNode }) {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <Link href="/student" className="font-serif text-lg font-bold text-primary">Seeds 학생</Link>
-            <nav className="hidden md:flex items-center gap-6">
-              <Link href="/student" className="text-sm font-medium text-muted-foreground hover:text-primary">대시보드</Link>
-              <Link href="/student/sessions" className="text-sm font-medium text-muted-foreground hover:text-primary">모임</Link>
-              <Link href="/student/assignments" className="text-sm font-medium text-muted-foreground hover:text-primary">과제</Link>
-              <Link href="/student/announcements" className="text-sm font-medium text-muted-foreground hover:text-primary">공지사항</Link>
-              <Link href="/student/attendance" className="text-sm font-medium text-muted-foreground hover:text-primary">출석</Link>
-              <Link href="/student/timeline" className="text-sm font-medium text-muted-foreground hover:text-primary">타임라인</Link>
-              <Link href="/student/projects" className="text-sm font-medium text-muted-foreground hover:text-primary">프로젝트</Link>
-              <Link href="/student/studies" className="text-sm font-medium text-muted-foreground hover:text-primary">스터디</Link>
-              <Link href="/student/artifacts" className="text-sm font-medium text-muted-foreground hover:text-primary">아티팩트</Link>
-              <Link href="/student/reflections" className="text-sm font-medium text-muted-foreground hover:text-primary">회고</Link>
-              <Link href="/student/feedback" className="text-sm font-medium text-muted-foreground hover:text-primary">피드백</Link>
-              <Link href="/student/report" className="text-sm font-medium text-muted-foreground hover:text-primary">리포트</Link>
-              <Link href="/student/profile" className="text-sm font-medium text-muted-foreground hover:text-primary">내 프로필</Link>
+            {/* lg 기준이다. 13개를 768px에 한 줄로 넣으면 눌러지지 않을 만큼
+                좁아져서, 그 구간은 MobileNav가 맡는다. */}
+            <nav className="hidden lg:flex items-center gap-6">
+              {STUDENT_NAV.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="text-sm font-medium text-muted-foreground hover:text-primary"
+                >
+                  {item.label}
+                </Link>
+              ))}
             </nav>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <RoleSwitcher roles={roles} current="student" />
-            <span className="text-sm text-muted-foreground">{me.email}</span>
-            <Button variant="outline" size="sm" onClick={handleLogout} disabled={logout.isPending}>
+            {/* 이메일은 폰에서 숨긴다 — 헤더 폭을 가장 많이 먹으면서
+                정보 가치는 가장 낮다. 드로어 하단에 그대로 나온다. */}
+            <span className="hidden md:inline text-sm text-muted-foreground">{me.email}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="hidden sm:inline-flex"
+              onClick={handleLogout}
+              disabled={logout.isPending}
+            >
               {logout.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               로그아웃
             </Button>
+            <MobileNav
+              items={STUDENT_NAV}
+              title="Seeds 학생"
+              breakpoint="lg"
+              footer={
+                <div className="space-y-2">
+                  <p className="px-3 text-xs text-muted-foreground break-all">{me.email}</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={handleLogout}
+                    disabled={logout.isPending}
+                  >
+                    {logout.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                    로그아웃
+                  </Button>
+                </div>
+              }
+            />
           </div>
         </div>
       </header>

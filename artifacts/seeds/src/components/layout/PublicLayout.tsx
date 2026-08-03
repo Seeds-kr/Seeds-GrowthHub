@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
+import { MobileNav } from "./MobileNav";
 
 export function PublicLayout({ children }: { children: ReactNode }) {
   const [location] = useLocation();
@@ -35,11 +36,26 @@ export function PublicLayout({ children }: { children: ReactNode }) {
           </nav>
           <div className="flex items-center gap-2">
             <Link href="/login">
-              <Button variant="ghost" size="sm">로그인</Button>
+              <Button variant="ghost" size="sm" className="hidden sm:inline-flex">로그인</Button>
             </Link>
             <Link href="/apply">
               <Button>지원하기</Button>
             </Link>
+            {/* 헤더 nav가 md 미만에서 사라지므로, 없으면 폰에서 소개·프로그램·
+                사람들·모집·FAQ 어디에도 갈 수 없다. 공개 사이트는 A 등급이고
+                A는 "내용 전부 읽힘"을 약속한다(design/05 §6.2). */}
+            <MobileNav
+              items={navItems}
+              title="Seeds"
+              footer={
+                <Link
+                  href="/login"
+                  className="block rounded-md px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
+                  로그인 (관리자 / 멘토 / 학생)
+                </Link>
+              }
+            />
           </div>
         </div>
       </header>
