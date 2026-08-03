@@ -127,6 +127,37 @@ export default function AdminPeople() {
 
   const [avatarTarget, setAvatarTarget] = useState<PeopleProfile | null>(null);
 
+  // 프로필과 로그인 계정은 별개다. 계정이 없으면 프로젝트 배정도 로그인도 안 되는데,
+  // 그동안 화면 두 개(/admin/users → /admin/people)를 오가야 했다.
+  const [accountTarget, setAccountTarget] = useState<PeopleProfile | null>(null);
+  const [accountEmail, setAccountEmail] = useState("");
+  const [activation, setActivation] = useState<{ name: string; path: string } | null>(null);
+
+  const createAccount = useMutation({
+    mutationFn: (vars: { id: number; email: string }) =>
+      api<{ activationPath: string }>(`/admin/people/${vars.id}/create-account`, {
+        method: "POST",
+        body: { email: vars.email },
+      }),
+    onSuccess: (res, vars) => {
+      qc.invalidateQueries({ queryKey: ["admin-people"] });
+      // 비밀번호는 본인이 정한다. 관리자에게는 전달할 링크만 준다.
+      setActivation({
+        name: accountTarget?.name ?? "",
+        path: res.activationPath,
+      });
+      setAccountTarget(null);
+      setAccountEmail("");
+      void vars;
+    },
+    onError: (e: any) =>
+      toast({
+        title: "계정 생성 실패",
+        description: e?.data?.error ?? e.message,
+        variant: "destructive",
+      }),
+  });
+
   const generateAvatar = useMutation({
     mutationFn: (vars: { id: number; body: Record<string, unknown> }) =>
       api<PeopleProfile>(`/admin/people/${vars.id}/generate-avatar`, {
@@ -235,13 +266,15 @@ export default function AdminPeople() {
                         보이는데 정작 프로젝트에 배정할 수도 로그인할 수도 없다.
                         그 상태가 화면 어디에도 드러나지 않아 원인을 찾기 어려웠다. */}
                     {p.userId == null && p.kind !== "member" ? (
-                      <Badge
-                        variant="outline"
-                        className="ml-2 text-[10px] text-muted-foreground"
-                        title="로그인 계정이 연결되지 않았습니다. 배정·로그인이 불가하며, 사용자 화면에서 계정을 만든 뒤 이 프로필에 연결해야 합니다."
+                      <button
+                        type="button"
+                        onClick={() => setAccountTarget(p)}
+                        className="ml-2 rounded-full border border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:border-primary hover:text-primary"
+                        title="로그인 계정이 없어 프로젝트 배정·로그인이 불가합니다. 눌러서 계정을 만들고 연결합니다."
+                        data-testid={`btn-create-account-${p.id}`}
                       >
-                        계정 미연결
-                      </Badge>
+                        계정 미연결 · 만들기
+                      </button>
                     ) : null}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
@@ -449,6 +482,110 @@ export default function AdminPeople() {
           generateAvatar.mutate({ id: avatarTarget.id, body })
         }
       />
+
+      {/* 계정 생성 — 비밀번호를 관리자가 정하지 않는다. 비활성 계정 + 활성화
+          링크로 만들고 본인이 첫 로그인 때 정한다(학생 전환과 같은 방식). */}
+      <Dialog
+        open={accountTarget !== null}
+        onOpenChange={(o) => {
+          if (!o) {
+            setAccountTarget(null);
+            setAccountEmail("");
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{accountTarget?.name} — 로그인 계정 만들기</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              프로필만으로는 프로젝트에 배정하거나 로그인할 수 없습니다. 계정을
+              만들면 이 프로필에 자동으로 연결됩니다.
+            </p>
+            <div>
+              <Label htmlFor="acct-email">이메일 *</Label>
+              <Input
+                id="acct-email"
+                type="email"
+                value={accountEmail}
+                onChange={(e) => setAccountEmail(e.target.value)}
+                placeholder="mentor@example.com"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              비밀번호는 설정하지 않습니다. 계정은 비활성 상태로 만들어지고 본인이
+              활성화 링크로 직접 정합니다.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAccountTarget(null)}>
+              취소
+            </Button>
+            <Button
+              disabled={!accountEmail.trim() || createAccount.isPending}
+              onClick={() =>
+                accountTarget &&
+                createAccount.mutate({
+                  id: accountTarget.id,
+                  email: accountEmail.trim(),
+                })
+              }
+              data-testid="btn-confirm-create-account"
+            >
+              {createAccount.isPending ? (
+                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+              ) : null}
+              계정 만들기
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 활성화 링크는 지금만 보인다 — 서버는 해시만 저장한다. */}
+      <Dialog
+        open={activation !== null}
+        onOpenChange={(o) => !o && setActivation(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>계정이 생성되었습니다</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm">
+              <strong>{activation?.name}</strong> 님에게 아래 활성화 링크를
+              전달하세요. 본인이 비밀번호를 정하면 로그인과 프로젝트 배정이
+              가능해집니다.
+            </p>
+            <code className="block break-all rounded bg-muted p-3 text-xs">
+              {typeof window !== "undefined" ? window.location.origin : ""}
+              {activation?.path}
+            </code>
+            <p className="text-xs text-muted-foreground">
+              이 링크는 <strong>지금만 확인할 수 있습니다.</strong> 서버는 해시만
+              저장하므로 창을 닫으면 다시 볼 수 없고, 필요하면 사용자 화면에서
+              다시 발급해야 합니다.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                const url =
+                  (typeof window !== "undefined" ? window.location.origin : "") +
+                  (activation?.path ?? "");
+                navigator.clipboard?.writeText(url).then(
+                  () => toast({ title: "링크를 복사했습니다." }),
+                  () => toast({ title: "복사 실패", variant: "destructive" }),
+                );
+              }}
+            >
+              링크 복사
+            </Button>
+            <Button onClick={() => setActivation(null)}>확인</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }
