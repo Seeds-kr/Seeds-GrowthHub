@@ -1,5 +1,5 @@
 import { AdminLayout } from "@/components/layout/AdminLayout";
-import { useRoute } from "wouter";
+import { useRoute, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   api, PROJECT_STATUSES, PROJECT_STATUS_LABEL,
@@ -226,14 +226,41 @@ export default function AdminProjectDetail() {
                 )}
               </div>
             ))}
-            <div className="flex gap-2">
-              <Select value={mentorForm.mentorUserId} onValueChange={(v) => setMentorForm({ ...mentorForm, mentorUserId: v })}>
-                <SelectTrigger><SelectValue placeholder="멘토 선택…" /></SelectTrigger>
-                <SelectContent>{mentorUsers?.items.map((u) => <SelectItem key={u.id} value={String(u.id)}>{u.name}</SelectItem>)}</SelectContent>
-              </Select>
-              <Input placeholder="역할 (예: 기술 멘토)" value={mentorForm.roleLabel} onChange={(e) => setMentorForm({ ...mentorForm, roleLabel: e.target.value })} />
-              <Button disabled={!mentorForm.mentorUserId || addMentor.isPending} onClick={() => addMentor.mutate()}>배정</Button>
-            </div>
+            {/* 배정 후보는 people_profiles가 아니라 `role=mentor` 계정이다.
+                mentor-seed.ts가 넣는 멘토 프로필은 user_id가 비어 있어서,
+                새로 설치한 직후에는 /admin/people에 멘토가 9명 보이는데
+                이 목록은 0명인 상태가 된다. 빈 드롭다운만 두면 원인을 알 수 없어
+                멘토 축 전체(상태체크·피드백·Mentor Workspace)가 조용히 막힌다. */}
+            {mentorUsers && mentorUsers.items.length === 0 ? (
+              <div className="rounded-md border border-dashed border-border p-3 text-xs text-muted-foreground">
+                <p className="mb-1 font-medium text-foreground">
+                  배정할 수 있는 멘토 계정이 없습니다.
+                </p>
+                <p>
+                  멘토 <strong>프로필</strong>(<Link href="/admin/people" className="text-primary hover:underline">사람들 프로필</Link>)과
+                  로그인할 수 있는 <strong>계정</strong>은 별개입니다. 배정은 계정 기준이라 두 단계가 필요합니다.
+                </p>
+                <ol className="mt-1.5 list-decimal space-y-0.5 pl-4">
+                  <li>
+                    <Link href="/admin/users" className="text-primary hover:underline">사용자</Link>에서
+                    역할 <code className="font-mono">mentor</code>로 계정을 만든다
+                  </li>
+                  <li>
+                    <Link href="/admin/people" className="text-primary hover:underline">사람들 프로필</Link>에서
+                    해당 멘토 프로필에 그 계정을 연결한다
+                  </li>
+                </ol>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Select value={mentorForm.mentorUserId} onValueChange={(v) => setMentorForm({ ...mentorForm, mentorUserId: v })}>
+                  <SelectTrigger><SelectValue placeholder="멘토 선택…" /></SelectTrigger>
+                  <SelectContent>{mentorUsers?.items.map((u) => <SelectItem key={u.id} value={String(u.id)}>{u.name}</SelectItem>)}</SelectContent>
+                </Select>
+                <Input placeholder="역할 (예: 기술 멘토)" value={mentorForm.roleLabel} onChange={(e) => setMentorForm({ ...mentorForm, roleLabel: e.target.value })} />
+                <Button disabled={!mentorForm.mentorUserId || addMentor.isPending} onClick={() => addMentor.mutate()}>배정</Button>
+              </div>
+            )}
             <p className="text-xs text-muted-foreground">
               담당 종료는 삭제가 아닙니다 — 기록은 남고 접근만 즉시 끊깁니다.
             </p>

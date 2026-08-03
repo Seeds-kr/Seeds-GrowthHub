@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -227,7 +228,22 @@ export default function AdminPeople() {
                   <TableCell className="text-muted-foreground">
                     {p.displayOrder}
                   </TableCell>
-                  <TableCell className="font-medium">{p.name}</TableCell>
+                  <TableCell className="font-medium">
+                    {p.name}
+                    {/* 프로필과 로그인 계정은 별개다. mentor-seed.ts가 넣는
+                        멘토 프로필은 userId가 비어 있어, 여기서는 멘토가
+                        보이는데 정작 프로젝트에 배정할 수도 로그인할 수도 없다.
+                        그 상태가 화면 어디에도 드러나지 않아 원인을 찾기 어려웠다. */}
+                    {p.userId == null && p.kind !== "member" ? (
+                      <Badge
+                        variant="outline"
+                        className="ml-2 text-[10px] text-muted-foreground"
+                        title="로그인 계정이 연결되지 않았습니다. 배정·로그인이 불가하며, 사용자 화면에서 계정을 만든 뒤 이 프로필에 연결해야 합니다."
+                      >
+                        계정 미연결
+                      </Badge>
+                    ) : null}
+                  </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {p.roleTitle ?? "-"}
                   </TableCell>
