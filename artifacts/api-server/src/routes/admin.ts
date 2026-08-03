@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { createRateLimit, clientIp } from "../lib/rate-limit";
 import { and, asc, desc, eq, ilike, or, sql, inArray } from "drizzle-orm";
 import {
   AdminLoginBody,
@@ -37,7 +38,31 @@ const requireRecruiting = requireOpsRole("recruiting");
 
 const router: IRouter = Router();
 
-router.post("/admin/login", async (req, res) => {
+/**
+ * Brute-force gate on the only unauthenticated credential endpoint.
+ *
+ * Keyed on IP **and** submitted email together. IP alone lets one attacker
+ * behind a shared NAT lock out a whole office; email alone lets anyone lock a
+ * known admin out of their own account by spraying failures at it. The pair
+ * limits the actual attack — one source guessing one account.
+ *
+ * Counts every attempt, not just failures: a limiter that resets on success
+ * lets an attacker interleave a known-good login to clear their budget.
+ */
+const loginRateLimit = createRateLimit({
+  windowMs: 5 * 60_000,
+  max: 10,
+  keyFor: (req) => {
+    const email =
+      typeof (req.body as any)?.email === "string"
+        ? (req.body as any).email.trim().toLowerCase()
+        : "";
+    return `${clientIp(req)}|${email}`;
+  },
+  message: "로그인 시도가 너무 많습니다. 잠시 후 다시 시도해 주세요.",
+});
+
+router.post("/admin/login", loginRateLimit, async (req, res) => {
   const parsed = AdminLoginBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(401).json({ error: "Invalid credentials" });

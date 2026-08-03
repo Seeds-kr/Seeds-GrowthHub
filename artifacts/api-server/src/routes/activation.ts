@@ -1,4 +1,4 @@
-import { Router, type IRouter, type RequestHandler } from "express";
+import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, usersTable } from "@workspace/db";
@@ -8,43 +8,15 @@ import {
 } from "../lib/activation";
 import { hashPassword, requireAdmin } from "../lib/auth";
 import { audit } from "../lib/audit";
+import { createRateLimit } from "../lib/rate-limit";
 
 const router: IRouter = Router();
 
 /**
- * Lightweight in-memory IP-based rate limiter for the public activation
- * endpoints. Stops trivial brute-force / scanning attempts. Single-process
- * only — sufficient given the 256-bit token entropy and our deployment shape.
- * 20 requests / 60s per IP across both GET and POST.
+ * 20 requests / 60s per IP across both activation endpoints. Token entropy is
+ * 256 bits, so this is scanner noise suppression rather than the real defence.
  */
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX = 20;
-const ipBuckets = new Map<string, number[]>();
-const rateLimit: RequestHandler = (req, res, next) => {
-  const xff = req.headers["x-forwarded-for"];
-  const xffStr = Array.isArray(xff) ? xff[0] : xff;
-  const ip = xffStr?.split(",")[0]?.trim() || req.ip || "unknown";
-  const now = Date.now();
-  const cutoff = now - RATE_LIMIT_WINDOW_MS;
-  const arr = (ipBuckets.get(ip) ?? []).filter((t) => t > cutoff);
-  if (arr.length >= RATE_LIMIT_MAX) {
-    res
-      .status(429)
-      .json({ error: "Too many requests", retryAfterMs: arr[0] + RATE_LIMIT_WINDOW_MS - now });
-    return;
-  }
-  arr.push(now);
-  ipBuckets.set(ip, arr);
-  // Periodic GC to keep map bounded.
-  if (ipBuckets.size > 5000) {
-    for (const [k, v] of ipBuckets) {
-      const filtered = v.filter((t) => t > cutoff);
-      if (filtered.length === 0) ipBuckets.delete(k);
-      else ipBuckets.set(k, filtered);
-    }
-  }
-  next();
-};
+const rateLimit = createRateLimit({ windowMs: 60_000, max: 20 });
 
 // Public: inspect an activation token (no auth) — used by the activation page
 // to show the user's email/name before they pick a password.
