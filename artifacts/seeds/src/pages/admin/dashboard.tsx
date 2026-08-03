@@ -1,5 +1,6 @@
 import { AdminLayout } from "@/components/layout/AdminLayout";
-import { useAdminDashboard } from "@workspace/api-client-react";
+import { useAdminDashboard, useAdminMe, getAdminMeQueryKey } from "@workspace/api-client-react";
+import { OnboardingCard } from "@/components/OnboardingCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -179,9 +180,15 @@ function EmptyRow({ message }: { message: string }) {
 
 export default function AdminDashboard() {
   const { data, isLoading } = useAdminDashboard();
+  // Reuses the cached /admin/me the layout already fetched — no extra request.
+  const { data: me } = useAdminMe({
+    query: { retry: false, queryKey: getAdminMeQueryKey() },
+  });
 
   return (
     <AdminLayout>
+      <OnboardingCard opsRoles={me?.opsRoles ?? []} />
+
       <div className="mb-8 flex items-end justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-3xl font-bold tracking-[-0.03em] mb-1">대시보드</h1>
