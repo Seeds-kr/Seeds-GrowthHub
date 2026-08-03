@@ -4,6 +4,8 @@ import ReactMarkdown from "react-markdown";
 import { MarkdownEditor } from "@/components/markdown/MarkdownEditor";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AdminLayout } from "@/components/layout/AdminLayout";
+import { DesktopOnly } from "@/components/DesktopOnly";
+import { useIsDesktop } from "@/hooks/use-desktop";
 import { api, ApiError } from "@/lib/mvp3-api";
 import {
   type MeetingDetail,
@@ -66,6 +68,7 @@ function MarkdownSection({
   saving: boolean;
   meetingId: number;
 }) {
+  const isDesktop = useIsDesktop();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(source);
   const hasContent = source.trim().length > 0;
@@ -98,20 +101,26 @@ function MarkdownSection({
               저장
             </Button>
           </div>
-        ) : (
+        ) : isDesktop ? (
+          /* W11 (design/05 §6.2) — 편집 모드 is C tier. Reading the note stays
+             A/B, so only the entry point disappears below `lg`. */
           <Button size="sm" variant="outline" className="shrink-0" onClick={start}>
             편집
           </Button>
-        )}
+        ) : null}
       </CardHeader>
       <CardContent>
         {editing ? (
-          <MarkdownEditor
-            rows={14}
-            value={draft}
-            onChange={setDraft}
-            uploadTarget={{ linkedObjectType: "meeting", linkedObjectId: meetingId }}
-          />
+          /* Still guarded even though the button is hidden below `lg`: the
+             window can be narrowed while a section is already open. */
+          <DesktopOnly feature="회의록 편집">
+            <MarkdownEditor
+              rows={14}
+              value={draft}
+              onChange={setDraft}
+              uploadTarget={{ linkedObjectType: "meeting", linkedObjectId: meetingId }}
+            />
+          </DesktopOnly>
         ) : hasContent ? (
           <div className="prose prose-sm max-w-none dark:prose-invert">
             <ReactMarkdown>{source}</ReactMarkdown>
@@ -387,7 +396,8 @@ export default function AdminMeetingDetailPage() {
                 }
               />
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            {/* W11 — B tier, same reasoning as the meeting create dialog. */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div>
                 <Label>담당자</Label>
                 <Select

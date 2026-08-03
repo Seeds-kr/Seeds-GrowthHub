@@ -113,7 +113,7 @@
 | `project_milestones` | (없음) | — | 프로젝트 가시성을 상속 |
 | `project_status_checks` | `admin_only` / `mentor_visible` | `mentor_visible` | 팀 상태·블로커·지원요청. **학생에게 노출 안 함** |
 | `external_links` | `private` / `team_visible` / `cohort_visible` / `admin_only` | `admin_only` | `artifacts`와 동일 어휘 |
-| `attachments` | `private` / `team_visible` / `admin_only` | `admin_only` | 영수증·증빙 포함 → 보수적 기본값 |
+| `attachments` | `private` / `admin_only` | `admin_only` | 영수증·증빙 포함 → 보수적 기본값. **W7에서 `team_visible` 제거** — 읽는 쪽이 없었다(아래 주석) |
 | `audit_logs` | (없음) | — | `program_lead` + `system` 기능 역할만 |
 | `communication_logs` | (없음) | — | 발송 담당 기능 역할(`recruiting`/`community`) + `program_lead` |
 
@@ -178,14 +178,57 @@ Q4 결정(**담당 팀 전체 열람**)의 구현 방식이다. `feedback`에 `m
 | `applications` / `evaluations` | — | — | — | 배정분만 | 배정분만 | `recruiting`만 | 전체 |
 | `audit_logs` | — | — | — | — | — | `system`만 | 전체 |
 | `communication_logs` | — | — | — | — | — | `recruiting`/`community` | 전체 |
-| `external_links` | — | 연결 객체 가시성 상속 | 동일 | 동일 | — | 전체 | 전체 |
-| `attachments` | — | `private`=본인, `team_visible`=팀 | — | 담당 팀 | — | 전체 | 전체 |
+| `external_links` | — | 부모 멤버십 ∩ `team_visible`/`cohort_visible` | 부모 기수 ∩ `cohort_visible` | 담당 프로젝트 ∩ `team_visible`/`cohort_visible` | — | 도달 가능 부모만 | 전체 |
+| `attachments` | — | **—** | — | **—** | — | `private`=소유자 본인만, 그 외 전체 | 전체 |
 
 > `reflections`의 운영진 열은 **접근 경로 자체가 없다.** 초안은 `cohort_visible`만 열어두려 했으나,
 > 구현 단계에서 운영진용 조회 엔드포인트를 만들지 않기로 확정했다 — ADR-001의 "일괄 조회 경로를
 > 만들 수 없게 한다"를 가장 좁게 해석한 결과다. 열람 경로는 **학생 동료**(`/student/reflections/shared`)와
 > **담당 멘토**(`/mentor/reflections`) 둘뿐이며, 운영진은 어느 화면에서도 회고를 볼 수 없다.
 > `meetings`/`documents`의 `mentor_visible`은 담당 여부와 무관하다 — 멘토 안내문·공지성 문서를 위한 값이기 때문이다.
+>
+> **`attachments`의 학생·멘토 열은 W7에서 `—`로 정정했다.** 초안은 `private`=본인 / `team_visible`=팀 /
+> 멘토=담당 팀으로 적었으나, 구현에는 그 경로가 **존재한 적이 없다** — 모든 라우트가 `requireAdmin`이고
+> `attachmentsTable`은 다른 파일에서 참조되지 않는다. 즉 §4.2가 금지한 "읽는 쪽 없는 값"이 그대로 남아
+> 있었다. 없는 경로를 새로 만드는 대신 **열을 현실에 맞췄다**: 첨부의 실제 출처는 MarkdownEditor
+> 붙여넣기(회의·문서 맥락)와 회계 영수증이며 **둘 다 운영진 전용**이라, 학생 다운로드 경로를 만드는 것은
+> 제품에 없는 청중을 위해 읽는 쪽을 만드는 — 같은 실수의 반대 방향이었다.
+> 학생이 실제로 첨부를 소유하게 되면 `team_visible`과 그 읽기 경로를 **같은 변경에서** 되살린다.
+> 대신 `private`은 이제 **소유자 본인만**으로 집행된다(다른 운영진도 못 본다) — 그래야 `admin_only`와
+> 구별되는 값이 된다.
+
+### 5.1 폴리모픽 객체의 유효 가시성 = 교집합
+
+`external_links`·`attachments`는 §4.2에서 **자체 `visibility` enum**을 갖는데, §5 표는 학생·멘토 열에
+**"연결 객체 가시성 상속"**이라고 적는다. 이 둘은 모순이 아니라 **둘 다 통과해야 한다**는 뜻이다.
+§6 체크리스트의 "폴리모픽 `linkedObjectId` 조회 시 대상 객체의 가시성까지 확인하는가?"가 같은 규칙이다.
+
+```text
+열람 가능 ⟺ (연결 객체 자체에 접근 가능)  AND  (링크의 visibility가 이 뷰어를 허용)
+```
+
+**자체 visibility만 보면 새는 이유.** `admin_only` 회의록에 붙은 링크의 visibility를 누군가
+`cohort_visible`로 바꾸면, 그 회의의 존재와 자료 URL이 기수 전체에 노출된다. 회의록 본문은 막혀 있는데
+링크 제목으로 내용이 새는 **측면 경로**가 된다. 그래서 교집합이다.
+
+**"상속"의 실제 의미는 타입마다 다르다.** 구현 시 확인한 사실 — 학생·멘토 청중이 있는 부모 타입
+(`project`·`study`·`session`·`cohort`·`program`)에는 **`visibility` 컬럼이 아예 없다.**
+`visibility`를 가진 것은 `meetings`·`documents` 둘뿐이고, 이 둘은 §5에서 학생 접근이 `—`다.
+따라서 "상속"은 **부모의 접근 규칙을 그대로 따른다**는 뜻으로 읽어야 한다:
+
+| 부모 `linked_object_type` | 부모 접근 규칙 (§5) | 링크에서 도달 가능한 최대 청중 |
+|---|---|---|
+| `project` | 학생=멤버, 멘토=담당 | 팀원 · 담당 멘토 · 운영진 |
+| `study` | 학생=멤버+같은 기수, 멘토=담당 기수 | 팀원 · 같은 기수 · 담당 멘토 · 운영진 |
+| `session` · `cohort` · `program` | 학생=본인 기수 | 같은 기수 · 운영진 |
+| `meeting` · `document` | 학생=**—**, 멘토=`mentor_visible` | 멘토(`mentor_visible`일 때) · 운영진 |
+| `application` | `recruiting`만 | `recruiting` · `program_lead` |
+| `finance_record` | `finance`만 | `finance` · `program_lead` |
+| `ops_task` · `student` · `user` · `meeting_type` · `channel` | 운영진 전용 | 운영진 |
+
+**결과적으로 자체 visibility 4개 값의 역할**은 "부모가 허용하는 청중을 더 좁히는 것"뿐이다.
+넓히지는 못한다. `private`는 부모와 무관하게 **소유자 전용**이고, `admin_only`는 부모와 무관하게
+**운영진 전용**이다. `team_visible`·`cohort_visible`은 부모가 그 청중을 갖고 있을 때만 의미가 있다.
 
 ---
 

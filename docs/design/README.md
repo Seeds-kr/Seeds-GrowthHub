@@ -72,7 +72,7 @@
 | # | 결정 | 대가 |
 |---|---|---|
 | **005** | 마크다운 유지 + 툴바. 블록 에디터 도입 안 함 | 표 편집이 불편 → 서식 중요 문서는 Drive 링크 |
-| **006** | 회의록은 유형별 템플릿, 결정·액션만 공통 강제 | 템플릿 6종 유지보수 → `documents` 템플릿으로 운영진이 직접 수정 |
+| **006** | 회의록은 유형별 템플릿, 결정·액션만 공통 강제 | 템플릿 7종 유지보수 → `documents` 템플릿으로 운영진이 직접 수정 |
 | **007** | 알림은 Discord 웹훅 + 인앱 배지 (이메일 없음) | Discord 장애 시 알림 끊김 → 인앱 배지 병행 |
 | **008** | 데스크톱 우선, 모바일은 읽기만 보장 | 멘토가 폰에서 상태체크 불가 → **007의 Discord 알림이 상쇄. 007이 빠지면 재검토** |
 
@@ -115,27 +115,28 @@ visibility-policy ─────┬─→ 02 Mentor Workspace ──→ 03 상�
 
 | Wave | 범위 | 산출물 | 게이트 | 상태 |
 |---|---|---|---|---|
-| **W1** | 권한 분리 Phase A | `ops_roles` 컬럼 + `requireOpsRole` + 백필 + 역할 관리 UI | `finance` 담당이 모집 데이터에 403 | ✅ 구현 완료<br/>(DB push·런타임 검증 미완) |
+| **W1** | 권한 분리 Phase A | `ops_roles` 컬럼 + `requireOpsRole` + 백필 + 역할 관리 UI | `finance` 담당이 모집 데이터에 403 | ✅ 구현 완료<br/>(런타임 실측: 403 확인) |
 | **W2** | 멘토 담당 팀 | `project_mentors` + `getMentorProjectIds` + Admin 배정 UI | 멘토가 담당 팀 목록을 본다 | ✅ 구현 완료 |
 | **W3** | 상태체크·마일스톤 | `project_status_checks` + `project_milestones` + `projects` 확장 | 30초 상태체크 → 운영 대시보드 반영 | ✅ 구현 완료 |
 | **W4** | Mentor Workspace 화면 | My Teams · Project Detail · Feedback | ADR-004 동작 확인 | ✅ 구현 완료 |
 | **W5** | 감사·첨부 | `audit_logs` + `attachments` + 인증 게이트 다운로드 | 영수증이 비인증으로 안 열림 | ✅ 구현 완료 |
 | **W6** | Growth 2차 | `studies` · `study_members` · `reflections` + 학생 화면 3종 | ADR-001 구조 보장 확인 | ✅ 구현 완료 |
-| **W7** | 외부링크·발송이력 | `external_links` · ~~`communication_logs`~~(W10에서 완료) | — | 부분 완료 |
-| **W8** | placeholder 실체화 | 빈 placeholder 11개를 채우거나 제거 | 빈 화면 0개 | 미착수 |
+| **W7** | 외부링크·발송이력 | `external_links` · ~~`communication_logs`~~(W10에서 완료) | 부모 가시성과 교집합으로만 열람 | ✅ 구현 완료<br/>(API·런타임 검증 완료, 화면 없음) |
+| **W8** | placeholder 실체화 | 8개 → 실체화 4(미디어·면접·출석·리포트) / 제거 4(회원·공개페이지·외부연동·설정) | 빈 화면 0개 | ✅ 구현 완료<br/>(빈 화면 0개 달성) |
 | **W9** | 편집 경험 | `MarkdownEditor` 툴바 + 회의록 유형별 템플릿 + `meetings.bodyMd` 이관 | 마크다운 몰라도 체크리스트 작성 가능 | ✅ 구현 완료 |
 | **W10** | 알림 | Discord 웹훅 디스패처 + 인앱 배지 + 일일 요약 cron | 팀 지원 요청이 즉시 운영진 채널에 뜸 | ✅ 구현 완료 |
-| **W11** | 반응형 등급 적용 | A/B/C 등급 분류 + `DesktopOnly` 가드 + 작업 보드 드래그 | 375px에서 학생 화면 가로 스크롤 0 | 미착수 |
+| **W11** | 반응형 등급 적용 | A/B/C 등급 분류 + `DesktopOnly` 가드 + 작업 보드 드래그 | 375px에서 학생 화면 가로 스크롤 0 | ✅ 구현 완료<br/>(브라우저 검증 미완) |
 
 **세 축이 대체로 독립**이다.
 
 ```text
-권한/인프라   W1 ✅ → W5 → W7 ─┐
-멘토/성장     W2 → W3 → W4·W6 ─┼→ W8 placeholder 실체화
-제품 경험     W9 → W10 → W11 ──┘
+권한/인프라   W1 ✅ → W5 ✅ → W7 ✅ ─┐
+멘토/성장     W2 ✅ → W3 ✅ → W4·W6 ✅ ─┼→ W8 ✅ placeholder 정리
+제품 경험     W9 ✅ → W10 ✅ → W11 ✅ ──┘
 ```
 
-- W1~W6, W9~W10 완료. 남은 것은 W7(`external_links`), W8(placeholder 실체화), W11(반응형)이다.
+- **11개 Wave 전부 완료.** W7의 화면은 예정대로 W8의 `/admin/media`에 들어갔다.
+  남은 것은 구현이 아니라 **브라우저 검증**이다([HANDOFF §6](../HANDOFF.md)).
 - W9의 이미지 붙여넣기만 W5(`attachments`)에 의존한다. 툴바 자체는 선행 없이 가능하다.
 - **W10(알림)은 W3 이후가 자연스럽다** — 알릴 가장 중요한 이벤트(팀 지원 요청)가 W3에서 생기기 때문이다. 다만 지연 작업 알림은 지금도 보낼 수 있다.
 
@@ -154,7 +155,7 @@ visibility-policy ─────┬─→ 02 Mentor Workspace ──→ 03 상�
 | 학생 가시성 | [visibility-policy §6](../visibility-policy.md)의 기존 6개 규칙 변경 금지 |
 | 평가 surface | `requireAdminOrMentor` + application 단위 assignment 소유권 재확인 패턴 유지. `recruiting` 기능 역할로 대체 금지 |
 | `getEffectiveRoles` | API 표면 변경 금지. `ops_roles`는 별도 함수로 |
-| 기존 visibility enum | `artifacts` 4 / `feedback` 2 / `activity_records` 3 값 추가·변경 금지 |
+| 기존 visibility enum | `artifacts` 4 / `feedback` 2 / `activity_records` 3 값 추가·변경 금지.<br/>`attachments`는 W7에서 `team_visible`을 **의도적으로 제거**했다(읽는 쪽이 없었다) — 되살릴 때는 읽기 경로와 같은 변경에서 |
 | `decision_logs` | append-only 유지. `audit_logs`가 흡수하지 않음 |
 | 아바타 서빙 | `visibility=public` 비인증 경로 유지 (attachments와 분리) |
 | 명명 | `ops_tasks`(운영) vs `assignments`(학생 과제), `mvp4ArtifactsTable` 컨벤션 유지 |

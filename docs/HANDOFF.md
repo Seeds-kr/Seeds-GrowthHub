@@ -8,12 +8,17 @@
 
 ## 0. 30초 요약
 
-설계 문서 세트를 만들고, 11개 Wave 중 **8개를 구현**했다. 전체 typecheck·빌드 통과.
+설계 문서 세트를 만들고, **11개 Wave 전부 구현했다**(W1~W11). 전체 typecheck·빌드 통과.
+빈 placeholder 화면은 **0개**다.
 
-**⚠️ 이어받자마자 해야 할 것 두 가지**
+남은 것은 구현이 아니라 **검증**이다 — 아래 §6의 "아직 검증 안 된 것"을 볼 것.
 
-1. **DB 스키마 푸시** — 신규 테이블 9개·컬럼 6개가 코드에는 있으나 DB에는 없다. 푸시 전에는 **로그인부터 실패**한다(§2).
-2. **런타임 검증** — 이 세션은 `DATABASE_URL`이 없어 **앱을 한 번도 실행하지 못했다.** 모든 검증은 typecheck·빌드·정적 감사·순수함수 단위 실행뿐이다. 실제 요청/응답은 미검증이다(§6).
+**⚠️ 이어받자마자 해야 할 것**
+
+1. **DB 스키마 푸시** — 신규 테이블 10개·컬럼 7개가 코드에는 있으나 DB에는 없다. 푸시 전에는 **로그인부터 실패**한다(§2).
+   스크래치 DB에서는 통과를 확인했으나, **기존 데이터가 있는 DB에서는 아직 돌려본 적이 없다.**
+2. **브라우저 검증** — API 표면은 실제 요청/응답으로 확인했다(§6 표). 다만 **화면을 브라우저로 연 적이 한 번도 없다.**
+   특히 W11(반응형)은 375px 실측·드래그앤드롭·`DesktopOnly` 배너가 전부 미검증이다.
 
 ---
 
@@ -21,17 +26,18 @@
 
 | 축 | 시작 | 현재 |
 |---|---:|---:|
-| 데이터 테이블 | 31 | **40** |
-| 화면(라우트) | 66 | **76** |
-| 빈 placeholder 화면 | 11 | **8** |
+| 데이터 테이블 | 31 | **41** (W7 `external_links` 포함, 스키마 푸시로 실측) |
+| 화면(라우트) | 66 | **77** (`App.tsx` `<Route>` 81개 = 중복 경로 포함, placeholder 0) |
+| 빈 placeholder 화면 | 11 | **0** |
+| 반응형 등급이 선언된 라우트 | 0 | **81 / 81** |
 
 ### Wave 진행
 
 ```text
-권한/인프라   W1 ✅ → W5 ✅ → W7 (communication_logs만 완료, external_links 남음)
+권한/인프라   W1 ✅ → W5 ✅ → W7 ✅
 멘토/성장     W2 ✅ → W3 ✅ → W4 ✅ · W6 ✅
-제품 경험     W9 ✅ → W10 ✅ → W11 ⬜
-마감          W8 ⬜ (placeholder 8개 실체화/제거)
+제품 경험     W9 ✅ → W10 ✅ → W11 ✅
+마감          W8 ✅ (실체화 4 · 제거 4)
 ```
 
 | Wave | 내용 | 상태 |
@@ -44,9 +50,9 @@
 | W6 | `studies`·`study_members`·`reflections` + 학생 화면 4종 | ✅ |
 | W9 | MarkdownEditor 툴바 + 회의록 유형별 템플릿 + `bodyMd` 이관 | ✅ |
 | W10 | Discord 웹훅 + 인앱 배지 + cron 요약 | ✅ |
-| **W7** | `external_links` | ⬜ 남음 |
-| **W8** | placeholder 8개 실체화 또는 제거 | ⬜ 남음 |
-| **W11** | 반응형 A/B/C 등급 + `DesktopOnly` 가드 + 작업 보드 드래그 | ⬜ 남음 |
+| W11 | 반응형 A/B/C 등급 + `DesktopOnly` 가드 + 작업 보드 드래그 | ✅ |
+| W7 | `external_links` (API·권한 완료, 화면 없음) | ✅ |
+| W8 | placeholder 8개 → **실체화 4**(미디어·면접·출석·리포트) **제거 4**(회원·공개페이지·외부연동·설정) | ✅ |
 
 Wave 정의는 [`design/README.md` §4](design/README.md), 완성 형상은 [`design/00-target-state.md`](design/00-target-state.md).
 
@@ -60,11 +66,11 @@ Wave 정의는 [`design/README.md` §4](design/README.md), 완성 형상은 [`de
 pnpm --filter @workspace/db run push
 ```
 
-### 신규 테이블 9개
+### 신규 테이블 10개
 
-`project_mentors` · `project_status_checks` · `project_milestones` · `studies` · `study_members` · `reflections` · `audit_logs` · `attachments` · `communication_logs`
+`project_mentors` · `project_status_checks` · `project_milestones` · `studies` · `study_members` · `reflections` · `audit_logs` · `attachments` · `communication_logs` · `external_links`(W7)
 
-### 기존 테이블 신규 컬럼
+### 기존 테이블 신규 컬럼 (7개)
 
 | 테이블 | 컬럼 |
 |---|---|
@@ -80,7 +86,9 @@ pnpm --filter @workspace/db run push
 1. **`backfillOpsRolesOnce()`** — 기존 admin 전원에게 `program_lead` 부여.
    **반드시 `bootstrapAdminFromEnv()`보다 먼저** 돈다. 순서가 바뀌면 부트스트랩 계정만 권한을 받고 나머지 관리자가 잠긴다. 이 가드는 "아무도 ops role을 안 가진 상태"에서만 동작하므로 한 번만 실행된다.
 2. `bootstrapAdminFromEnv()` — 부트스트랩 admin에 `program_lead` 보장
-3. `bootstrapMeetingTemplates()` — 회의 유형별 템플릿 6종을 `documents` 행으로 시딩
+3. `bootstrapMeetingTemplates()` — 회의 유형별 템플릿 **7종**을 `documents` 행으로 시딩
+   (기동 로그 `created: 7` 실측. `MEETING_TYPES` 7종 = 일반·운영·기획·회고·멘토·외부·기타.
+   문서에 "6종"으로 적혀 있던 것을 바로잡았다.)
 4. `backfillMeetingBodies()` — 구 `agenda/pending/notes` → `body_md` 병합 (빈 행만)
 
 ### 푸시 후 확인
@@ -90,6 +98,19 @@ psql "$DATABASE_URL" -c "SELECT count(*) FROM users WHERE role='admin' AND NOT (
 ```
 
 **0이어야 한다.** 0이 아니면 백필이 안 돌았거나 순서가 꼬인 것이다.
+
+> ⚠️ **이건 "푸시 직후 첫 기동" 1회용 검사다. 상시 헬스체크가 아니다.**
+> 이후 누군가 기능 역할을 정상적으로 편집하면 값이 0이 아니게 되고, 그건 버그가 아니다.
+> 예: `finance` 전용 관리자를 만들면(`role='admin'` + `ops_roles={finance}`) 이 쿼리에 잡힌다 —
+> 오히려 W1 권한 분리가 의도대로 동작한다는 증거다.
+> 실제로 이 세션에서 409 가드를 시험하며 권한을 벗긴 계정 + finance 전용 계정 때문에
+> 나중에 `2`가 나왔고, 백필과는 무관했다. **0이 아닐 때는 백필을 의심하기 전에
+> `SELECT id,email,role,ops_roles FROM users`로 누가 왜 걸렸는지 먼저 볼 것.**
+>
+> 백필이 실제로 안 돈 것인지 구분하는 방법: **기동 로그에
+> `backfilled ops_roles=program_lead for existing admins`가 있는지** 본다.
+> 2회차 이후 기동에는 이 줄이 **없는 게 정상**이다(가드가 조기 반환).
+> 재부팅 후 재기동으로 확인했다 — 가드는 멱등이고, **의도적으로 벗긴 권한을 되돌리지 않는다.**
 
 ---
 
@@ -162,6 +183,24 @@ macOS 체크아웃 때문에 한글 파일명이 NFD로 커밋돼 있고 NFC로 
 
 멘토 scope와 학생 과제 라우트는 **권한 밖이어도 404**를 준다. 403으로 갈리면 id 열거로 존재가 샌다. 신규 scope 라우트도 이 규칙을 따를 것.
 
+### 5.6 루트 `pnpm run build`는 `PORT`·`BASE_PATH`를 요구한다
+
+`mockup-sandbox`의 `vite.config.ts`에는 `seeds`에 있는 `isServe` 가드가 **없어서**, 빌드에도
+두 변수를 요구한다. 없으면 이렇게 죽는데, 원인이 코드처럼 보여서 헷갈린다.
+
+```text
+failed to load config from artifacts/mockup-sandbox/vite.config.ts
+Error: BASE_PATH environment variable is required but was not provided.
+```
+
+```bash
+PORT=8080 BASE_PATH=/ pnpm run build
+```
+
+`pnpm run typecheck`과 `--filter @workspace/seeds run build`는 영향을 받지 않는다.
+(`seeds`는 `serve`/`dev`/`preview`일 때만 요구하도록 가드가 있다. 언젠가 `mockup-sandbox`에도
+같은 가드를 넣는 게 맞다.)
+
 ---
 
 ## 6. 검증 상태 — 무엇이 검증됐고 무엇이 아닌가
@@ -179,13 +218,49 @@ macOS 체크아웃 때문에 한글 파일명이 NFD로 커밋돼 있고 NFC로 
 | 회고 소유권 4/4 | 정적 감사 |
 | ADR 준수 15 + 21 + 12 항목 | 정적 감사 |
 
-### 검증 **안** 된 것
+### 런타임 검증 (2026-07-30, 원격 세션에서 추가)
 
-- **앱을 실행하지 못했다.** `DATABASE_URL` 없음. 실제 HTTP 요청/응답, 403/404 동작, 백필 실행, 409 가드, Discord 발송, 파일 업로드 전부 미검증.
-- 마이그레이션이 실제로 통과하는지 미확인.
-- 프론트 화면을 브라우저로 한 번도 열어보지 않았다.
+로컬 스크래치 Postgres 16(도커, 포트 5434 — 기존 `lala_postgres`와 무관)에 푸시하고
+api-server를 실제로 띄워 확인했다. **아래는 HTTP 요청/응답으로 확인한 것이다.**
 
-**원격에서 첫 할 일은 DB 푸시 후 실제 기동과 스모크 테스트다.**
+| 항목 | 결과 |
+|---|---|
+| `drizzle-kit push` | 통과. 테이블 **41개** · 신규 10개 · 신규 컬럼 7개 실측 |
+| 백필 순서 (ADR-002) | **실측.** 빈 DB로는 공허하게 통과하므로 `ops_roles={}`인 기존 admin 3명(`role='admin'` 2 + `extra_roles={admin}` 1)을 먼저 심고 기동 → `count:3` 백필, 학생·일반 멘토는 미부여. 검증 쿼리 **0** |
+| 백필 멱등성 | **실측.** 재부팅 후 재기동 시 백필 로그 없음 = 조기 반환. 의도적으로 벗긴 권한을 되돌리지 않는다 |
+| 관리자 로그인 · 세션 쿠키 | 200, `seeds_admin` 쿠키 발급, `/admin/me` 200 |
+| `/admin/ops-dashboard/summary` | 200 |
+| `/admin/users` 목록 · 기능 역할 편집 | 200 / `PATCH opsRoles` 200 |
+| `requireOpsRole` 403 게이트 (W1 게이트) | `finance` 담당 → `/admin/applications` **403**, 자기 표면 `/admin/finance-records` **200** |
+| 권한 상승 차단 | `finance` 담당이 자신에게 `program_lead` 부여 시도 → **403**, DB 미반영 확인 |
+| 마지막 `program_lead` 409 가드 | 해제 **409** · 비활성화 **409** 양쪽 |
+| 멘토 scope · 404 vs 403 (§5.5) | 담당 팀 200, 미담당 팀 **404**, 없는 id **404** — 응답 본문까지 동일해 열거 누출 없음 |
+| 회고 4개 visibility 읽기 경로 | **전부 살아 있음.** `private` 소유자 전용 → `mentor_visible` 멘토 O · `team_visible` 멘토 X · `cohort_visible` 멘토 O, 팀원은 3개 값 전부 열람 = §2 확장 사다리와 일치 |
+| ADR-001 구조 보장 | `/admin/reflections` 류 **404**, `reflectionsTable` 참조가 `student-growth.ts`·`mentor-teams.ts` 두 파일뿐 |
+| 회고 소유권 | 타 학생 `PATCH`/`DELETE` **404** |
+| `audit_logs` | `permission_denied`·`role_change` 기록 확인 |
+| 작업 상태 PATCH (드래그 대상) | 6개 컬럼 전부 200, 잘못된 status **400** |
+| W7 `external_links` 교집합 | **실측.** 담당 팀 학생·멘토만 `team_visible` 링크 열람, 미소속 프로젝트 링크는 같은 값이어도 안 보임 |
+| W7 부모 청중 검증 | `document`+`cohort_visible` **422**, `cohort`+`team_visible` **422**, 없는 대상 **422**, `channel` 타입 **422** |
+| W7 부모 ops 게이트 | `community` 전용 admin → `finance_record` 링크 목록·생성·수정 전부 **404**. `finance`·`program_lead`는 접근 |
+| W7 `private` ≠ `admin_only` | 소유자만 열람, **다른 운영진은 못 봄**. 4개 값 전부 읽는 쪽 있음 |
+| `attachments` 소유자 전용화 | 남의 `private`은 목록 제외 · 다운로드 **404** · 삭제 **404**(행 보존 확인) |
+| W8 출석 집계 산식 | **실측.** 4회 모임 기준 (출석2+지각1)/4=**75%**, 인정결석 보유 학생은 분모에서 제외돼 1/(4−1)=**33.3%**. 낮은 순 정렬·미기록 수 확인 |
+| W8 면접 목록 | 2건 조회, `status=scheduled` 필터 1건, 잘못된 status **400** |
+| W8 권한 경계 | `/admin/interviews`는 `recruiting` 게이트 — finance·community 모두 **403**. `/admin/attendance`는 일반 운영이라 둘 다 **200**. 학생은 신규 3개 라우트 전부 **403** |
+| typecheck 4개 워크스페이스 · api-server 빌드 · seeds 빌드 | 전부 통과 |
+
+### 아직 검증 **안** 된 것
+
+- **브라우저로 화면을 연 적이 없다.** 이 환경에 연결된 브라우저가 없고, firefox 헤드리스는
+  snap 격리로 뜨지 않았다. 따라서 실제 렌더, **375px 가로 스크롤 실측, 드래그앤드롭 동작,
+  `DesktopOnly` 배너 표시**는 전부 미검증이다. W11의 §8 수용 기준 마지막 두 항목이 여기 걸린다.
+- Discord 발송 (웹훅 URL 미설정 — 미설정 시 스킵 경로만 확인).
+- 파일 업로드 / 첨부 다운로드 게이트.
+- cron 라우트 (`CRON_SECRET` 미설정).
+- **기존 데이터가 있는 실 DB에서의 마이그레이션.** 빈 DB 푸시는 파괴적 변경 프롬프트를
+  띄우지 않으므로, 실 DB 푸시 전에는 `drizzle-kit push` 출력을 반드시 눈으로 볼 것.
+- 프로덕션 `DATABASE_URL`은 이 세션에 없었다. 위 결과는 전부 **빈 스크래치 DB + 직접 심은 픽스처** 기준이다.
 
 ### 재현 가능한 검증 스크립트
 
@@ -202,21 +277,44 @@ node -e 'import("/tmp/x.mjs").then(m => ...)'
 
 ## 7. 남은 작업
 
-### W7 — `external_links`
+### ~~W7 — `external_links`~~ (API 완료, **화면만 남음**)
 
-명세: [design/04 §4](design/04-core-infra.md). `communication_logs`는 W10에서 이미 완료.
-`artifacts`와의 경계가 헷갈리기 쉬우니 §4의 대조표를 먼저 볼 것.
+스키마·권한·읽기 경로는 끝났고 런타임 검증까지 했다(§6). **프론트 화면이 없다** —
+`/admin`에 링크 관리 UI도, 학생·멘토 목록 화면도 붙이지 않았다. W8에서 placeholder를
+정리할 때 같이 배치하는 것이 자연스럽다.
 
-### W8 — placeholder 8개
+읽기 규칙이 단순하지 않으니 화면을 붙이기 전에 [visibility-policy §5.1](visibility-policy.md)을 볼 것 —
+**자체 `visibility`만 보면 안 되고 부모 도달 가능성과 교집합**이다. 판정은
+`artifacts/api-server/src/lib/external-link-scope.ts` 한 곳에 모여 있으니 새 라우트도 거기를 지나게 한다.
+부모에 청중이 없는 visibility는 쓰기 시점에 422로 거부된다(`meeting`+`cohort_visible` 등).
 
-`/admin/members` · `/admin/interviews` · `/admin/attendance` · `/admin/reports` · `/admin/public-pages` · `/admin/media` · `/admin/integrations` · `/admin/settings`
+### ~~W8 — placeholder 8개~~ (완료)
 
-각각 실체화하거나 **제거**한다. `/admin/reflections`는 ADR-001과 충돌해 이미 제거했다 — 같은 판단이 필요한 항목이 더 있는지 볼 것.
+**실체화 4** — `/admin/media`(W7 링크 관리가 여기 들어감) · `/admin/interviews`(목록 API 신규) ·
+`/admin/attendance`(기수 집계 API 신규) · `/admin/reports`(기존 화면 2개로 가는 인덱스, 신규 API 없음).
 
-### W11 — 반응형
+**제거 4** — 사유는 각각 `lib/admin-nav.ts`의 해당 위치 주석에 남겼다. 되살리려면 그 근거부터 뒤집어야 한다.
 
-명세: [design/05 §6](design/05-product-experience.md). A/B/C 3등급 분류 + `DesktopOnly` 가드 + 작업 보드 드래그.
-**규칙: 애매하면 C(데스크톱 전용)로 내린다.** 어중간한 모바일 대응은 깨진 화면보다 낫지 않다.
+| 제거 | 사유 |
+|---|---|
+| `/admin/integrations` | design/04 §8이 자동 sync를 **명시적 비목표**로 못박았다. 연동 *상태* 화면은 그 상태를 만드는 sync 계층이 있어야 성립하는데, 그 계층을 안 만들기로 한 것이다. `/admin/reflections` ↔ ADR-001과 같은 형태 |
+| `/admin/settings` | 약속 항목이 `SESSION_SECRET`·`ADMIN_EMAIL` 등 환경변수라 UI 노출은 보안 후퇴다. 또 "기본 가시성 정책"을 런타임에 바꾸게 하면 ADR-001이 **구조로** 보장한 것이 무너진다 |
+| `/admin/members` | `/admin/people`이 이미 kind(mentor/staff/member) 통합 인물 디렉터리다. IA v2 §7.2는 신규 화면이 아니라 `/admin/students` **배치 미결**을 지적한 것이었다 |
+| `/admin/public-pages` | 게시/숨김·SEO 메타는 **스키마가 없다**. `site_contents`는 키→본문 맵이다. 되살릴 때는 그 확장과 같은 변경에서 |
+
+placeholder 기반 코드(`ADMIN_PLACEHOLDER_ITEMS`·`findPlaceholderItem`·`_placeholder.tsx`·
+`NavItem.placeholder`)는 전부 제거했다. **nav 항목은 이제 반드시 동작하는 화면과 함께 추가한다.**
+
+### ~~W11 — 반응형~~ (완료)
+
+등급 대장은 [`artifacts/seeds/src/lib/responsive-tiers.ts`](../artifacts/seeds/src/lib/responsive-tiers.ts) —
+라우트 85개 전량이 A/B/C를 선언한다. **신규 화면은 여기에 행을 먼저 추가한다.**
+가드는 `components/DesktopOnly.tsx`(children을 렌더하지 않음) + `hooks/use-desktop.tsx`(1024px,
+`useIsMobile` 768px과 **별개** — 사이드바 드로어를 끌고 가지 않기 위함).
+작업 보드 드래그는 **네이티브 HTML5 DnD·신규 의존성 없음**이고, 상태 `Select`는
+키보드 경로로 남겨뒀다(네이티브 드래그는 키보드 접근 불가).
+등급이 갈리는 2개 화면(`/mentor/projects/:id`·`/admin/meetings/:id`)은 `MIXED_TIER_SCREENS` 참조.
+`/evaluator/*`는 §6.2가 분류하지 않아 **B로 정했다** — 근거는 design/05 §6.2 표. 브라우저 검증만 남았다(§6).
 
 ### 미결 항목
 

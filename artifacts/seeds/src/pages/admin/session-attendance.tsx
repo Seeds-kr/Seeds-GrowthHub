@@ -1,4 +1,5 @@
 import { AdminLayout } from "@/components/layout/AdminLayout";
+import { DesktopOnly } from "@/components/DesktopOnly";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/mvp3-api";
 import { ATTENDANCE_STATUSES, ATTENDANCE_STATUS_LABEL, formatKoreanDateTime } from "@/lib/admin-labels";
@@ -51,6 +52,10 @@ export default function AdminSessionAttendance() {
         {formatKoreanDateTime(data.session.scheduledAt)}
         {data.session.locationOrLink ? ` · ${data.session.locationOrLink}` : ""}
       </div>
+      {/* W11 (design/05 §6.2) — C tier: a roster-wide status+memo grid cannot be
+          entered on a phone. The session heading above stays readable so the
+          notice arrives with context about which session it refers to. */}
+      <DesktopOnly feature="일괄 출석 입력">
       {data.roster.length === 0 ? <div className="text-muted-foreground">이 모임의 기수에 학생이 없습니다.</div> : (
         <>
           <div className="bg-card border border-border mb-6">
@@ -78,6 +83,7 @@ export default function AdminSessionAttendance() {
           <Button disabled={save.isPending} onClick={() => save.mutate()}>{save.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}출석 저장</Button>
         </>
       )}
+      </DesktopOnly>
     </AdminLayout>
   );
 }

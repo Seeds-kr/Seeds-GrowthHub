@@ -66,7 +66,6 @@ import ActivatePage from "@/pages/activate";
 import PeoplePage from "@/pages/people";
 import PersonDetailPage from "@/pages/person-detail";
 import AdminPeople from "@/pages/admin/people";
-import AdminPlaceholderPage from "@/pages/admin/_placeholder";
 import AdminMeetings from "@/pages/admin/meetings";
 import AdminMeetingDetail from "@/pages/admin/meeting-detail";
 import AdminTasks from "@/pages/admin/tasks";
@@ -79,8 +78,11 @@ import AdminUsers from "@/pages/admin/users";
 import AdminRoles from "@/pages/admin/roles";
 import AdminDocuments from "@/pages/admin/documents";
 import AdminDocumentDetail from "@/pages/admin/document-detail";
+import AdminMedia from "@/pages/admin/media";
+import AdminInterviews from "@/pages/admin/interviews";
+import AdminAttendance from "@/pages/admin/attendance";
+import AdminReports from "@/pages/admin/reports";
 import AdminSessionDetail from "@/pages/admin/session-detail";
-import { ADMIN_PLACEHOLDER_ITEMS } from "@/lib/admin-nav";
 import StudentProfilePage from "@/pages/student/profile";
 
 const queryClient = new QueryClient({
@@ -149,9 +151,10 @@ function Router() {
       <Route path="/admin/documents" component={AdminDocuments} />
       <Route path="/admin/documents/:id" component={AdminDocumentDetail} />
 
-      {ADMIN_PLACEHOLDER_ITEMS.map((item) => (
-        <Route key={item.href} path={item.href} component={AdminPlaceholderPage} />
-      ))}
+      <Route path="/admin/media" component={AdminMedia} />
+      <Route path="/admin/interviews" component={AdminInterviews} />
+      <Route path="/admin/attendance" component={AdminAttendance} />
+      <Route path="/admin/reports" component={AdminReports} />
 
       <Route path="/evaluator" component={EvaluatorDashboard} />
       <Route path="/evaluator/applications/:id" component={EvaluatorApplicationDetail} />

@@ -3,6 +3,7 @@ import { useRoute, Link } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { MentorLayout } from "@/components/layout/MentorLayout";
+import { DesktopOnly } from "@/components/DesktopOnly";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -336,7 +337,18 @@ export default function MentorProjectDetailPage() {
       </div>
 
       <div className="space-y-4">
-        <StatusCheckForm projectId={id} />
+        {/* W11 (design/05 §6.2) — this page is A tier for reading, but the
+            status-check form is C. Guarded at the call site so everything else
+            on the route stays readable on a phone (MIXED_TIER_SCREENS in
+            lib/responsive-tiers.ts records the split).
+
+            ADR-008 accepts "멘토가 폰에서 상태체크 불가" because ADR-007's Discord
+            notifications carry the urgent path. §9 leaves input rate as an open
+            question — if it comes in low for the first cohort, ADR-008 is what
+            gets revisited, not this guard in isolation. */}
+        <DesktopOnly feature="상태체크 입력">
+          <StatusCheckForm projectId={id} />
+        </DesktopOnly>
 
         <div className="grid gap-4 lg:grid-cols-2">
           <Card>

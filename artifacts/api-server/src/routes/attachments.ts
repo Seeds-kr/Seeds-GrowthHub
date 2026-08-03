@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import {
   db,
@@ -147,6 +147,13 @@ router.get("/admin/attachments", requireAdmin, async (req, res) => {
       and(
         eq(attachmentsTable.linkedObjectType, type),
         eq(attachmentsTable.linkedObjectId, id),
+        // `private` is owner-only and that beats being an admin. Without this
+        // the value was indistinguishable from `admin_only` — every admin saw
+        // every row either way, which is what made it meaningless.
+        or(
+          sql`${attachmentsTable.visibility} <> 'private'`,
+          eq(attachmentsTable.ownerId, req.sessionUser!.id),
+        ),
       ),
     )
     .orderBy(desc(attachmentsTable.createdAt));
@@ -180,6 +187,13 @@ router.get("/attachments/:id/download", requireAdmin, async (req, res) => {
   const user = req.sessionUser!;
   const isAdmin = getEffectiveRoles(user).includes("admin");
 
+  // Another owner's `private` attachment: 404, not 403. 403 would confirm the
+  // id belongs to a real file the caller may not have.
+  if (row.visibility === "private" && row.ownerId !== user.id) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+
   // Finance receipts need the finance function role on top of admin.
   if (row.linkedObjectType === "finance_record" && !hasOpsRole(user, "finance")) {
     res.status(403).json({ error: "Forbidden", requiredOpsRole: "finance" });
@@ -206,6 +220,20 @@ router.get("/attachments/:id/download", requireAdmin, async (req, res) => {
 router.delete("/admin/attachments/:id", requireAdmin, async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  // Read before deleting so another owner's `private` row cannot be destroyed
+  // by an admin who is not allowed to see it.
+  const [target] = await db
+    .select()
+    .from(attachmentsTable)
+    .where(eq(attachmentsTable.id, id))
+    .limit(1);
+  if (
+    !target ||
+    (target.visibility === "private" && target.ownerId !== req.sessionUser!.id)
+  ) {
     res.status(404).json({ error: "Not found" });
     return;
   }

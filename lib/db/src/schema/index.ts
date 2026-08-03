@@ -34,5 +34,6 @@ export * from "./communication-logs";
 export * from "./_linkable";
 export * from "./audit-logs";
 export * from "./attachments";
+export * from "./external-links";
 export * from "./studies";
 export * from "./reflections";

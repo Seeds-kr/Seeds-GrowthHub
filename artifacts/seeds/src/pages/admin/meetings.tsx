@@ -269,7 +269,10 @@ export default function AdminMeetingsPage() {
                 placeholder="예: 2026년 2월 운영진 정기회의"
               />
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            {/* W11 — B tier. Three selects share ~113px each inside a dialog at
+                375px, which shrinks rather than overflows but is not operable.
+                Stacked below `sm`. */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div>
                 <Label>유형</Label>
                 <Select

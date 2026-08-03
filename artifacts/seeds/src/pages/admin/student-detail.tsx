@@ -75,7 +75,9 @@ export default function AdminStudentDetail() {
           <div>활성화: <Badge className="rounded-none">{s.isActive ? "활성" : "비활성"}</Badge></div>
           {s.applicationId && <div>지원서: <Link href={`/admin/applications/${s.applicationId}`} className="text-primary underline">#{s.applicationId}</Link></div>}
         </CardContent></Card>
-        <Card className="rounded-none"><CardHeader><CardTitle>출석 요약</CardTitle></CardHeader><CardContent className="grid grid-cols-4 gap-2 text-sm">
+        {/* W11 (design/05 §6.4) — B tier still forbids page-level horizontal
+            scroll; four fixed columns overflowed this card at 375px. */}
+        <Card className="rounded-none"><CardHeader><CardTitle>출석 요약</CardTitle></CardHeader><CardContent className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
           <div>출석: <strong>{data.attendanceSummary.present}</strong></div>
           <div>지각: <strong>{data.attendanceSummary.late}</strong></div>
           <div>결석: <strong>{data.attendanceSummary.absent}</strong></div>

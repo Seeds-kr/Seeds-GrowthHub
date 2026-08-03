@@ -1,8 +1,17 @@
 # 설계 04 — Core 인프라 (감사·링크·첨부·발송)
 
-> 상태: **부분 구현 완료** — `audit_logs`·`attachments`(W5)와 `communication_logs`(W10)는 완료. `external_links`는 미착수(W7)
+> 상태: **구현 완료** — `audit_logs`·`attachments`(W5), `communication_logs`(W10), `external_links`(W7) 전부 완료
 >
 > 구현 중 확정한 사항: `attachments`는 `fileUrl` 대신 **`objectPath`** 를 저장한다. 공개 URL 컬럼을 두면 실수로 노출될 여지가 남기 때문에, 저장 경로는 서버 내부에만 두고 다운로드는 `GET /api/attachments/:id/download`만 통과시킨다.
+>
+> **W7에서 확정한 두 가지.**
+> ① `external_links` 읽기는 자체 `visibility`만 보지 않고 **부모 도달 가능성과 교집합**을 취한다
+> ([visibility-policy §5.1](../visibility-policy.md)). 자체 값만 보면 `admin_only` 회의록에 붙은 링크를
+> `cohort_visible`로 바꿔 회의 존재와 자료 URL을 기수 전체에 흘릴 수 있다. 판정은 전부
+> `artifacts/api-server/src/lib/external-link-scope.ts` 한 곳을 지난다.
+> ② 부모에 청중이 없는 visibility는 **쓰기 시점에 422로 거부**한다 — `meeting`에 `cohort_visible`을
+> 저장하면 읽기에서 걸러져 아무 효과 없는 값이 남고, 그게 §4.2가 말하는 죽은 값이다.
+> `attachments`의 `team_visible`은 같은 이유로 **제거**했다(읽는 쪽이 없었다).
 > 선행: [baseline/02-core-v2.md](../baseline/02-core-v2.md) §9~11, [baseline/03-external-integrations.md](../baseline/03-external-integrations.md) §13, [visibility-policy.md](../visibility-policy.md) §4.2
 > 대응: `gap-register.md` C2, EX1, EX2, OF2
 
@@ -239,6 +248,23 @@ export const communicationLogsTable = pgTable("communication_logs", {
 - [ ] 아바타 서빙(`visibility=public`)이 회귀 없이 동작한다.
 - [ ] `communication_logs`에 본문 컬럼이 없다.
 - [ ] `finance_records`의 기존 `linked_object_type` 값이 마이그레이션 없이 계속 유효하다.
+
+### W7 `external_links` — 런타임 확인 완료 (2026-07-30)
+
+스크래치 DB + 실제 HTTP 요청으로 확인한 것. 응답 코드는 실측값이다.
+
+- [x] 없는 대상 id → **422**, 화이트리스트 밖 타입(`channel`) → **422**.
+- [x] 부모에 청중 없는 visibility 거부: `document`+`cohort_visible` → **422**, `cohort`+`team_visible` → **422**.
+- [x] 교집합 동작: `project 1`의 `team_visible` 링크를 그 팀 학생과 담당 멘토만 봄.
+      같은 값이라도 **미소속 `project 2`** 링크는 안 보임.
+- [x] `private`이 `admin_only`와 구별됨: 소유자만 보고 **다른 운영진은 못 본다**. 4개 값 전부 읽는 쪽 있음.
+- [x] 부모 ops 게이트: `community` 전용 admin은 `finance_record` 링크를 목록·생성·수정 전부 **404**.
+      `finance` 보유자와 `program_lead`는 접근 가능.
+- [x] 권한 밖은 **404**(§5.5): 남의 `private` PATCH → 404. 학생이 ops 라우트 → 403.
+- [x] `attachments` 소유자 전용화: 목록에서 남의 `private` 제외, 다운로드·삭제 **404** + 행 보존 확인.
+
+**남은 것: 프론트 화면이 없다.** API만 존재하며 `/admin/*`에 링크 관리 UI를 붙이지 않았다
+(W8 placeholder 정리와 함께 배치하는 것이 자연스럽다). 학생·멘토 목록 화면도 없다.
 
 ## 8. 비목표
 

@@ -78,12 +78,6 @@ export type NavItem = {
    * no read state (design/05 §5.3), so no notifications table is needed.
    */
   badgeKey?: "tasks" | "teamSupport" | "finance";
-  /** If true, page is a placeholder (not-yet-implemented feature). */
-  placeholder?: boolean;
-  /** Short description used by placeholder pages. */
-  description?: string;
-  /** Scope/future plan shown on placeholder pages. */
-  futureScope?: string;
 };
 
 export type NavSection = {
@@ -98,9 +92,13 @@ export type NavSection = {
  * Admin navigation re-organized per the GrowthHub IA v2 baseline:
  * Home / Core / Ops / Growth / Content / System.
  *
- * Existing routes are preserved as-is. Items marked `placeholder: true`
- * point to not-yet-implemented features and are rendered as informational
- * placeholder pages so the IA is fully navigable.
+ * W8 완료 후 이 목록에는 **빈 화면이 없다.** 전에는 IA를 전부 순회할 수 있게
+ * `placeholder: true` 항목을 두고 안내 페이지를 렌더했는데, 그 자리들이 각각
+ * 실체화되거나(미디어·면접·출석·리포트) 제거되었다(회원·공개페이지·외부연동·설정).
+ * 제거 사유는 해당 위치의 주석에 남겨두었다 — 되살리려면 그 근거부터 뒤집어야 한다.
+ *
+ * 신규 항목을 추가할 때는 동작하는 화면과 함께 넣는다. 화면 없는 nav 항목은
+ * 존재하지 않는 기능을 약속하는 것과 같다.
  */
 export const ADMIN_NAV_SECTIONS: NavSection[] = [
   {
@@ -119,14 +117,12 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
       { href: "/admin/roles", label: "역할 & 권한", icon: ShieldCheck },
       { href: "/admin/cohorts", label: "기수(Cohorts)", icon: Users },
       { href: "/admin/programs", label: "프로그램(Programs)", icon: FolderKanban },
-      {
-        href: "/admin/members",
-        label: "회원(Members)",
-        icon: Users,
-        placeholder: true,
-        description: "동아리 회원(Members) 명부 — 학생·멘토·운영진을 통합한 사람 단위 목록입니다.",
-        futureScope: "현재는 people_profiles(/admin/people)와 학생(/admin/students)으로 분리되어 있습니다. 통합 회원 명부와 회원 카드(연락처·소속·태그·소속 기수) 통합 화면을 제공할 예정입니다.",
-      },
+      // W8 — `/admin/members` 제거. IA v2 트리에 Members 항목이 있으나, §7.2 매핑표는
+      // `/admin/students`를 "Growth > Students 또는 Core > Members"로 적고 우선순위를
+      // "위치 정리 필요"로 남겼다. 즉 요구는 신규 화면이 아니라 **중복 해소**였다.
+      // 인물 단위 통합 디렉터리는 `/admin/people`이 이미 kind(mentor/staff/member)로
+      // 제공하므로, Members를 만들면 사람 목록이 네 개(users·people·students·members)가 되어
+      // 어느 것이 정본인지 더 흐려진다.
     ],
   },
   {
@@ -141,24 +137,9 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
       // Its mutations (create/update user) are gated on `system`, and the
       // per-application assignment routes on `recruiting`.
       { href: "/admin/evaluators", label: "평가 담당자(Evaluations)", icon: UserCheck },
-      {
-        href: "/admin/interviews",
-        label: "면접(Interviews)",
-        icon: Mic,
-        placeholder: true,
-        requiredOpsRole: "recruiting",
-        description: "면접 일정·결과 통합 관리 화면입니다.",
-        futureScope: "현재 면접 결과는 지원서 상세(/admin/applications/:id)에서 입력합니다. 일정·면접관 캘린더 뷰와 결과 일괄 조회 화면을 추가할 예정입니다.",
-      },
+      { href: "/admin/interviews", label: "면접(Interviews)", icon: Mic, requiredOpsRole: "recruiting" },
       { href: "/admin/sessions", label: "행사 / 모임(Events / Sessions)", icon: CalendarDays },
-      {
-        href: "/admin/attendance",
-        label: "출석(Attendance)",
-        icon: ClipboardList,
-        placeholder: true,
-        description: "기수·프로그램 단위 출석 통계와 검색 화면입니다.",
-        futureScope: "현재 출석은 세션별(/admin/sessions/:id/attendance)로 관리됩니다. 학생별 출석률·결석 알림 등 집계 화면을 제공할 예정입니다.",
-      },
+      { href: "/admin/attendance", label: "출석(Attendance)", icon: ClipboardList },
       { href: "/admin/assignments", label: "과제(Assignments)", icon: ClipboardList },
       { href: "/admin/announcements", label: "공지(Announcements)", icon: Megaphone },
       { href: "/admin/finance", label: "재정(Finance)", icon: Wallet, requiredOpsRole: "finance", badgeKey: "finance" },
@@ -177,14 +158,7 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
       { href: "/admin/artifacts", label: "산출물(Artifacts)", icon: Package },
       { href: "/admin/feedback", label: "피드백(Feedback)", icon: MessageSquare },
       { href: "/admin/tags", label: "태그(Tags)", icon: Tags },
-      {
-        href: "/admin/reports",
-        label: "리포트(Reports)",
-        icon: BarChart3,
-        placeholder: true,
-        description: "학생·기수 단위 활동 리포트 인덱스. 현재는 학생 상세에서 개별적으로 접근합니다.",
-        futureScope: "학생 리포트(/admin/students/:id/report)와 기수 요약(/admin/cohorts/:id/summary)을 한 자리에서 탐색·내보내기할 수 있도록 통합합니다.",
-      },
+      { href: "/admin/reports", label: "리포트(Reports)", icon: BarChart3 },
     ],
   },
   {
@@ -192,50 +166,37 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
     key: "content",
     items: [
       { href: "/admin/site-content", label: "사이트 콘텐츠", icon: FileEdit },
-      {
-        href: "/admin/public-pages",
-        label: "공개 페이지",
-        icon: Globe,
-        placeholder: true,
-        description: "공개 페이지(/, /about, /program, /faq, /recruit) 메타 정보와 노출 상태를 관리하는 자리입니다.",
-        futureScope: "현재는 site-content 키 기반으로 본문만 편집됩니다. 페이지 단위 게시/숨김, SEO 메타, 미리보기 링크 등을 추가할 예정입니다.",
-      },
-      {
-        href: "/admin/media",
-        label: "미디어 / 링크",
-        icon: ImageIcon,
-        placeholder: true,
-        description: "이미지·문서 등 업로드된 미디어와 외부 링크(external_links)를 한곳에서 관리합니다.",
-        futureScope: "object storage에 업로드된 자산 목록 + external_links 테이블 도입 후 통합 인덱스를 제공합니다.",
-      },
+      // W8 — `/admin/public-pages` 제거. 약속한 것(페이지 단위 게시/숨김, SEO 메타,
+      // 미리보기 링크)은 전부 **스키마가 없다** — `site_contents`는 키→본문 맵이고
+      // 게시 상태나 메타 필드를 담지 않는다. 데이터 모델 없이 화면만 두면 없는 기능을
+      // 약속하는 자리가 된다. 본문 편집이라는 현재 필요는 `/admin/site-content`가 충족한다.
+      // 되살릴 때는 `site_contents` 확장(게시 상태·메타)과 같은 변경에서.
+      { href: "/admin/media", label: "미디어 / 링크", icon: ImageIcon },
     ],
   },
   {
     title: "System · 시스템",
     key: "system",
     items: [
-      {
-        href: "/admin/integrations",
-        label: "외부 연동(Integrations)",
-        icon: Plug,
-        placeholder: true,
-        description: "GitHub·Discord·Google Drive·Calendar·이메일 등 외부 도구 연동 상태와 링크 매핑을 관리합니다.",
-        futureScope: "외부 도구 연계 설계 문서에 따라 링크 기반 연동을 우선 도입하고, API 연동은 운영이 안정화된 뒤 검토합니다.",
-      },
+      // W8 — `/admin/integrations` 제거. design/04 §8이 자동 sync(`sync_logs`,
+      // `integration_accounts`)를 **명시적 비목표**로 못박았고, baseline 외부연계는
+      // "링크 기반 우선, API 연동은 필요성이 검증된 뒤"라고 정했다. 연동 *상태* 화면은
+      // 그 상태를 만들어낼 sync 계층이 있어야 성립하는데 그 계층을 안 만들기로 한 것이다.
+      // `/admin/reflections`가 ADR-001과 충돌해 제거된 것과 같은 형태다.
+      // 링크 기반 연동의 실체는 `external_links`이고 화면은 `/admin/media`에 있다.
       {
         href: "/admin/audit-logs",
         label: "감사 로그(Audit Logs)",
         icon: ScrollText,
         requiredOpsRole: "system",
       },
-      {
-        href: "/admin/settings",
-        label: "설정(Settings)",
-        icon: Settings,
-        placeholder: true,
-        description: "플랫폼 전역 설정 — 부트스트랩 관리자, 시스템 환경, 알림 채널, 기본 가시성 정책 등을 관리하는 자리입니다.",
-        futureScope: "현재 설정은 환경변수(SESSION_SECRET, ADMIN_EMAIL 등)에 의존합니다. UI에서 조정 가능한 항목을 단계적으로 노출합니다.",
-      },
+      // W8 — `/admin/settings` 제거. 두 가지 이유다.
+      // ① 약속한 항목(부트스트랩 관리자, 시스템 환경)은 `SESSION_SECRET`·`ADMIN_EMAIL`
+      //    같은 환경변수이며, 이를 UI로 노출하는 것은 보안 후퇴다.
+      // ② "기본 가시성 정책"을 런타임에 조정 가능하게 만드는 것은 이 설계의 핵심 전제를
+      //    깨뜨린다 — ADR-001은 가시성을 UI 문구가 아니라 **구조**로 보장한다고 정했고,
+      //    구조를 화면에서 바꿀 수 있으면 그 보장이 사라진다.
+      // 알림 채널은 이미 환경변수이며 미설정 시 조용히 꺼지도록 W10에서 처리했다.
     ],
   },
 ];
@@ -255,12 +216,3 @@ export function visibleNavSections(
   })).filter((section) => section.items.length > 0);
 }
 
-/** Flattened list of placeholder items — used by App.tsx to register routes. */
-export const ADMIN_PLACEHOLDER_ITEMS: NavItem[] = ADMIN_NAV_SECTIONS.flatMap(
-  (section) => section.items.filter((item) => item.placeholder),
-);
-
-/** Lookup placeholder metadata by href, used by the shared placeholder page. */
-export function findPlaceholderItem(href: string): NavItem | undefined {
-  return ADMIN_PLACEHOLDER_ITEMS.find((item) => item.href === href);
-}

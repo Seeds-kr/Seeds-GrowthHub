@@ -9,11 +9,24 @@ import {
 import { usersTable } from "./users";
 import type { LinkableType } from "./_linkable";
 
-export const ATTACHMENT_VISIBILITIES = [
-  "private",
-  "team_visible",
-  "admin_only",
-] as const;
+/**
+ * Narrowed in W7 from `private | team_visible | admin_only`.
+ *
+ * `team_visible` was a DEAD VALUE: every attachment route is `requireAdmin`,
+ * `attachmentsTable` is referenced in no other file, and no student or mentor
+ * surface reads it — so the value promised a team audience that nothing could
+ * ever serve (visibility-policy §4.2 forbids exactly this).
+ *
+ * It was removed rather than given a reader because there is no student-facing
+ * attachment surface to serve: uploads come from the MarkdownEditor paste path
+ * (meeting/document context) and from finance receipts, both ops-only. Adding a
+ * student download route would have built a reader for an audience the product
+ * does not have — the same mistake pointing the other way.
+ *
+ * Restore `team_visible` together with the student route that reads it, in one
+ * change, when students actually own attachments.
+ */
+export const ATTACHMENT_VISIBILITIES = ["private", "admin_only"] as const;
 export type AttachmentVisibility = (typeof ATTACHMENT_VISIBILITIES)[number];
 
 /**

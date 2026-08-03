@@ -53,13 +53,23 @@ async function start() {
   } catch (err) {
     logger.error({ err }, "Failed to bootstrap mentor profiles");
   }
-  app.listen(port, (err) => {
+  // Optional bind address. Unset keeps the previous behaviour (all interfaces),
+  // which the Replit deployment relies on. Set `HOST=127.0.0.1` when something
+  // else fronts the app — a reverse proxy or a cloudflared tunnel — so the API
+  // cannot also be reached directly, around whatever that front door enforces.
+  const host = process.env["HOST"];
+  const onListen = (err?: Error) => {
     if (err) {
       logger.error({ err }, "Error listening on port");
       process.exit(1);
     }
-    logger.info({ port }, "Server listening");
-  });
+    logger.info({ port, host: host ?? "0.0.0.0" }, "Server listening");
+  };
+  if (host) {
+    app.listen(port, host, onListen);
+  } else {
+    app.listen(port, onListen);
+  }
 }
 
 void start();

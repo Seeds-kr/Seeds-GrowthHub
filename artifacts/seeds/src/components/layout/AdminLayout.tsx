@@ -11,7 +11,6 @@ import {
   Menu,
   X,
   ChevronDown,
-  Construction,
 } from "lucide-react";
 import { RoleSwitcher, effectiveRoles, pickRedirectFor } from "./RoleSwitcher";
 import { visibleNavSections, type NavSection } from "@/lib/admin-nav";
@@ -119,11 +118,6 @@ function SidebarContent({
                           >
                             {badges[item.badgeKey] > 99 ? "99+" : badges[item.badgeKey]}
                           </span>
-                        ) : item.placeholder ? (
-                          <Construction
-                            className="w-3 h-3 ml-auto shrink-0 opacity-60"
-                            aria-label="준비 중"
-                          />
                         ) : null}
                       </Link>
                     </li>
