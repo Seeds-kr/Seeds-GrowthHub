@@ -1,6 +1,6 @@
 import { ReactNode, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { motion, useMotionValueEvent, useScroll } from "framer-motion";
+import { motion, useMotionValueEvent, useReducedMotion, useScroll } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { MobileNav } from "./MobileNav";
 import { Magnetic } from "@/lib/motion";
@@ -12,8 +12,9 @@ export function PublicLayout({ children }: { children: ReactNode }) {
   // 알려주는 신호이자, 본문이 헤더 아래로 지나간다는 걸 보여주는 깊이 단서다.
   // `useScroll` 을 쓰는 이유는 스크롤 이벤트를 직접 걸면 매 프레임 리렌더가
   // 나기 때문이다. 여기서는 임계값을 넘는 순간에만 상태가 바뀐다.
-  const { scrollY } = useScroll();
+  const { scrollY, scrollYProgress } = useScroll();
   const [scrolled, setScrolled] = useState(false);
+  const reduce = useReducedMotion();
   useMotionValueEvent(scrollY, "change", (y) => {
     const next = y > 12;
     setScrolled((prev) => (prev === next ? prev : next));
@@ -96,8 +97,28 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             />
           </div>
         </div>
+
+        {/* 페이지 진행 표시줄. 공개 페이지가 길어서(홈은 화면 6개분) 지금
+            어디쯤인지가 안 보인다. 헤더 바닥에 붙여 스크롤바를 대신한다.
+            scaleX 만 바꾸므로 레이아웃 계산이 없다. */}
+        <motion.div
+          aria-hidden="true"
+          className="absolute inset-x-0 bottom-0 h-0.5 origin-left bg-primary"
+          style={{ scaleX: scrollYProgress }}
+        />
       </header>
-      <main className="flex-1 flex flex-col">{children}</main>
+      {/* 페이지 전환. 링크를 눌렀을 때 화면이 통째로 바뀌면 같은 사이트 안에서
+          움직였다는 감각이 끊긴다. 짧게 겹쳐 넘기면 이어진 것으로 읽힌다.
+          `location` 을 키로 써서 경로가 바뀔 때만 재생된다. */}
+      <motion.main
+        key={location}
+        className="flex flex-1 flex-col"
+        initial={reduce ? false : { opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
+      >
+        {children}
+      </motion.main>
       <footer className="border-t border-border bg-muted/30">
         <div className="container mx-auto px-4 py-12 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
           <div>&copy; {new Date().getFullYear()} Seeds Program. All rights reserved.</div>

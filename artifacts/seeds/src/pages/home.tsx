@@ -5,6 +5,7 @@ import { useSiteContent, HOME_DEFAULT } from "@/lib/site-content";
 import { ArrowRight } from "lucide-react";
 import seedsHero from "@assets/image_1779550028961.png";
 import { LiquidBackdrop } from "@/components/LiquidBackdrop";
+import { HorizontalDrift } from "@/components/HorizontalDrift";
 import { CountUp, Magnetic, Reveal, Spotlight, Stagger, StaggerItem } from "@/lib/motion";
 
 /**
@@ -164,35 +165,48 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Year timeline ────────────────────────────────────────────────── */}
-      <section className="border-t border-border bg-muted/30 px-4 py-24">
-        <div className="container mx-auto max-w-4xl">
-          <Reveal>
-            <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-primary">
-              {c.activities.eyebrow}
-            </div>
-            <h2 className="mb-12 font-serif text-3xl font-bold md:text-4xl">
-              {c.activities.title}
-            </h2>
-          </Reveal>
-          {/* 연표는 순서가 곧 정보라 차례로 들어오는 게 맞다. */}
-          <Stagger className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-card">
-            {c.activities.items.map((a, i) => (
-              <StaggerItem
-                key={i}
-                className="flex flex-col gap-2 p-6 md:flex-row md:items-baseline md:gap-8"
-              >
-                <div className="shrink-0 text-sm font-semibold tabular-nums text-primary md:w-20">
-                  {a.date}
-                </div>
-                <div className="flex-1">
-                  <h3 className="mb-1 font-bold">{a.title}</h3>
-                  <p className="text-sm leading-relaxed text-muted-foreground">{a.summary}</p>
-                </div>
-              </StaggerItem>
-            ))}
-          </Stagger>
-        </div>
+      {/* ── Year timeline ────────────────────────────────────────────────────
+          이 판만 가로로 흐른다. 2023에서 2026으로 가는 것이 실제로 "앞으로
+          나아가는" 일이라, 가로 이동이 내용의 의미와 맞는 유일한 자리다.
+
+          스크롤을 가로채지 않는다. 처음엔 화면을 고정하고 세로 스크롤을 가로
+          이동으로 바꾸는 방식으로 만들었는데, 실측하니 이동 거리가 624px 뿐이라
+          화면 하나도 안 되는 거리를 위해 스크롤을 빼앗는 꼴이었다. 게다가
+          고정한 화면의 70%가 빈 채로 남았다. 지금은 판이 지나가는 동안에만
+          흐르고, 스크롤은 평소대로 동작한다. */}
+      <section className="border-t border-border bg-muted/30 py-24">
+        <Reveal className="container mx-auto max-w-4xl px-4">
+          <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-primary">
+            {c.activities.eyebrow}
+          </div>
+          <h2 className="mb-10 font-serif text-3xl font-bold md:text-4xl">
+            {c.activities.title}
+          </h2>
+        </Reveal>
+
+        <HorizontalDrift className="gap-6 pl-[max(1rem,calc((100vw-56rem)/2))] pr-8">
+          {c.activities.items.map((a, i) => (
+            <article
+              key={i}
+              className="spotlight-card flex w-[17rem] shrink-0 snap-start flex-col rounded-lg border border-border bg-card p-7 transition-[border-color,box-shadow] duration-200 hover:border-primary/40 hover:shadow-lg md:w-[19rem]"
+              onPointerMove={(e) => {
+                if (e.pointerType !== "mouse") return;
+                const el = e.currentTarget;
+                const r = el.getBoundingClientRect();
+                el.style.setProperty("--spot-x", `${e.clientX - r.left}px`);
+                el.style.setProperty("--spot-y", `${e.clientY - r.top}px`);
+              }}
+            >
+              {/* 연도를 크게 각인한다. 가로로 흐르는 동안 지금 어느 해를 보고
+                  있는지가 한눈에 잡혀야 한다. */}
+              <div className="font-serif text-5xl font-bold tabular-nums leading-none text-primary">
+                {a.date}
+              </div>
+              <h3 className="mt-5 text-lg font-bold">{a.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{a.summary}</p>
+            </article>
+          ))}
+        </HorizontalDrift>
       </section>
 
       {/* ── Recruit banner ───────────────────────────────────────────────── */}
