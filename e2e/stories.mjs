@@ -358,29 +358,56 @@ console.log("\n── 운영진 ────────────────
     await p.waitForTimeout(1100);
     if ((await p.locator(`text=${title}`).count()) === 0) throw new Error("새로고침 후 목록에 없음");
 
-    // 새 과제는 "초안" 으로 저장된다. 초안인 동안 학생 화면에는 안 나오므로,
-    // 게시까지 해야 이 스토리가 끝난 것이다. 게시 컨트롤은 목록이 아니라
-    // [수정] 안에 있다 — 목록에는 상태만 보이고 게시 버튼이 없다.
-    await p.locator("button", { hasText: /^수정$/ }).first().click();
-    await p.waitForTimeout(900);
-    const boxes = p.getByRole("combobox");
-    let done = false;
-    for (let i = 0; i < (await boxes.count()); i++) {
-      if ((await boxes.nth(i).innerText()).trim() !== "초안") continue;
-      const picked = await pickCombobox(p, i, "초안");
-      if (picked) done = true;
-      break;
-    }
-    if (!done) throw new Error("상태를 초안에서 바꿀 방법을 못 찾음");
-    await p.locator("button", { hasText: /^저장$/ }).first().click();
+    // 새 과제는 "초안" 으로 저장되고, 초안인 동안 학생 화면에는 안 나온다.
+    // 게시까지 해야 이 스토리가 끝난 것이다. 예전에는 게시 컨트롤이 [수정]
+    // 다이얼로그 안에만 있어서 운영진이 "냈다" 고 착각하기 쉬웠는데,
+    // 지금은 목록에서 바로 누를 수 있다 — 그 동선을 그대로 주행한다.
+    const row = p.locator("tr").filter({ hasText: title });
+    const hidden = await row.locator("text=학생에게 안 보임").count();
+    if (!hidden) throw new Error("초안이 '학생에게 안 보임' 으로 표시되지 않음");
+    const pub = row.locator("button", { hasText: /^게시$/ });
+    if (!(await pub.count())) throw new Error("목록에 게시 버튼이 없음");
+    await pub.click();
     await p.waitForTimeout(1600);
     await p.reload({ waitUntil: "networkidle" });
-    await p.waitForTimeout(1100);
-    const listed = (await p.locator("main").innerText()).replace(/\s+/g, " ");
-    if (/초안/.test(listed.slice(listed.indexOf(title))) ) {
-      // 제목 뒤쪽 문자열에 여전히 초안이 붙어 있으면 게시가 안 된 것이다.
+    await p.waitForTimeout(1200);
+    const after = p.locator("tr").filter({ hasText: title });
+    if (await after.locator("text=학생에게 안 보임").count())
+      throw new Error("게시 후에도 초안으로 남아 있음");
+    return `"${title}" 등록 + 목록에서 바로 게시`;
+  });
+
+  await story("O10", "지원서에 평가자를 배정한다", async () => {
+    need();
+    await p.goto(BASE + "/admin/applications", { waitUntil: "networkidle" });
+    await p.waitForTimeout(900);
+    const link = p.locator('a[href^="/admin/applications/"]').first();
+    if (!(await link.count())) throw blocked("지원서가 없어 주행 불가");
+    await link.click();
+    await p.waitForTimeout(1200);
+
+    const evalSel = p.locator('[data-testid="select-evaluator"]');
+    if (!(await evalSel.count())) throw new Error("평가자 선택 컨트롤이 없음");
+    await evalSel.click();
+    await p.waitForTimeout(400);
+    const opts = p.getByRole("option");
+    const n = await opts.count();
+    if (!n) throw new Error("배정할 수 있는 평가자가 없음");
+    // 멘토 스토리에서 쓰는 계정을 고른다. 그래야 아래 E 축이 이어진다.
+    let target = 0;
+    for (let i = 0; i < n; i++) {
+      if ((await opts.nth(i).innerText()).includes(process.env.E2E_MENTOR_EMAIL ?? "@@")) { target = i; break; }
     }
-    return `"${title}" 등록 + 게시`;
+    const who = (await opts.nth(target).innerText()).trim();
+    await opts.nth(target).click();
+    await p.waitForTimeout(400);
+    await p.locator('[data-testid="button-assign"]').click();
+    await p.waitForTimeout(1600);
+    await p.reload({ waitUntil: "networkidle" });
+    await p.waitForTimeout(1200);
+    const body = await p.locator("main").innerText();
+    if (!body.includes(who.split(" (")[0])) throw new Error(`새로고침 후 배정이 안 남음 (${who})`);
+    return `${who} 배정 확인`;
   });
 
   await story("O8", "권한 밖 리소스에 접근한다", async () => {
@@ -455,6 +482,81 @@ console.log("\n── 멘토 ─────────────────
     if (r.is403) throw new Error(`403 이 노출됨: ${r.body}`);
     if (!r.is404) throw new Error(`차단되지 않음. 본문="${r.body}"`);
     return "담당 아닌 팀 → 404";
+  });
+
+  await c.close();
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// 평가위원은 별도 계정 종류가 아니다. 서버가 requireAdminOrMentor 로 받고,
+// "평가위원인가" 는 evaluation_assignments 에 자기 배정이 있느냐로 정해진다.
+// 그래서 멘토 계정으로 들어가되, 앞의 O10 이 배정을 만들어 둔 뒤에 주행한다.
+console.log("\n── 평가위원 ──────────────────────────────────────────────────");
+{
+  const email = process.env.E2E_MENTOR_EMAIL, pw = process.env.E2E_MENTOR_PASSWORD;
+  const c = await ctx();
+  const p = await c.newPage();
+  let ok = false;
+  if (email && pw) { await login(p, "/admin/login", email, pw); ok = !p.url().includes("/login"); }
+  const need = () => { if (!ok) throw blocked("평가위원으로 쓸 계정 미설정 또는 로그인 실패"); };
+  let appId = null;
+
+  await story("E1", "배정받은 지원서 목록을 확인한다", async () => {
+    need();
+    await p.goto(BASE + "/evaluator", { waitUntil: "networkidle" });
+    await p.waitForTimeout(1100);
+    const rows = p.locator('[data-testid^="row-assignment-"]');
+    const n = await rows.count();
+    await shot(p, "E1-dashboard");
+    if (n === 0) throw new Error("배정받은 지원서가 하나도 없음");
+    const open = p.locator('[data-testid^="button-open-"]').first();
+    const href = await open.locator("xpath=ancestor::a").getAttribute("href").catch(() => null);
+    appId = href ? href.split("/").pop() : null;
+    return `배정 ${n}건`;
+  });
+
+  await story("E2", "지원서를 열어 내용을 읽는다", async () => {
+    need();
+    if (!appId) throw blocked("E1 에서 지원서 id 를 못 얻음");
+    await p.goto(BASE + `/evaluator/applications/${appId}`, { waitUntil: "networkidle" });
+    await p.waitForTimeout(1200);
+    const t = (await p.locator("main").innerText()).trim();
+    if (t.length < 100) throw new Error(`내용이 사실상 비어 있음 (${t.length}자)`);
+    return `본문 ${t.length}자`;
+  });
+
+  await story("E3", "평가를 작성해 제출한다", async () => {
+    need();
+    if (!appId) throw blocked("E1 에서 지원서 id 를 못 얻음");
+    await p.goto(BASE + `/evaluator/applications/${appId}`, { waitUntil: "networkidle" });
+    await p.waitForTimeout(1200);
+    const comment = p.locator('[data-testid="input-comment"]');
+    if (!(await comment.count())) throw new Error("평가 의견 입력칸이 없음");
+    const msg = `주행 평가 의견 ${Date.now()}`;
+    await comment.fill(msg);
+    for (const id of ["select-stage", "select-recommendation"]) {
+      const trig = p.locator(`[data-testid="${id}"]`);
+      if (!(await trig.count())) continue;
+      await trig.click();
+      await p.waitForTimeout(350);
+      const o = p.getByRole("option");
+      if (await o.count()) await o.first().click();
+      await p.waitForTimeout(350);
+    }
+    await p.locator('[data-testid="button-submit-evaluation"]').click();
+    await p.waitForTimeout(1800);
+    await p.reload({ waitUntil: "networkidle" });
+    await p.waitForTimeout(1300);
+    if ((await p.locator(`text=${msg}`).count()) === 0) throw new Error("새로고침 후 평가가 안 남음");
+    return "평가 저장 확인";
+  });
+
+  await story("E4", "배정받지 않은 지원서에 접근한다", async () => {
+    need();
+    const r = await expect404(p, "/evaluator/applications/99999");
+    if (r.is403) throw new Error(`403 이 노출됨: ${r.body}`);
+    if (!r.is404) throw new Error(`차단되지 않음. 본문="${r.body}"`);
+    return "배정 밖 지원서 → 404";
   });
 
   await c.close();
