@@ -1,39 +1,56 @@
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { useSiteContent, PROGRAM_DEFAULT } from "@/lib/site-content";
+import { Cover, Plate, SealPlate, annualRule } from "@/components/annual";
 
+/**
+ * 프로그램 — 기수 연감(DESIGN.md)의 판면.
+ *
+ * 이전에는 커리큘럼과 혜택을 나란한 두 카드에 넣고 한쪽만 초록으로 채웠다.
+ * 연감에서 두 목록의 무게가 같다면 판을 나눠 순서로 말한다 — 색으로 한쪽만
+ * 강조하면 다른 쪽이 부록처럼 읽힌다. 혜택은 마감 판(도장 면)으로 내려
+ * 읽고 난 뒤 마지막에 오게 했다.
+ */
 export default function Program() {
   const { value: c } = useSiteContent("page.program", PROGRAM_DEFAULT);
   return (
     <PublicLayout>
-      <div className="container mx-auto px-4 py-24 max-w-4xl">
-        <h1 className="text-4xl font-serif font-bold mb-12 text-center">{c.title}</h1>
+      <Cover title={c.title} />
 
-        <div className="grid md:grid-cols-2 gap-12 mb-16">
-          <div className="bg-card border border-border p-8">
-            <h2 className="text-2xl font-serif font-bold mb-4">{c.curriculum.heading}</h2>
-            <ul className="space-y-4 text-muted-foreground">
-              {c.curriculum.items.map((it, i) => (
-                <li key={i} className="flex flex-col gap-1">
-                  <span className="font-semibold text-foreground">{it.title}</span>
-                  <span>{it.desc}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+      <Plate no="01" title={c.curriculum.heading}>
+        <dl className="mt-6">
+          {c.curriculum.items.map((it, i) => (
+            <div
+              key={i}
+              className="grid gap-x-8 gap-y-1 border-t py-5 md:grid-cols-[14rem_1fr]"
+              style={annualRule}
+            >
+              <dt className="text-base font-bold tracking-[-0.02em]">
+                {it.title}
+              </dt>
+              <dd className="max-w-[62ch] text-sm leading-relaxed text-muted-foreground">
+                {it.desc}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </Plate>
 
-          <div className="bg-card border border-border p-8 bg-primary text-primary-foreground">
-            <h2 className="text-2xl font-serif font-bold mb-4">{c.benefits.heading}</h2>
-            <ul className="space-y-4 opacity-90">
-              {c.benefits.items.map((it, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <span>•</span>
-                  <span>{it}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </div>
+      <SealPlate no="02" title={c.benefits.heading}>
+        <ul className="mt-7 grid gap-x-10 gap-y-4 sm:grid-cols-2">
+          {c.benefits.items.map((it, i) => (
+            <li
+              key={i}
+              className="border-t pt-4 text-base leading-relaxed"
+              style={{
+                borderColor: "hsl(0 0% 100% / 0.25)",
+                color: "hsl(0 0% 100% / 0.92)",
+              }}
+            >
+              {it}
+            </li>
+          ))}
+        </ul>
+      </SealPlate>
     </PublicLayout>
   );
 }
