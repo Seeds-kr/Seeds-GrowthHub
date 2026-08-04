@@ -1,5 +1,6 @@
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { useSiteContent, ABOUT_DEFAULT } from "@/lib/site-content";
+import { Reveal } from "@/lib/motion";
 import seedsLogo from "@assets/image_1779550028961.png";
 import teamPhoto from "@assets/KakaoTalk_20230801_023526919_01_1779550028961.jpg";
 import mentorPhoto from "@assets/KakaoTalk_20230801_023526919_06_1779550028960.jpg";
@@ -18,7 +19,7 @@ export default function About() {
 
   return (
     <PublicLayout>
-      <section className="container mx-auto px-4 py-20 max-w-3xl">
+      <Reveal as="section" className="container mx-auto px-4 py-20 max-w-3xl">
         <div className="flex flex-col items-center text-center mb-12">
           <img src={seedsLogo} alt="Seeds" className="w-40 mb-6" />
           <h1 className="text-4xl font-serif font-bold mb-6">{c.title}</h1>
@@ -67,7 +68,7 @@ export default function About() {
             <li>카카오톡 오픈채팅: <a href="https://open.kakao.com/o/sqpmEzEf" target="_blank" rel="noreferrer" className="text-primary hover:underline">바로가기</a></li>
           </ul>
         </div>
-      </section>
+      </Reveal>
     </PublicLayout>
   );
 }
