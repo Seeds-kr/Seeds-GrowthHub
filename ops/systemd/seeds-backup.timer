@@ -1,0 +1,11 @@
+[Unit]
+Description=Seeds GrowthHub DB backup (daily)
+
+[Timer]
+OnCalendar=*-*-* 04:30:00
+# 꺼져 있던 동안 지나간 실행은 켜지자마자 한 번 따라잡는다.
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

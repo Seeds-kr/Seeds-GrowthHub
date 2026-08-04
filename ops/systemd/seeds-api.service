@@ -1,0 +1,19 @@
+[Unit]
+Description=Seeds GrowthHub API server
+# DB 가 먼저 떠야 한다. 도커 컨테이너는 unless-stopped 라 부팅 시 스스로 올라오지만,
+# 순서를 보장하지 않으므로 docker 서비스 뒤로 세우고 재시도로 흡수한다.
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/harvester/seeds-preview
+ExecStart=/bin/bash -c 'set -a; . /home/harvester/.secrets/seeds-preview.env; set +a; exec /home/harvester/.nvm/versions/node/v22.23.1/bin/node --enable-source-maps /home/harvester/Seeds-GrowthHub/artifacts/api-server/dist/index.mjs'
+# DB 가 아직 준비 안 됐으면 죽는다. 계속 다시 띄워서 준비될 때까지 기다린다.
+Restart=always
+RestartSec=5
+StandardOutput=append:/home/harvester/seeds-preview/api.log
+StandardError=append:/home/harvester/seeds-preview/api.log
+
+[Install]
+WantedBy=default.target

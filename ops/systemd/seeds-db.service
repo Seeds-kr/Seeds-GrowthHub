@@ -1,0 +1,20 @@
+[Unit]
+Description=Seeds GrowthHub Postgres container
+# 도커의 restart 정책에만 기대지 않는다. `docker kill`/`docker stop` 을 한 번
+# 거치면 컨테이너가 "수동 정지" 로 표시돼 정책이 적용되지 않는 경우가 있고,
+# 그 상태로 재부팅하면 DB 만 안 올라온다(실제로 재현했다).
+# 부팅 때 systemd 가 직접 한 번 더 올려서 그 구멍을 막는다.
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/docker start seeds_growthhub_pg
+ExecStop=/usr/bin/docker stop seeds_growthhub_pg
+# 도커 데몬이 아직 준비 중이면 실패한다. 몇 번 다시 시도한다.
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

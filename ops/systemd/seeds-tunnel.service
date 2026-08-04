@@ -1,0 +1,15 @@
+[Unit]
+Description=Seeds GrowthHub Cloudflare tunnel
+After=network-online.target seeds-router.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/cloudflared tunnel --config /home/harvester/seeds-preview/tunnel-config.yml run
+Restart=always
+RestartSec=10
+StandardOutput=append:/home/harvester/seeds-preview/tunnel.log
+StandardError=append:/home/harvester/seeds-preview/tunnel.log
+
+[Install]
+WantedBy=default.target

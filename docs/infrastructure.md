@@ -1,0 +1,80 @@
+# 프리뷰 인프라 — seeds.harvester.kr
+
+이 문서는 **프리뷰 환경**을 다룬다. 프로덕션이 아니고, 데이터도 손으로 심은 것이 섞여 있다.
+다만 "재부팅하면 사라지는" 상태는 벗어났다.
+
+```
+인터넷 ── Cloudflare 터널 ──> router(127.0.0.1:8088) ──/api──> api-server(127.0.0.1:8087)
+                                          └──────────────────> seeds/dist/public (SPA)
+                                                                        │
+                                                    seeds_growthhub_pg (127.0.0.1:5434)
+```
+
+전부 `127.0.0.1` 에만 바인딩한다. 이 머신은 공인 IP 가 NIC 직결이라 `0.0.0.0` 은 곧 인터넷
+공개이고, 그러면 Cloudflare 를 우회해 API·DB 를 직접 때릴 수 있다.
+
+## systemd 유닛
+
+| 유닛 | 하는 일 |
+|---|---|
+| `seeds-db.service` | Postgres 컨테이너를 올린다 (`oneshot` + `RemainAfterExit`) |
+| `seeds-api.service` | api-server. DB 준비 전이면 죽고 `Restart=always` 로 다시 붙는다 |
+| `seeds-router.service` | 정적 파일 + `/api` 프록시 |
+| `seeds-tunnel.service` | cloudflared |
+| `seeds-backup.timer` | 매일 04:30 DB 덤프 (`Persistent=true` 라 꺼져 있던 동안 것도 따라잡는다) |
+
+```bash
+sudo systemctl status seeds-db seeds-api seeds-router seeds-tunnel
+journalctl -u seeds-api -n 50
+```
+
+### 왜 도커 restart 정책만으로 부족한가
+
+컨테이너에 `--restart always` 를 걸어 뒀지만, `docker stop` 이나 `docker kill` 을 한 번
+거치면 도커가 그 컨테이너를 "수동 정지" 로 표시하고 정책을 적용하지 않는다. 실제로
+`docker kill` 후 `restartCount=0` 으로 죽어 있는 걸 확인했다. 그 상태로 재부팅하면 DB 만
+안 올라온다. `seeds-db.service` 가 부팅 때 한 번 더 `docker start` 를 해서 이 구멍을 막는다.
+
+> 실제 재부팅으로는 검증하지 않았다. 도커 데몬을 재시작하면 이 머신의 다른 프로젝트
+> 컨테이너(lala_postgres 등)가 함께 내려가기 때문이다. 대신 컨테이너를 정지시킨 뒤
+> `systemctl restart seeds-db` 로 다시 올라오는 것까지 확인했다.
+
+## 데이터
+
+- 볼륨: `seeds_growthhub_pgdata` (명명 볼륨)
+  - 원래는 이름 없는 볼륨이었다. `docker volume prune` 한 번에 사라지는 자리이고,
+    무엇이 들어 있는지 아무도 알 수 없다. 백업으로 복원을 검증한 뒤 옮겼다.
+- 백업: `/home/harvester/seeds-preview/backups/growthhub-<날짜>.sql.gz` (600, 30일 보관)
+  - `backup.sh` 는 `.part` 로 받아 gzip 무결성과 최소 크기를 확인한 뒤에만 정식 이름을 준다.
+    끊긴 덤프가 "성공한 백업" 으로 남지 않게 하려는 것이다.
+  - 보관 기간이 지나도 최소 3개는 남긴다.
+
+```bash
+# 수동 백업
+/home/harvester/seeds-preview/backup.sh
+
+# 복원 (반드시 사본에 먼저 해 보고 옮길 것)
+zcat backups/growthhub-<날짜>.sql.gz | docker exec -i seeds_growthhub_pg psql -U growthhub -d growthhub
+```
+
+## 스키마 마이그레이션
+
+`db push` 만 쓰면 어떤 SQL 이 나갔는지 아무 데도 안 남아서, 다른 환경에 같은 상태를 다시
+만들 수 없고 무엇이 언제 바뀌었는지 되짚을 수도 없다. 마이그레이션 파일을 남긴다.
+
+```bash
+cd lib/db
+pnpm run generate   # 스키마 수정 후. drizzle/NNNN_*.sql 이 생긴다 - 읽고 커밋한다
+pnpm run migrate    # 반영
+pnpm run check      # 마이그레이션끼리 충돌하는지
+```
+
+현재 DB 는 `push` 로 만들어져 이력이 없었으므로 `0000` 을 "적용됨" 으로 기록해 베이스라인을
+잡았다(`drizzle.__drizzle_migrations`). 사본에 먼저 적용해 `migrate` 가 아무것도 건드리지
+않고 데이터도 그대로인 것을 확인한 뒤 실제 DB 에 넣었다.
+
+## 아직 안 된 것
+
+- 실제 재부팅 검증 (위 사유)
+- 백업의 외부 보관 — 지금은 같은 디스크에만 있다. 디스크가 죽으면 같이 죽는다
+- 평가위원 계정이 없어 그 역할의 유저 스토리는 미작성 (`docs/user-stories.md`)
