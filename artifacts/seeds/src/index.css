@@ -183,3 +183,52 @@
     color: hsl(var(--primary));
   }
 }
+
+/* ── 기수 연감 (Cohort Annual) — 공개 표면 전용 ─────────────────────────────
+   DESIGN.md의 세계. `.annual` 안에서만 색이 바뀌므로 어드민·학생·멘토 화면은
+   영향을 받지 않는다(그쪽은 Operate 면이라 밀도와 익숙한 어포던스가 우선).
+   전역 토큰을 갈아엎지 않는 이유이기도 하다 — e2e가 검증한 표면을 흔들지 않는다. */
+@layer base {
+  .annual {
+    --paper: 40 30% 97%;
+    --ink: 220 15% 12%;
+    --ink-muted: 220 10% 40%;
+    --seal: 152 70% 26%;
+    --rule: 40 15% 82%;
+
+    background-color: hsl(var(--paper));
+    color: hsl(var(--ink));
+  }
+
+  /* 미색 종이 위에서는 본문도 잉크색 계열이어야 한다. 색 있는 바탕 위의
+     회색 본문은 craft-floor가 금지하는 조합이고, 대비도 떨어진다. */
+  .annual .text-muted-foreground {
+    color: hsl(var(--ink-muted));
+  }
+
+  /* 연감의 구획은 카드가 아니라 괘선이 만든다. */
+  .annual hr,
+  .annual .rule {
+    border-color: hsl(var(--rule));
+  }
+
+  /* 판 번호 — 순서가 정보인 자리에서만 쓴다. */
+  .annual .plate-no {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.14em;
+    color: hsl(var(--ink-muted));
+  }
+
+  /* 첫 진입에서 연도 각인이 종이에 눌리듯 자리를 잡는다.
+     이미 보이는 상태에서 출발하므로 JS가 죽어도 내용은 보인다. */
+  @keyframes annual-press {
+    from { opacity: 0.55; transform: translateY(6px); }
+    to   { opacity: 1;    transform: translateY(0); }
+  }
+  .annual .press-in {
+    animation: annual-press 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .annual .press-in { animation: none; }
+  }
+}

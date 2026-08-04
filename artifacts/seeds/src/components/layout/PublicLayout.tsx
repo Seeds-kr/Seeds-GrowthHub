@@ -14,9 +14,12 @@ export function PublicLayout({ children }: { children: ReactNode }) {
     { label: "FAQ", href: "/faq" },
   ];
 
+  // `.annual` — DESIGN.md의 기수 연감 세계. 헤더·푸터까지 같은 종이 위에 있어야
+  // 이음매가 생기지 않는다. 공개 표면 전체가 이 세계를 공유하고, 어드민·학생·멘토는
+  // 이 밖에 있으므로 영향을 받지 않는다.
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-background text-foreground">
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-md">
+    <div className="annual min-h-[100dvh] flex flex-col">
+      <header className="sticky top-0 z-50 w-full border-b backdrop-blur-md" style={{ borderColor: "hsl(var(--rule))", backgroundColor: "hsl(var(--paper) / 0.85)" }}>
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="font-serif text-xl font-bold tracking-tight text-primary">
             Seeds
@@ -60,7 +63,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
         </div>
       </header>
       <main className="flex-1 flex flex-col">{children}</main>
-      <footer className="border-t border-border bg-muted/30">
+      <footer className="border-t" style={{ borderColor: "hsl(var(--rule))" }}>
         <div className="container mx-auto px-4 py-12 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
           <div>&copy; {new Date().getFullYear()} Seeds Program. All rights reserved.</div>
           <div className="flex items-center gap-4">

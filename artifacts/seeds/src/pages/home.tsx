@@ -3,154 +3,219 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useSiteContent, HOME_DEFAULT } from "@/lib/site-content";
 import { ArrowRight } from "lucide-react";
-import seedsHero from "@assets/image_1779550028961.png";
 
+/**
+ * 공개 홈 — 기수 연감(DESIGN.md).
+ *
+ * 이 동아리의 단위는 기수이고, 연감은 한 기수를 통째로 기록해 남기는 물건이다.
+ * `PRODUCT.md`의 1원칙이 "인수인계가 제품이다"이므로 겉모습이 제품의 주장과 같다.
+ * 지원자에게 하는 말은 하나다 — 여기서 1년을 보내면 무엇이 남는가.
+ *
+ * 향수는 가져오지 않는다. 연감은 회고적이지만 이 표면은 다음 기수를 모집하므로
+ * 과거형으로 말하지 않고, 아직 비어 있는 판을 "이 자리가 당신 것"으로 쓴다.
+ *
+ * 문구는 전부 `site-content`에서 온다 — 운영진이 배포 없이 고친다. 여기서 바꾼 것은
+ * 판면뿐이고 내용은 한 글자도 지어내지 않았다. eyebrow 필드는 데이터에 남아 있지만
+ * 렌더하지 않는다: 제목 위 kicker는 craft-floor의 금지 항목이고, 제목이 스스로
+ * 무게를 진다.
+ */
 export default function Home() {
   const { value: c } = useSiteContent("page.home", HOME_DEFAULT);
+
+  // 연감의 표지 연도. `activities`는 최신 연도가 앞이라 첫 항목이 현재 기수다.
+  const currentYear = c.activities.items[0]?.date ?? "";
+
   return (
     <PublicLayout>
-      {/* Hero */}
-      <section className="py-20 md:py-28 px-4 bg-gradient-to-b from-muted/40 to-background">
-        <div className="container mx-auto max-w-5xl grid md:grid-cols-2 gap-10 items-center">
-          <div>
-            <div className="text-[11px] uppercase tracking-[0.22em] text-accent mb-5 font-semibold">
-              {c.hero.eyebrow}
+        {/* ── 표지 ───────────────────────────────────────────────────────── */}
+        <section className="border-b" style={{ borderColor: "hsl(var(--rule))" }}>
+          <div className="container mx-auto max-w-5xl px-4 py-20 md:py-28">
+            <div className="press-in">
+              <div
+                className="font-bold leading-[0.85] tracking-[-0.05em]"
+                style={{
+                  fontSize: "clamp(4rem, 12vw, 9rem)",
+                  color: "hsl(var(--seal))",
+                }}
+              >
+                {currentYear}
+              </div>
+              <h1
+                className="mt-6 max-w-3xl whitespace-pre-line font-bold leading-[1.15] tracking-[-0.035em]"
+                style={{ fontSize: "clamp(2rem, 4vw, 3.25rem)" }}
+              >
+                {c.hero.title}
+              </h1>
             </div>
-            <h1 className="text-4xl md:text-5xl font-serif font-bold tracking-tight text-foreground mb-6 leading-tight whitespace-pre-line">
-              {c.hero.title}
-            </h1>
-            <p className="text-base md:text-lg text-muted-foreground mb-8 leading-relaxed whitespace-pre-line">
+
+            <p className="mt-7 max-w-[68ch] whitespace-pre-line text-base leading-[1.7] text-muted-foreground md:text-lg">
               {c.hero.body}
             </p>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+
+            <div className="mt-9 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
               <Link href={c.hero.primaryCtaHref}>
-                <Button size="lg" className="text-base px-7 h-12">
+                <Button size="lg" className="h-12 px-7 text-base">
                   {c.hero.primaryCtaLabel}
                 </Button>
               </Link>
               <Link href={c.hero.secondaryCtaHref}>
-                <Button size="lg" variant="outline" className="text-base px-7 h-12">
+                <Button size="lg" variant="outline" className="h-12 px-7 text-base">
                   {c.hero.secondaryCtaLabel}
                 </Button>
               </Link>
             </div>
-          </div>
-          <div className="flex justify-center md:justify-end">
-            <img
-              src={seedsHero}
-              alt="Seeds — 씨앗에서 나무로"
-              className="w-full max-w-md object-contain"
-            />
-          </div>
-        </div>
-      </section>
 
-      {/* Stats */}
-      <section className="py-20 px-4 border-t border-border">
-        <div className="container mx-auto max-w-5xl">
-          <div className="text-[11px] uppercase tracking-[0.22em] text-accent mb-3 font-semibold text-center">
-            {c.stats.eyebrow}
-          </div>
-          <h2 className="text-3xl md:text-4xl font-serif font-bold mb-12 text-center">
-            {c.stats.title}
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-border border border-border rounded-lg overflow-hidden">
-            {c.stats.items.map((s, i) => (
-              <div key={i} className="bg-card p-8 text-center">
-                <div className="text-4xl md:text-5xl font-serif font-bold text-primary mb-2">
-                  {s.value}
+            {/* 판권 정보처럼 표지 아래에 붙는 사실들. 큰 숫자 카드 격자(hero-metric
+                템플릿)를 쓰지 않는 이유는 그것이 이 카테고리의 기본값이기 때문이고,
+                연감에서 수치는 자랑이 아니라 기록이라 작게 놓인다. */}
+            <dl className="mt-14 flex flex-wrap gap-x-10 gap-y-4 border-t pt-6" style={{ borderColor: "hsl(var(--rule))" }}>
+              {c.stats.items.map((s, i) => (
+                <div key={i}>
+                  <dt className="plate-no text-xs uppercase">{s.label}</dt>
+                  <dd className="mt-1 text-xl font-bold tracking-[-0.02em]">{s.value}</dd>
                 </div>
-                <div className="text-sm text-muted-foreground">{s.label}</div>
-              </div>
-            ))}
+              ))}
+            </dl>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* About */}
-      <section className="py-24 px-4 bg-muted/30 border-t border-border">
-        <div className="container mx-auto max-w-4xl">
-          <div className="text-[11px] uppercase tracking-[0.22em] text-accent mb-3 font-semibold">
-            {c.about.eyebrow}
-          </div>
-          <h2 className="text-3xl md:text-4xl font-serif font-bold mb-6">{c.about.title}</h2>
-          <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-3xl whitespace-pre-line">
+        {/* ── 01 색인: 연도별 기록 ───────────────────────────────────────── */}
+        <Plate no="01" title={c.activities.title}>
+          <ol className="mt-2">
+            {c.activities.items.map((a, i) => {
+              const isCurrent = i === 0;
+              return (
+                <li
+                  key={a.date}
+                  className="grid grid-cols-[4.5rem_1fr] items-baseline gap-x-5 border-t py-5 md:grid-cols-[7rem_1fr] md:gap-x-8"
+                  style={{ borderColor: "hsl(var(--rule))" }}
+                >
+                  <span
+                    className="text-lg font-bold tabular-nums tracking-[-0.02em] md:text-2xl"
+                    style={isCurrent ? { color: "hsl(var(--seal))" } : undefined}
+                  >
+                    {a.date}
+                  </span>
+                  <div>
+                    <h3 className="text-base font-bold tracking-[-0.02em] md:text-lg">
+                      {a.title}
+                      {/* 색이 아니라 글자로도 현재 기수를 말한다 — 색만으로 상태를
+                          전하지 않는다는 접근성 원칙. */}
+                      {isCurrent ? (
+                        <span
+                          className="ml-2 align-middle text-xs font-semibold"
+                          style={{ color: "hsl(var(--seal))" }}
+                        >
+                          모집 예정
+                        </span>
+                      ) : null}
+                    </h3>
+                    <p className="mt-1 max-w-[70ch] text-sm leading-relaxed text-muted-foreground">
+                      {a.summary}
+                    </p>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        </Plate>
+
+        {/* ── 02 무엇을 만드는가 ─────────────────────────────────────────── */}
+        <Plate no="02" title={c.about.title}>
+          <p className="mt-2 max-w-[68ch] text-base leading-[1.75] text-muted-foreground">
             {c.about.body}
           </p>
-          <Link href={c.about.ctaHref}>
-            <Button variant="outline">
-              {c.about.ctaLabel}
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
+          <Link
+            href={c.about.ctaHref}
+            className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold underline-offset-4 hover:underline"
+            style={{ color: "hsl(var(--seal))" }}
+          >
+            {c.about.ctaLabel} <ArrowRight className="h-4 w-4" />
           </Link>
-        </div>
-      </section>
+        </Plate>
 
-      {/* Activities (4 cards) */}
-      <section className="py-24 px-4 border-t border-border">
-        <div className="container mx-auto max-w-5xl">
-          <div className="text-[11px] uppercase tracking-[0.22em] text-accent mb-3 font-semibold">
-            {c.projects.eyebrow}
-          </div>
-          <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">{c.projects.title}</h2>
-          <p className="text-muted-foreground leading-relaxed mb-12 max-w-2xl whitespace-pre-line">
+        {/* ── 03 활동 플레이트 ───────────────────────────────────────────── */}
+        <Plate no="03" title={c.projects.title}>
+          <p className="mt-2 max-w-[68ch] text-base leading-[1.75] text-muted-foreground">
             {c.projects.body}
           </p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* 고정 축척 그리드 — 크기로 서열을 만들지 않는다. 카드로 감싸지 않고
+              괘선으로만 구획한다(중첩 카드 금지). */}
+          <div className="mt-8 grid gap-x-10 gap-y-8 sm:grid-cols-2">
             {c.projects.items.map((p, i) => (
-              <div key={i} className="border border-border bg-card p-6 flex flex-col rounded-lg">
-                <div className="inline-flex items-center self-start text-[10px] font-semibold text-primary uppercase tracking-wider mb-4 px-2 py-1 bg-primary/10 rounded">
-                  {p.status}
-                </div>
-                <h3 className="text-lg font-bold mb-3">{p.title}</h3>
-                <p className="text-muted-foreground leading-relaxed text-sm">{p.summary}</p>
-              </div>
+              <article
+                key={i}
+                className="border-t pt-5"
+                style={{ borderColor: "hsl(var(--rule))" }}
+              >
+                <div className="plate-no text-[11px] uppercase">{p.status}</div>
+                <h3 className="mt-2 text-lg font-bold tracking-[-0.02em]">{p.title}</h3>
+                <p className="mt-2 max-w-[60ch] text-sm leading-relaxed text-muted-foreground">
+                  {p.summary}
+                </p>
+              </article>
             ))}
           </div>
-        </div>
-      </section>
+        </Plate>
 
-      {/* Year timeline */}
-      <section className="py-24 px-4 bg-muted/30 border-t border-border">
-        <div className="container mx-auto max-w-4xl">
-          <div className="text-[11px] uppercase tracking-[0.22em] text-accent mb-3 font-semibold">
-            {c.activities.eyebrow}
+        {/* ── 04 아직 비어 있는 판 ───────────────────────────────────────── */}
+        <section
+          className="border-t"
+          style={{ borderColor: "hsl(var(--rule))", backgroundColor: "hsl(var(--seal))" }}
+        >
+          <div className="container mx-auto max-w-5xl px-4 py-20 md:py-24">
+            <div className="plate-no text-[11px] uppercase" style={{ color: "hsl(0 0% 100% / 0.7)" }}>
+              04
+            </div>
+            <h2
+              className="mt-3 max-w-3xl text-3xl font-bold leading-[1.2] tracking-[-0.035em] md:text-4xl"
+              style={{ color: "hsl(0 0% 100%)" }}
+            >
+              {c.recruitBanner.title}
+            </h2>
+            <p
+              className="mt-5 max-w-[62ch] text-base leading-[1.7]"
+              style={{ color: "hsl(0 0% 100% / 0.85)" }}
+            >
+              {c.recruitBanner.body}
+            </p>
+            <Link href={c.recruitBanner.ctaHref}>
+              <Button
+                size="lg"
+                variant="secondary"
+                className="mt-8 h-12 px-7 text-base"
+              >
+                {c.recruitBanner.ctaLabel} <ArrowRight className="ml-1 h-4 w-4" />
+              </Button>
+            </Link>
           </div>
-          <h2 className="text-3xl md:text-4xl font-serif font-bold mb-12">{c.activities.title}</h2>
-          <div className="border border-border bg-card divide-y divide-border rounded-lg overflow-hidden">
-            {c.activities.items.map((a, i) => (
-              <div key={i} className="p-6 flex flex-col md:flex-row md:items-baseline gap-2 md:gap-8">
-                <div className="text-sm font-semibold text-primary md:w-20 shrink-0">{a.date}</div>
-                <div className="flex-1">
-                  <h3 className="font-bold mb-1">{a.title}</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">{a.summary}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Recruit banner */}
-      <section className="py-24 px-4 bg-primary text-primary-foreground">
-        <div className="container mx-auto max-w-3xl text-center">
-          <div className="text-[11px] uppercase tracking-[0.22em] text-primary-foreground/80 mb-3 font-semibold">
-            {c.recruitBanner.eyebrow}
-          </div>
-          <h2 className="text-3xl md:text-4xl font-serif font-bold mb-6">
-            {c.recruitBanner.title}
-          </h2>
-          <p className="text-primary-foreground/80 text-lg mb-10 leading-relaxed whitespace-pre-line">
-            {c.recruitBanner.body}
-          </p>
-          <Link href={c.recruitBanner.ctaHref}>
-            <Button size="lg" variant="secondary" className="text-base px-8 h-12">
-              {c.recruitBanner.ctaLabel}
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </Button>
-          </Link>
-        </div>
-      </section>
+        </section>
     </PublicLayout>
+  );
+}
+
+/**
+ * 연감의 한 판. 번호는 순서가 정보인 자리에서만 쓰는 실제 기능이라 남긴다
+ * (장식용 01/02/03 나열이 아니라 색인과 짝을 이룬다).
+ */
+function Plate({
+  no,
+  title,
+  children,
+}: {
+  no: string;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="border-t" style={{ borderColor: "hsl(var(--rule))" }}>
+      <div className="container mx-auto max-w-5xl px-4 py-16 md:py-20">
+        <div className="plate-no text-[11px] uppercase">{no}</div>
+        <h2 className="mt-3 text-2xl font-bold tracking-[-0.03em] md:text-3xl">
+          {title}
+        </h2>
+        {children}
+      </div>
+    </section>
   );
 }
