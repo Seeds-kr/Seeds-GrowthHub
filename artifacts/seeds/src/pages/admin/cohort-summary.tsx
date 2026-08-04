@@ -5,6 +5,7 @@ import { api, type CohortSummary } from "@/lib/mvp3-api";
 import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ResourceMissing } from "@/components/ResourceMissing";
 
 export default function AdminCohortSummary() {
   const [, params] = useRoute("/admin/cohorts/:id/summary");
@@ -14,7 +15,15 @@ export default function AdminCohortSummary() {
     queryFn: () => api<CohortSummary>(`/admin/cohorts/${id}/summary`),
     enabled: Number.isFinite(id),
   });
-  if (isLoading || !data) return <AdminLayout><Loader2 className="animate-spin mx-auto" /></AdminLayout>;
+  // 로딩과 "없음"을 갈라야 한다. 하나로 묶으면 없는 자료를 열었을 때
+  // 스피너가 영원히 돈다(느린 건지 없는 건지 알 수 없다).
+  if (isLoading) return <AdminLayout><Loader2 className="animate-spin mx-auto" /></AdminLayout>;
+  if (!data)
+    return (
+      <AdminLayout>
+        <ResourceMissing label="기수 요약" backHref="/admin/cohorts" />
+      </AdminLayout>
+    );
   return (
     <AdminLayout>
       <h1 className="text-3xl font-serif font-bold mb-4">{data.cohort.name} · 활동 요약</h1>

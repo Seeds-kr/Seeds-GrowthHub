@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
+import { ResourceMissing } from "@/components/ResourceMissing";
 
 type Detail = {
   project: Project;
@@ -28,7 +29,15 @@ export default function StudentProjectDetail() {
     queryFn: () => api<Detail>(`/student/projects/${id}`),
     enabled: Number.isFinite(id),
   });
-  if (isLoading || !data) return <StudentLayout><Loader2 className="animate-spin mx-auto" /></StudentLayout>;
+  // 로딩과 "없음"을 갈라야 한다. 하나로 묶으면 없는 자료를 열었을 때
+  // 스피너가 영원히 돈다(느린 건지 없는 건지 알 수 없다).
+  if (isLoading) return <StudentLayout><Loader2 className="animate-spin mx-auto" /></StudentLayout>;
+  if (!data)
+    return (
+      <StudentLayout>
+        <ResourceMissing label="프로젝트" backHref="/student/projects" />
+      </StudentLayout>
+    );
   const p = data.project;
   return (
     <StudentLayout>

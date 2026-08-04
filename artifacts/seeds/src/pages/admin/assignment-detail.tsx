@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
+import { ResourceMissing } from "@/components/ResourceMissing";
 
 type Detail = {
   assignment: { id: number; title: string; description: string | null; dueAt: string | null; status: string; cohortId: number; programId: number | null };
@@ -40,8 +41,15 @@ export default function AdminAssignmentDetail() {
     queryFn: () => api<Detail>(`/admin/assignments/${id}`),
     enabled: !!id,
   });
-  if (isLoading || !data) return <AdminLayout><div className="flex justify-center py-12"><Loader2 className="animate-spin" /></div></AdminLayout>;
-
+  // 로딩과 "없음"을 갈라야 한다. 하나로 묶으면 없는 자료를 열었을 때
+  // 스피너가 영원히 돈다(느린 건지 없는 건지 알 수 없다).
+  if (isLoading) return <AdminLayout><div className="flex justify-center py-12"><Loader2 className="animate-spin" /></div></AdminLayout>;
+  if (!data)
+    return (
+      <AdminLayout>
+        <ResourceMissing label="과제" backHref="/admin/assignments" />
+      </AdminLayout>
+    );
   return (
     <AdminLayout>
       <div className="mb-4"><Link href="/admin/assignments" className="text-sm text-muted-foreground hover:text-primary">← 과제 목록</Link></div>

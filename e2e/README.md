@@ -48,3 +48,19 @@ snap으로 격리된 환경(이 저장소를 검증한 머신이 그랬다)에�
 - `main`으로 기다리는 것도 이유가 있다. `header`는 AdminLayout에서 `lg:hidden`이라
   데스크톱 폭에서 영원히 보이지 않는다.
 - 드래그 검사는 `ops_task`가 최소 하나 있어야 한다. 없으면 SKIP한다.
+
+## stories.mjs — 역할별 유저 스토리 주행
+
+`run.mjs` 는 화면이 뜨는지를 본다. `stories.mjs` 는 **한 역할이 일을 끝낼 수 있는지**를 본다
+(쓰고, 저장되고, 새로고침해도 남는지까지). 목록과 결과는 `docs/user-stories.md`.
+
+```bash
+E2E_BASE_URL=https://seeds.harvester.kr \
+E2E_ADMIN_EMAIL=... E2E_ADMIN_PASSWORD=... \
+E2E_MENTOR_EMAIL=... E2E_MENTOR_PASSWORD=... \
+E2E_STUDENT_EMAIL=... E2E_STUDENT_PASSWORD=... \
+node stories.mjs
+```
+
+계정을 안 주면 그 역할은 `BLOCK` 으로 남는다. 통과로 세지 않는다.
+쓰기 스토리는 실제 데이터를 만든다 — 운영 DB 를 향해 돌리지 말 것.

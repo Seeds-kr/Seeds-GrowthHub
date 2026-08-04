@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { ResourceMissing } from "@/components/ResourceMissing";
 
 type Resp = {
   items: { id: number; sessionId: number; sessionTitle: string; scheduledAt: string; status: string; note: string | null }[];
@@ -14,7 +15,15 @@ type Resp = {
 
 export default function StudentAttendance() {
   const { data, isLoading } = useQuery({ queryKey: ["student-attendance"], queryFn: () => api<Resp>("/student/attendance") });
-  if (isLoading || !data) return <StudentLayout><Loader2 className="animate-spin mx-auto" /></StudentLayout>;
+  // 로딩과 "없음"을 갈라야 한다. 하나로 묶으면 없는 자료를 열었을 때
+  // 스피너가 영원히 돈다(느린 건지 없는 건지 알 수 없다).
+  if (isLoading) return <StudentLayout><Loader2 className="animate-spin mx-auto" /></StudentLayout>;
+  if (!data)
+    return (
+      <StudentLayout>
+        <ResourceMissing label="출석 기록" backHref="/student" />
+      </StudentLayout>
+    );
   return (
     <StudentLayout>
       <h1 className="text-3xl font-serif font-bold mb-6">출석 현황</h1>

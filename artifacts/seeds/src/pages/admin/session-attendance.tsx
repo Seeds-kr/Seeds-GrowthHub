@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
+import { ResourceMissing } from "@/components/ResourceMissing";
 
 type Roster = { studentId: number; name: string; email: string; status: string | null; note: string | null; recordId: number | null };
 type Resp = { session: { id: number; title: string; scheduledAt: string; locationOrLink: string | null }; roster: Roster[] };
@@ -42,8 +43,23 @@ export default function AdminSessionAttendance() {
     onError: (e: any) => toast({ title: "실패", description: e?.data?.error ?? e.message, variant: "destructive" }),
   });
 
-  if (isLoading || !data) return <AdminLayout><div className="flex justify-center py-12"><Loader2 className="animate-spin" /></div></AdminLayout>;
+  // 로딩과 "없음"을 갈라야 한다. 하나로 묶으면 없는 자료를 열었을 때
 
+  // 스피너가 영원히 돈다(느린 건지 없는 건지 알 수 없다).
+
+  if (isLoading) return <AdminLayout><div className="flex justify-center py-12"><Loader2 className="animate-spin" /></div></AdminLayout>;
+
+  if (!data)
+
+    return (
+
+      <AdminLayout>
+
+        <ResourceMissing label="모임" backHref="/admin/sessions" />
+
+      </AdminLayout>
+
+    );
   return (
     <AdminLayout>
       <div className="mb-4"><Link href="/admin/sessions" className="text-sm text-muted-foreground hover:text-primary">← 모임 목록</Link></div>

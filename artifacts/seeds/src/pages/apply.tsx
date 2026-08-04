@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { koErrorMap } from "@/lib/zod-ko";
 
 type ApplyFormValues = z.input<typeof CreateApplicationBody>;
 
@@ -23,7 +24,7 @@ export default function Apply() {
   const { toast } = useToast();
 
   const form = useForm<ApplyFormValues>({
-    resolver: zodResolver(CreateApplicationBody),
+    resolver: zodResolver(CreateApplicationBody, { errorMap: koErrorMap }),
     defaultValues: {
       name: "",
       email: "",

@@ -42,6 +42,7 @@ import {
   stageLabels,
   recommendationLabels,
 } from "@/lib/seeds-labels";
+import { ResourceMissing } from "@/components/ResourceMissing";
 
 export default function AdminApplicationDetail() {
   const { id } = useParams();
@@ -206,7 +207,9 @@ export default function AdminApplicationDetail() {
     );
   };
 
-  if (isLoading || !application) {
+  // 로딩과 "없음"을 갈라야 한다. 하나로 묶으면 없는 자료를 열었을 때
+  // 스피너가 영원히 돈다(느린 건지 없는 건지 알 수 없다).
+  if (isLoading) {
     return (
       <AdminLayout>
         <div className="flex justify-center py-24">
@@ -215,7 +218,13 @@ export default function AdminApplicationDetail() {
       </AdminLayout>
     );
   }
-
+  if (!application) {
+    return (
+      <AdminLayout>
+        <ResourceMissing label="지원서" backHref="/admin/applications" />
+      </AdminLayout>
+    );
+  }
   const evaluatorOptions = (evaluators.data?.items ?? []).filter((u) => u.isActive);
 
   return (

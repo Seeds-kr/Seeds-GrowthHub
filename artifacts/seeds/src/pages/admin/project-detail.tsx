@@ -22,6 +22,7 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 import { RemovableTag } from "@/components/RemovableTag";
+import { ResourceMissing } from "@/components/ResourceMissing";
 
 type MentorAssignment = {
   id: number; mentorUserId: number; mentorName: string; mentorEmail: string;
@@ -157,7 +158,23 @@ export default function AdminProjectDetail() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-tag-mappings", "project", id] }),
   });
 
-  if (isLoading || !data) return <AdminLayout><Loader2 className="animate-spin mx-auto" /></AdminLayout>;
+  // 로딩과 "없음"을 갈라야 한다. 하나로 묶으면 없는 자료를 열었을 때
+
+  // 스피너가 영원히 돈다(느린 건지 없는 건지 알 수 없다).
+
+  if (isLoading) return <AdminLayout><Loader2 className="animate-spin mx-auto" /></AdminLayout>;
+
+  if (!data)
+
+    return (
+
+      <AdminLayout>
+
+        <ResourceMissing label="프로젝트" backHref="/admin/projects" />
+
+      </AdminLayout>
+
+    );
   const p = data.project;
 
   return (

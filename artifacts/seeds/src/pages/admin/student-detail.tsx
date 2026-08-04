@@ -11,6 +11,7 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 import { Copy, Check, KeyRound } from "lucide-react";
+import { ResourceMissing } from "@/components/ResourceMissing";
 
 type Detail = {
   student: {
@@ -55,7 +56,23 @@ export default function AdminStudentDetail() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-student", id] }),
   });
 
-  if (isLoading || !data) return <AdminLayout><div className="flex justify-center py-12"><Loader2 className="animate-spin" /></div></AdminLayout>;
+  // 로딩과 "없음"을 갈라야 한다. 하나로 묶으면 없는 자료를 열었을 때
+
+  // 스피너가 영원히 돈다(느린 건지 없는 건지 알 수 없다).
+
+  if (isLoading) return <AdminLayout><div className="flex justify-center py-12"><Loader2 className="animate-spin" /></div></AdminLayout>;
+
+  if (!data)
+
+    return (
+
+      <AdminLayout>
+
+        <ResourceMissing label="학생" backHref="/admin/students" />
+
+      </AdminLayout>
+
+    );
   const s = data.student;
 
   return (
