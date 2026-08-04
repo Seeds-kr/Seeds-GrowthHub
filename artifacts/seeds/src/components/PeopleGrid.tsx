@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
 import { Stagger, StaggerItem } from "@/lib/motion";
+import { SurfaceCard } from "@/components/SurfaceCard";
 import { ArrowRight, Loader2, Phone } from "lucide-react";
 import {
   api,
@@ -30,18 +30,7 @@ import {
  */
 function Card({ p }: { p: PublicPeopleProfile }) {
   return (
-    <Link
-      href={`/people/${p.kind}/${p.id}`}
-      className="spotlight-card group flex h-full flex-col border border-border bg-card p-6 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-1 hover:border-primary hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-      onPointerMove={(e) => {
-        // 광원 좌표. CSS 변수로만 흘려서 리렌더가 없다(lib/motion.tsx 와 같은 방식).
-        if (e.pointerType !== "mouse") return;
-        const el = e.currentTarget as HTMLElement;
-        const r = el.getBoundingClientRect();
-        el.style.setProperty("--spot-x", `${e.clientX - r.left}px`);
-        el.style.setProperty("--spot-y", `${e.clientY - r.top}px`);
-      }}
-    >
+    <SurfaceCard href={`/people/${p.kind}/${p.id}`} className="h-full">
       <div className="aspect-square w-full mb-4 bg-muted overflow-hidden">
         {p.photoUrl ? (
           <img
@@ -96,7 +85,7 @@ function Card({ p }: { p: PublicPeopleProfile }) {
           <ArrowRight className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-1" />
         </div>
       </div>
-    </Link>
+    </SurfaceCard>
   );
 }
 

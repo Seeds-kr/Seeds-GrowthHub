@@ -6,7 +6,8 @@ import { ArrowRight } from "lucide-react";
 import seedsHero from "@assets/image_1779550028961.png";
 import { LiquidBackdrop } from "@/components/LiquidBackdrop";
 import { HorizontalDrift } from "@/components/HorizontalDrift";
-import { CountUp, Magnetic, Reveal, Spotlight, Stagger, StaggerItem } from "@/lib/motion";
+import { CountUp, Magnetic, Reveal, Stagger, StaggerItem } from "@/lib/motion";
+import { SurfaceCard } from "@/components/SurfaceCard";
 
 /**
  * 공개 홈.
@@ -152,13 +153,13 @@ export default function Home() {
           <Stagger className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {c.projects.items.map((p, i) => (
               <StaggerItem key={i}>
-                <Spotlight className="spotlight-card h-full rounded-lg border border-border bg-card p-6 transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg">
+                <SurfaceCard className="h-full">
                   <div className="mb-4 inline-flex items-center self-start rounded bg-primary/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-primary">
                     {p.status}
                   </div>
                   <h3 className="mb-3 text-lg font-bold">{p.title}</h3>
                   <p className="text-sm leading-relaxed text-muted-foreground">{p.summary}</p>
-                </Spotlight>
+                </SurfaceCard>
               </StaggerItem>
             ))}
           </Stagger>
@@ -186,17 +187,7 @@ export default function Home() {
 
         <HorizontalDrift className="gap-6 pl-[max(1rem,calc((100vw-56rem)/2))] pr-8">
           {c.activities.items.map((a, i) => (
-            <article
-              key={i}
-              className="spotlight-card flex w-[17rem] shrink-0 snap-start flex-col rounded-lg border border-border bg-card p-7 transition-[border-color,box-shadow] duration-200 hover:border-primary/40 hover:shadow-lg md:w-[19rem]"
-              onPointerMove={(e) => {
-                if (e.pointerType !== "mouse") return;
-                const el = e.currentTarget;
-                const r = el.getBoundingClientRect();
-                el.style.setProperty("--spot-x", `${e.clientX - r.left}px`);
-                el.style.setProperty("--spot-y", `${e.clientY - r.top}px`);
-              }}
-            >
+            <SurfaceCard key={i} className="w-[17rem] shrink-0 snap-start md:w-[19rem]">
               {/* 연도를 크게 각인한다. 가로로 흐르는 동안 지금 어느 해를 보고
                   있는지가 한눈에 잡혀야 한다. */}
               <div className="font-serif text-5xl font-bold tabular-nums leading-none text-primary">
@@ -204,7 +195,7 @@ export default function Home() {
               </div>
               <h3 className="mt-5 text-lg font-bold">{a.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{a.summary}</p>
-            </article>
+            </SurfaceCard>
           ))}
         </HorizontalDrift>
       </section>

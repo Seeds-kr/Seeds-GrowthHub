@@ -57,6 +57,15 @@ journalctl -u seeds-api -n 50
 zcat backups/growthhub-<날짜>.sql.gz | docker exec -i seeds_growthhub_pg psql -U growthhub -d growthhub
 ```
 
+### 옛 컨테이너를 남겨 둔 이유
+
+`growthhub_pg_OLD_20260804` (정지 상태)가 이름 없는 옛 볼륨을 붙들고 있다. 새 볼륨이
+멀쩡한 걸 며칠 지켜본 뒤 지우면 된다. 지울 때는 볼륨까지 같이 지워야 디스크가 돈다:
+
+```bash
+docker rm -v growthhub_pg_OLD_20260804
+```
+
 ## 스키마 마이그레이션
 
 `db push` 만 쓰면 어떤 SQL 이 나갔는지 아무 데도 안 남아서, 다른 환경에 같은 상태를 다시
