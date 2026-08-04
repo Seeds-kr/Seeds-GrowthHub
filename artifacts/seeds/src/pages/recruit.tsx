@@ -2,139 +2,149 @@ import { PublicLayout } from "@/components/layout/PublicLayout";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useSiteContent, RECRUIT_DEFAULT } from "@/lib/site-content";
-import { Cover, Plate, Entry, SealPlate, annualRule } from "@/components/annual";
 
-/**
- * 모집 — 기수 연감(DESIGN.md)의 판면.
- *
- * 공개 표면 중 유일하게 결정을 요구하는 화면이라 판 순서가 곧 설득 순서다:
- * 무엇인가(01) → 누구를 찾는가(02) → 1년이 어떻게 흐르는가(03) →
- * 언제 뽑는가(04) → 흔한 의문(05) → 지원.
- *
- * eyebrow 6개를 전부 걷어냈다. 판 번호가 그 자리를 대신하는데, 여기서는
- * 번호가 실제로 기능한다 — 순서가 지원자가 밟는 경로다.
- */
 export default function Recruit() {
   const { value: c } = useSiteContent("page.recruit", RECRUIT_DEFAULT);
   return (
     <PublicLayout>
-      <Cover
-        title={`${c.hero.headlineLine1}\n${c.hero.headlineLine2}`}
-        intro={c.hero.body}
-      >
+      {/* Hero */}
+      <section className="py-24 md:py-32 flex flex-col items-center justify-center text-center px-4 bg-gradient-to-b from-muted/50 to-background">
+        <div className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-6 font-medium">
+          {c.hero.eyebrow}
+        </div>
+        <h1 className="text-4xl md:text-6xl font-serif font-bold tracking-tight text-foreground max-w-3xl mb-6 leading-tight">
+          {c.hero.headlineLine1}<br />{c.hero.headlineLine2}
+        </h1>
+        <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mb-10 leading-relaxed whitespace-pre-line">
+          {c.hero.body}
+        </p>
         <Link href="/apply">
-          <Button size="lg" className="mt-9 h-13 px-8 text-base">
+          <Button size="lg" className="text-lg px-8 h-14 rounded-none">
             {c.hero.ctaLabel}
           </Button>
         </Link>
-      </Cover>
+      </section>
 
-      <Plate no="01" title={c.intro.title} lead={c.intro.body}>
-        <div className="grid gap-x-10 gap-y-8 md:grid-cols-3">
-          {c.intro.features.map((f, i) => (
-            <Entry
-              key={i}
-              label={String(i + 1).padStart(2, "0")}
-              title={f.title}
-              body={f.desc}
-            />
-          ))}
+      {/* What is Seeds? */}
+      <section className="py-24 px-4 border-t border-border">
+        <div className="container mx-auto max-w-4xl">
+          <div className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-3 font-medium">
+            {c.intro.eyebrow}
+          </div>
+          <h2 className="text-3xl md:text-4xl font-serif font-bold mb-6">{c.intro.title}</h2>
+          <p className="text-muted-foreground text-lg leading-relaxed mb-12 max-w-3xl whitespace-pre-line">
+            {c.intro.body}
+          </p>
+          <div className="grid md:grid-cols-3 gap-6">
+            {c.intro.features.map((f, i) => (
+              <div key={i} className="border border-border bg-card p-8">
+                <div className="text-sm text-primary font-semibold mb-3">0{i + 1}</div>
+                <h3 className="text-xl font-bold mb-3">{f.title}</h3>
+                <p className="text-muted-foreground leading-relaxed">{f.desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
-      </Plate>
+      </section>
 
-      <Plate no="02" title={c.applicants.title}>
-        <ul className="grid gap-x-12 md:grid-cols-2">
-          {c.applicants.items.map((item, i) => (
-            <li
-              key={i}
-              className="flex items-baseline gap-4 border-t py-4"
-              style={annualRule}
-            >
-              <span className="plate-no shrink-0 text-[11px]">
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <p className="leading-relaxed">{item}</p>
-            </li>
-          ))}
-        </ul>
-      </Plate>
-
-      {/* 1년의 흐름 — 연감의 색인과 같은 판형(왼쪽 시기, 오른쪽 내용). */}
-      <Plate no="03" title={c.flow.title}>
-        <ol>
-          {c.flow.steps.map((step, i) => (
-            <li
-              key={i}
-              className="grid grid-cols-[5rem_1fr] items-baseline gap-x-5 border-t py-5 md:grid-cols-[9rem_1fr] md:gap-x-8"
-              style={annualRule}
-            >
-              <span className="text-sm font-bold tracking-[-0.01em] md:text-base">
-                {step.month}
-              </span>
-              <div>
-                <h3 className="text-base font-bold tracking-[-0.02em] md:text-lg">
-                  {step.title}
-                </h3>
-                <p className="mt-1 max-w-[62ch] text-sm leading-relaxed text-muted-foreground">
-                  {step.desc}
-                </p>
+      {/* Who should apply? */}
+      <section className="py-24 px-4 bg-muted/30 border-t border-border">
+        <div className="container mx-auto max-w-4xl">
+          <div className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-3 font-medium">
+            {c.applicants.eyebrow}
+          </div>
+          <h2 className="text-3xl md:text-4xl font-serif font-bold mb-12">{c.applicants.title}</h2>
+          <div className="grid md:grid-cols-2 gap-x-12 gap-y-6">
+            {c.applicants.items.map((item, i) => (
+              <div key={i} className="flex items-start gap-4 py-3 border-b border-border/60">
+                <span className="font-serif text-primary font-bold text-lg leading-none mt-1">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <p className="text-foreground leading-relaxed">{item}</p>
               </div>
-            </li>
-          ))}
-        </ol>
-      </Plate>
+            ))}
+          </div>
+        </div>
+      </section>
 
-      <Plate no="04" title={c.schedule.title}>
-        <ol>
-          {c.schedule.steps.map((step, i) => (
-            <li
-              key={i}
-              className="grid grid-cols-[5rem_1fr] items-baseline gap-x-5 border-t py-5 md:grid-cols-[9rem_1fr] md:gap-x-8"
-              style={annualRule}
-            >
-              <span className="text-sm font-bold tabular-nums md:text-base">
-                {step.date}
-              </span>
-              <div>
-                <h3 className="text-base font-bold tracking-[-0.02em] md:text-lg">
-                  {step.phase}
-                </h3>
-                <p className="mt-1 max-w-[62ch] text-sm leading-relaxed text-muted-foreground">
-                  {step.desc}
-                </p>
+      {/* Program flow */}
+      <section className="py-24 px-4 border-t border-border">
+        <div className="container mx-auto max-w-5xl">
+          <div className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-3 font-medium">
+            {c.flow.eyebrow}
+          </div>
+          <h2 className="text-3xl md:text-4xl font-serif font-bold mb-12">{c.flow.title}</h2>
+          <div className="grid md:grid-cols-4 gap-px bg-border border border-border">
+            {c.flow.steps.map((step, i) => (
+              <div key={i} className="bg-card p-8">
+                <div className="text-sm text-primary font-semibold mb-2">{step.month}</div>
+                <h3 className="text-xl font-bold mb-3">{step.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
               </div>
-            </li>
-          ))}
-        </ol>
-      </Plate>
+            ))}
+          </div>
+        </div>
+      </section>
 
-      <Plate no="05" title={c.faqTeaser.title}>
-        <dl>
-          {c.faqTeaser.items.map((item, i) => (
-            <div key={i} className="border-t py-5" style={annualRule}>
-              <dt className="text-base font-bold tracking-[-0.02em]">
-                {item.q}
-              </dt>
-              <dd className="mt-2 max-w-[68ch] leading-relaxed text-muted-foreground">
-                {item.a}
-              </dd>
-            </div>
-          ))}
-        </dl>
-        <Link href="/faq">
-          <Button variant="outline" className="mt-8">
-            {c.faqTeaser.ctaLabel}
-          </Button>
-        </Link>
-      </Plate>
+      {/* Recruitment schedule */}
+      <section className="py-24 px-4 bg-muted/30 border-t border-border">
+        <div className="container mx-auto max-w-4xl">
+          <div className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-3 font-medium">
+            {c.schedule.eyebrow}
+          </div>
+          <h2 className="text-3xl md:text-4xl font-serif font-bold mb-12">{c.schedule.title}</h2>
+          <div className="grid md:grid-cols-4 gap-8">
+            {c.schedule.steps.map((step, i) => (
+              <div key={i} className="flex flex-col p-6 border border-border bg-card">
+                <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
+                  Step {i + 1}
+                </div>
+                <div className="text-sm font-semibold text-primary mb-2">{step.date}</div>
+                <div className="text-xl font-bold mb-3">{step.phase}</div>
+                <div className="text-sm text-muted-foreground">{step.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-      <SealPlate title={c.cta.title} body={c.cta.body}>
-        <Link href="/apply">
-          <Button size="lg" variant="secondary" className="mt-8 h-13 px-8 text-base">
-            {c.cta.ctaLabel}
-          </Button>
-        </Link>
-      </SealPlate>
+      {/* FAQ teaser */}
+      <section className="py-24 px-4 border-t border-border">
+        <div className="container mx-auto max-w-4xl">
+          <div className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-3 font-medium">
+            {c.faqTeaser.eyebrow}
+          </div>
+          <h2 className="text-3xl md:text-4xl font-serif font-bold mb-12">{c.faqTeaser.title}</h2>
+          <div className="space-y-4 mb-10">
+            {c.faqTeaser.items.map((item, i) => (
+              <div key={i} className="border border-border bg-card p-6">
+                <h3 className="font-bold mb-2">Q. {item.q}</h3>
+                <p className="text-muted-foreground leading-relaxed">{item.a}</p>
+              </div>
+            ))}
+          </div>
+          <Link href="/faq">
+            <Button variant="outline" className="rounded-none">
+              {c.faqTeaser.ctaLabel}
+            </Button>
+          </Link>
+        </div>
+      </section>
+
+      {/* Apply CTA */}
+      <section className="py-24 px-4 bg-primary text-primary-foreground">
+        <div className="container mx-auto max-w-3xl text-center">
+          <h2 className="text-3xl md:text-4xl font-serif font-bold mb-6">{c.cta.title}</h2>
+          <p className="text-primary-foreground text-lg mb-10 leading-relaxed whitespace-pre-line">
+            {c.cta.body}
+          </p>
+          <Link href="/apply">
+            <Button size="lg" variant="secondary" className="text-lg px-8 h-14 rounded-none">
+              {c.cta.ctaLabel}
+            </Button>
+          </Link>
+        </div>
+      </section>
     </PublicLayout>
   );
 }

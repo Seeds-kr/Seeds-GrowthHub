@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
+import { RemovableTag } from "@/components/RemovableTag";
 
 type MentorAssignment = {
   id: number; mentorUserId: number; mentorName: string; mentorEmail: string;
@@ -404,7 +405,7 @@ export default function AdminProjectDetail() {
           <CardContent>
             <div className="flex flex-wrap gap-2 mb-3">
               {(tagMappings?.items ?? []).map((m) => (
-                <Badge key={m.mappingId} variant="outline" className="cursor-pointer" onClick={() => detachTag.mutate(m.mappingId)}>{m.name} ✕</Badge>
+                <RemovableTag key={m.mappingId} name={m.name} onRemove={() => detachTag.mutate(m.mappingId)} disabled={detachTag.isPending} />
               ))}
               {(tagMappings?.items ?? []).length === 0 && <span className="text-sm text-muted-foreground">태그가 없습니다.</span>}
             </div>

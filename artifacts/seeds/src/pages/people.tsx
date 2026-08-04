@@ -34,8 +34,6 @@ export default function PeoplePage() {
 
   return (
     <PublicLayout>
-      {/* PeopleGrid 가 자체 표제를 이미 갖고 있다. Cover 를 얹었더니 "사람들"이
-          두 번 나왔다 — 표제는 그리드 안에 두고 여기서는 감싸지 않는다. */}
       <PeopleGrid kind={kind} onKindChange={handleChange} />
     </PublicLayout>
   );

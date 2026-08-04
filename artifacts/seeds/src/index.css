@@ -71,8 +71,14 @@
   --popover-foreground: 220 15% 8%;
   --popover-border: 220 12% 91%;
 
-  /* Primary: vivid, confident green — modern startup energy, not literary */
-  --primary: 152 70% 32%;
+  /* Primary: vivid, confident green — modern startup energy, not literary
+     32% → 30%. 명도만 2%p 내렸다. 공개 6면에서 잰 명암비 미달 27건이 전부
+     이 한 값에서 나왔고 전부 같은 4.32:1 이었다(필요 4.5):
+       흰 글자 on bg-primary  (지원하기 버튼 등)
+       text-primary on 흰 배경 (nav 현재 항목·본문 링크·목록 불릿)
+     같은 색 조합이라 두 방향의 비가 같다. 30%면 4.83:1 로 둘 다 통과한다.
+     색상(152)과 채도(70%)는 건드리지 않아 브랜드 그린 그대로다. */
+  --primary: 152 70% 30%;
   --primary-foreground: 0 0% 100%;
 
   --secondary: 220 14% 96%;
@@ -82,23 +88,23 @@
   --muted-foreground: 220 9% 42%;
 
   /* Accent reuses primary green for system consistency */
-  --accent: 152 70% 32%;
+  --accent: 152 70% 30%;
   --accent-foreground: 0 0% 100%;
 
   --destructive: 0 72% 45%;
   --destructive-foreground: 0 0% 100%;
 
   --input: 220 12% 91%;
-  --ring: 152 70% 32%;
+  --ring: 152 70% 30%;
 
   --sidebar: 0 0% 100%;
   --sidebar-foreground: 220 15% 8%;
   --sidebar-border: 220 12% 91%;
-  --sidebar-primary: 152 70% 32%;
+  --sidebar-primary: 152 70% 30%;
   --sidebar-primary-foreground: 0 0% 100%;
   --sidebar-accent: 220 14% 96%;
   --sidebar-accent-foreground: 220 15% 8%;
-  --sidebar-ring: 152 70% 32%;
+  --sidebar-ring: 152 70% 30%;
 
   --app-font-sans: 'Pretendard Variable', Pretendard, 'Inter', -apple-system,
     BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Segoe UI', Roboto, sans-serif;
@@ -181,109 +187,5 @@
     letter-spacing: 0.18em;
     text-transform: uppercase;
     color: hsl(var(--primary));
-  }
-}
-
-/* ── 기수 연감 (Cohort Annual) — 공개 표면 전용 ─────────────────────────────
-   DESIGN.md의 세계. `.annual` 안에서만 색이 바뀌므로 어드민·학생·멘토 화면은
-   영향을 받지 않는다(그쪽은 Operate 면이라 밀도와 익숙한 어포던스가 우선).
-   전역 토큰을 갈아엎지 않는 이유이기도 하다 — e2e가 검증한 표면을 흔들지 않는다. */
-@layer base {
-  .annual {
-    --paper: 40 30% 97%;
-    --ink: 220 15% 12%;
-    --ink-muted: 220 10% 40%;
-    --seal: 152 70% 26%;
-    --rule: 40 15% 82%;
-    /* 한 톤 내려앉은 종이 — 도판 자리와 사진 없는 초상판의 바탕.
-       회색을 쓰면 미색 판면에서 죽은 자국처럼 뜬다. */
-    --paper-2: 40 22% 93%;
-
-    /* shadcn 토큰을 연감 쪽으로 갈아끼운다.
-       헤더·푸터가 `.annual` 안에 있으면서도 전역 브랜드 그린(--primary 32%)을
-       쓰고 있었고, 그게 실측 명암비 미달 두 건의 원인이었다:
-         text-primary  본문 크기 링크  4.07 : 1  (필요 4.5)
-         bg-primary    흰 글자 버튼    4.32 : 1  (필요 4.5)
-       도장색(26%)으로 내리면 각각 5.62 : 1 과 6.03 : 1 이 된다.
-       공개 표면 전체가 한 번에 고쳐지고 어드민·학생·멘토 화면은 그대로다. */
-    --primary: var(--seal);
-    --primary-foreground: 0 0% 100%;
-    --ring: var(--seal);
-
-    /* 이 프로젝트는 --accent 가 --primary 와 같은 값이라, hover:bg-accent 가
-       걸린 자리는 브랜드 그린으로 채워진다. 종이 위에서는 한 톤 내린 종이여야 한다. */
-    --accent: var(--paper-2);
-    --accent-foreground: var(--ink);
-    --muted: var(--paper-2);
-    --muted-foreground: var(--ink-muted);
-    --border: var(--rule);
-    --input: var(--rule);
-    --card: var(--paper);
-    --card-foreground: var(--ink);
-
-    background-color: hsl(var(--paper));
-    color: hsl(var(--ink));
-  }
-
-  /* 미색 종이 위에서는 본문도 잉크색 계열이어야 한다. 색 있는 바탕 위의
-     회색 본문은 craft-floor가 금지하는 조합이고, 대비도 떨어진다. */
-  .annual .text-muted-foreground {
-    color: hsl(var(--ink-muted));
-  }
-
-  /* 연감의 구획은 카드가 아니라 괘선이 만든다. */
-  .annual hr,
-  .annual .rule {
-    border-color: hsl(var(--rule));
-  }
-
-  /* 판 번호 — 순서가 정보인 자리에서만 쓴다. */
-  .annual .plate-no {
-    font-variant-numeric: tabular-nums;
-    /* 0.14em 은 숫자에는 맞지만 한글 캡션("수록 인원"·"운영 기간")에서는 자간이
-       벌어져 낱자로 흩어진다. 이 클래스가 둘 다 받으므로 한글이 견디는 폭으로 내린다. */
-    letter-spacing: 0.1em;
-    color: hsl(var(--ink-muted));
-  }
-
-  /* 첫 진입에서 연도 각인이 종이에 눌리듯 자리를 잡는다.
-     이미 보이는 상태에서 출발하므로 JS가 죽어도 내용은 보인다. */
-  @keyframes annual-press {
-    from { opacity: 0.55; transform: translateY(6px); }
-    to   { opacity: 1;    transform: translateY(0); }
-  }
-  .annual .press-in {
-    animation: annual-press 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .annual .press-in { animation: none; }
-  }
-}
-
-/* ── 연감 물성 ─────────────────────────────────────────────────────────────
-   1차 시도는 색만 미색으로 바꾸고 질감을 0으로 뒀다. 그래서 "절제"가 아니라
-   "안 만든 것"으로 읽혔다. 종이는 색이 아니라 표면이다. */
-@layer base {
-  /* 종이 결. 이미지 없이 미세한 얼룩만 얹어 평면을 깬다.
-     불투명도가 낮아 인쇄물의 기색만 남고 본문 대비를 건드리지 않는다. */
-  .annual {
-    background-image:
-      radial-gradient(hsl(40 20% 60% / 0.055) 0.5px, transparent 0.5px),
-      radial-gradient(hsl(40 20% 55% / 0.04) 0.5px, transparent 0.5px);
-    background-size: 13px 13px, 21px 21px;
-    background-position: 0 0, 7px 11px;
-  }
-
-  /* 잉크 눌림 — 큰 각인에만. 종이에 활자가 박힌 자국을 아주 얕게 흉내낸다.
-     오프셋 없는 색 후광이 아니라 방향과 번짐이 있는 그림자다. */
-  .annual .ink-press {
-    text-shadow:
-      0 1px 0 hsl(40 30% 99% / 0.9),
-      0 2px 3px hsl(220 15% 12% / 0.14);
-  }
-
-  /* 판 가장자리 — 두 겹 괘선. 인쇄물의 재단선처럼 얇은 선이 하나 더 붙는다. */
-  .annual .plate-edge {
-    box-shadow: inset 0 1px 0 hsl(40 30% 99%), inset 0 -1px 0 hsl(40 15% 88%);
   }
 }

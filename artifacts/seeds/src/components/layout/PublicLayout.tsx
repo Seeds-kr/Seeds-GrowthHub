@@ -14,46 +14,25 @@ export function PublicLayout({ children }: { children: ReactNode }) {
     { label: "FAQ", href: "/faq" },
   ];
 
-  // `.annual` — DESIGN.md의 기수 연감 세계. 헤더·푸터까지 같은 종이 위에 있어야
-  // 이음매가 생기지 않는다. 공개 표면 전체가 이 세계를 공유하고, 어드민·학생·멘토는
-  // 이 밖에 있으므로 영향을 받지 않는다.
   return (
-    <div className="annual min-h-[100dvh] flex flex-col">
-      <header className="sticky top-0 z-50 w-full border-b backdrop-blur-md" style={{ borderColor: "hsl(var(--rule))", backgroundColor: "hsl(var(--paper) / 0.85)" }}>
+    <div className="min-h-[100dvh] flex flex-col bg-background text-foreground">
+      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-md">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          {/* 워드마크에 `font-serif`가 남아 있었다 — DESIGN.md는 Pretendard 단일
-              서체 세계라 헤더만 다른 활자로 서 있던 셈이다. 판번호처럼 도장색
-              사각을 앞에 붙여 연감의 표식으로 만든다. */}
-          <Link href="/" className="group flex items-center gap-2.5">
-            <span
-              className="grid h-6 w-6 place-items-center text-[13px] font-bold leading-none"
-              style={{ backgroundColor: "hsl(var(--seal))", color: "hsl(0 0% 100%)" }}
-              aria-hidden="true"
-            >
-              S
-            </span>
-            <span className="text-xl font-bold tracking-[-0.03em]">Seeds</span>
+          <Link href="/" className="font-serif text-xl font-bold tracking-tight text-primary">
+            Seeds
           </Link>
           <nav className="hidden md:flex items-center gap-8">
-            {navItems.map((item) => {
-              const on = location === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  aria-current={on ? "page" : undefined}
-                  /* 현재 위치는 색이 아니라 굵기와 밑줄로도 말한다 — 색만으로
-                     상태를 전하지 않는다. */
-                  className={`border-b-2 py-0.5 text-sm transition-colors ${
-                    on
-                      ? "border-current font-bold text-foreground"
-                      : "border-transparent font-medium text-muted-foreground hover:border-current hover:text-foreground"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`text-sm font-medium transition-colors hover:text-primary ${
+                  location === item.href ? "text-primary" : "text-muted-foreground"
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
           </nav>
           <div className="flex items-center gap-2">
             <Link href="/login">
@@ -81,7 +60,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
         </div>
       </header>
       <main className="flex-1 flex flex-col">{children}</main>
-      <footer className="border-t" style={{ borderColor: "hsl(var(--rule))" }}>
+      <footer className="border-t border-border bg-muted/30">
         <div className="container mx-auto px-4 py-12 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
           <div>&copy; {new Date().getFullYear()} Seeds Program. All rights reserved.</div>
           <div className="flex items-center gap-4">

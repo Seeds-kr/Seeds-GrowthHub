@@ -250,6 +250,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
           <div
             className="absolute inset-0 bg-black/40"
             onClick={() => setMobileOpen(false)}
+            aria-hidden="true"
           />
           <aside className="relative flex flex-col w-72 max-w-[85vw] bg-card border-r border-border">
             <div className="h-14 px-4 flex items-center justify-between border-b border-border">

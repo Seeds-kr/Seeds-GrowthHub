@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState } from "react";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
+import { RemovableTag } from "@/components/RemovableTag";
 
 function TimelineItem({ r, allTags, onChange }: { r: ActivityRecord; allTags?: SkillTag[]; onChange: () => void }) {
   const qc = useQueryClient();
@@ -42,7 +43,7 @@ function TimelineItem({ r, allTags, onChange }: { r: ActivityRecord; allTags?: S
         {r.description && <div className="text-sm whitespace-pre-wrap">{r.description}</div>}
         <div className="flex flex-wrap gap-1">
           {(mappings?.items ?? []).map((m) => (
-            <Badge key={m.mappingId} variant="outline" className="rounded-none cursor-pointer" onClick={() => detach.mutate(m.mappingId)}>{m.name} ✕</Badge>
+            <RemovableTag key={m.mappingId} name={m.name} onRemove={() => detach.mutate(m.mappingId)} disabled={detach.isPending} />
           ))}
           <Select value={tagSel} onValueChange={setTagSel}>
             <SelectTrigger className="rounded-none w-32 h-7"><SelectValue placeholder="+ 태그" /></SelectTrigger>
