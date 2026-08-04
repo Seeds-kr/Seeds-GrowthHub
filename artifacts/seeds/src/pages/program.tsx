@@ -17,7 +17,7 @@ export default function Program() {
       <Cover title={c.title} />
 
       <Plate no="01" title={c.curriculum.heading}>
-        <dl className="mt-6">
+        <dl>
           {c.curriculum.items.map((it, i) => (
             <div
               key={i}
@@ -36,7 +36,7 @@ export default function Program() {
       </Plate>
 
       <SealPlate no="02" title={c.benefits.heading}>
-        <ul className="mt-7 grid gap-x-10 gap-y-4 sm:grid-cols-2">
+        <ul className="mt-9 grid gap-x-10 gap-y-4 sm:grid-cols-2">
           {c.benefits.items.map((it, i) => (
             <li
               key={i}

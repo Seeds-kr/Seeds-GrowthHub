@@ -34,7 +34,7 @@ export default function About() {
         const img = imageFor(s.heading);
         return (
           <Plate key={i} no={String(i + 1).padStart(2, "0")} title={s.heading}>
-            <p className="mt-3 max-w-[68ch] whitespace-pre-line text-base leading-[1.75] text-muted-foreground">
+            <p className="max-w-[68ch] whitespace-pre-line text-base leading-[1.75] text-muted-foreground">
               {s.body}
             </p>
             {img ? (
@@ -59,7 +59,7 @@ export default function About() {
           no={String(c.sections.length + 1).padStart(2, "0")}
           title="핵심 가치"
         >
-          <div className="mt-8 grid gap-x-10 gap-y-8 sm:grid-cols-3">
+          <div className="grid gap-x-10 gap-y-8 sm:grid-cols-3">
             {c.values.map((v, i) => (
               <Entry key={i} title={v.label} body={v.desc} />
             ))}
@@ -68,7 +68,7 @@ export default function About() {
       ) : null}
 
       <Plate title="문의">
-        <ul className="mt-3 space-y-1.5 text-sm text-muted-foreground">
+        <ul className="space-y-1.5 text-sm text-muted-foreground">
           <li>
             이메일{" "}
             <a

@@ -2,6 +2,8 @@ import { PublicLayout } from "@/components/layout/PublicLayout";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useSiteContent, HOME_DEFAULT } from "@/lib/site-content";
+import { MentorRoster } from "@/components/MentorRoster";
+import { Plate } from "@/components/annual";
 import { ArrowRight } from "lucide-react";
 
 /**
@@ -30,25 +32,36 @@ export default function Home() {
         {/* ── 표지 ───────────────────────────────────────────────────────── */}
         <section className="border-b" style={{ borderColor: "hsl(var(--rule))" }}>
           <div className="container mx-auto max-w-5xl px-4 py-20 md:py-28">
+            {/* 표지의 활자 낙차가 이 판면의 전부다. 연도 각인과 그 옆에 붙는
+                캡션의 크기 차이를 크게 벌린다 — 1차 시도는 제목 3rem·본문 1rem이
+                전부라 위계가 밋밋했다. */}
             <div className="press-in">
-              <div
-                className="font-bold leading-[0.85] tracking-[-0.05em]"
-                style={{
-                  fontSize: "clamp(4rem, 12vw, 9rem)",
-                  color: "hsl(var(--seal))",
-                }}
-              >
-                {currentYear}
+              <div className="flex flex-wrap items-end gap-x-7 gap-y-3">
+                <div
+                  className="ink-press font-bold leading-[0.8] tracking-[-0.055em]"
+                  style={{
+                    fontSize: "clamp(4.5rem, 14vw, 11rem)",
+                    color: "hsl(var(--seal))",
+                  }}
+                >
+                  {currentYear}
+                </div>
+                <div className="pb-3 md:pb-5">
+                  <div className="plate-no text-[11px] uppercase">기수 기록</div>
+                  <div className="mt-1 text-sm font-semibold tracking-[-0.01em]">
+                    Seeds GrowthHub
+                  </div>
+                </div>
               </div>
               <h1
-                className="mt-6 max-w-3xl whitespace-pre-line font-bold leading-[1.15] tracking-[-0.035em]"
-                style={{ fontSize: "clamp(2rem, 4vw, 3.25rem)" }}
+                className="mt-7 max-w-3xl whitespace-pre-line font-bold leading-[1.12] tracking-[-0.04em]"
+                style={{ fontSize: "clamp(2.125rem, 4.6vw, 3.75rem)" }}
               >
                 {c.hero.title}
               </h1>
             </div>
 
-            <p className="mt-7 max-w-[68ch] whitespace-pre-line text-base leading-[1.7] text-muted-foreground md:text-lg">
+            <p className="mt-7 max-w-[64ch] whitespace-pre-line text-base leading-[1.7] text-muted-foreground md:text-lg">
               {c.hero.body}
             </p>
 
@@ -68,11 +81,19 @@ export default function Home() {
             {/* 판권 정보처럼 표지 아래에 붙는 사실들. 큰 숫자 카드 격자(hero-metric
                 템플릿)를 쓰지 않는 이유는 그것이 이 카테고리의 기본값이기 때문이고,
                 연감에서 수치는 자랑이 아니라 기록이라 작게 놓인다. */}
-            <dl className="mt-14 flex flex-wrap gap-x-10 gap-y-4 border-t pt-6" style={{ borderColor: "hsl(var(--rule))" }}>
+            <dl className="mt-16 grid grid-cols-2 border-t sm:grid-cols-4" style={{ borderColor: "hsl(var(--rule))" }}>
               {c.stats.items.map((s, i) => (
-                <div key={i}>
-                  <dt className="plate-no text-xs uppercase">{s.label}</dt>
-                  <dd className="mt-1 text-xl font-bold tracking-[-0.02em]">{s.value}</dd>
+                /* 세로 괘선으로 칸을 나눈다 — 판권 정보는 표로 조판된다.
+                   첫 칸에는 왼쪽 선을 두지 않아 판면 가장자리가 열려 있게 한다. */
+                <div
+                  key={i}
+                  className="border-l py-5 pl-4 first:border-l-0 first:pl-0 sm:pl-5"
+                  style={{ borderColor: "hsl(var(--rule))" }}
+                >
+                  <dt className="plate-no text-[11px] uppercase">{s.label}</dt>
+                  <dd className="mt-1.5 text-2xl font-bold tabular-nums tracking-[-0.03em] md:text-3xl">
+                    {s.value}
+                  </dd>
                 </div>
               ))}
             </dl>
@@ -81,7 +102,7 @@ export default function Home() {
 
         {/* ── 01 색인: 연도별 기록 ───────────────────────────────────────── */}
         <Plate no="01" title={c.activities.title}>
-          <ol className="mt-2">
+          <ol>
             {c.activities.items.map((a, i) => {
               const isCurrent = i === 0;
               return (
@@ -121,10 +142,7 @@ export default function Home() {
         </Plate>
 
         {/* ── 02 무엇을 만드는가 ─────────────────────────────────────────── */}
-        <Plate no="02" title={c.about.title}>
-          <p className="mt-2 max-w-[68ch] text-base leading-[1.75] text-muted-foreground">
-            {c.about.body}
-          </p>
+        <Plate no="02" title={c.about.title} lead={c.about.body}>
           <Link
             href={c.about.ctaHref}
             className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold underline-offset-4 hover:underline"
@@ -134,11 +152,12 @@ export default function Home() {
           </Link>
         </Plate>
 
-        {/* ── 03 활동 플레이트 ───────────────────────────────────────────── */}
-        <Plate no="03" title={c.projects.title}>
-          <p className="mt-2 max-w-[68ch] text-base leading-[1.75] text-muted-foreground">
-            {c.projects.body}
-          </p>
+        {/* ── 03 인물 판 ─────────────────────────────────────────────────
+            실존 멘토진. 등록된 사람이 없으면 스스로 렌더하지 않는다. */}
+        <MentorRoster />
+
+        {/* ── 04 활동 플레이트 ───────────────────────────────────────────── */}
+        <Plate no="04" title={c.projects.title} lead={c.projects.body}>
           {/* 고정 축척 그리드 — 크기로 서열을 만들지 않는다. 카드로 감싸지 않고
               괘선으로만 구획한다(중첩 카드 금지). */}
           <div className="mt-8 grid gap-x-10 gap-y-8 sm:grid-cols-2">
@@ -158,14 +177,14 @@ export default function Home() {
           </div>
         </Plate>
 
-        {/* ── 04 아직 비어 있는 판 ───────────────────────────────────────── */}
+        {/* ── 05 아직 비어 있는 판 ───────────────────────────────────────── */}
         <section
           className="border-t"
           style={{ borderColor: "hsl(var(--rule))", backgroundColor: "hsl(var(--seal))" }}
         >
           <div className="container mx-auto max-w-5xl px-4 py-20 md:py-24">
             <div className="plate-no text-[11px] uppercase" style={{ color: "hsl(0 0% 100% / 0.7)" }}>
-              04
+              05
             </div>
             <h2
               className="mt-3 max-w-3xl text-3xl font-bold leading-[1.2] tracking-[-0.035em] md:text-4xl"
@@ -191,31 +210,5 @@ export default function Home() {
           </div>
         </section>
     </PublicLayout>
-  );
-}
-
-/**
- * 연감의 한 판. 번호는 순서가 정보인 자리에서만 쓰는 실제 기능이라 남긴다
- * (장식용 01/02/03 나열이 아니라 색인과 짝을 이룬다).
- */
-function Plate({
-  no,
-  title,
-  children,
-}: {
-  no: string;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="border-t" style={{ borderColor: "hsl(var(--rule))" }}>
-      <div className="container mx-auto max-w-5xl px-4 py-16 md:py-20">
-        <div className="plate-no text-[11px] uppercase">{no}</div>
-        <h2 className="mt-3 text-2xl font-bold tracking-[-0.03em] md:text-3xl">
-          {title}
-        </h2>
-        {children}
-      </div>
-    </section>
   );
 }

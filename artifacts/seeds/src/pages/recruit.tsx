@@ -30,7 +30,7 @@ export default function Recruit() {
       </Cover>
 
       <Plate no="01" title={c.intro.title} lead={c.intro.body}>
-        <div className="mt-8 grid gap-x-10 gap-y-8 md:grid-cols-3">
+        <div className="grid gap-x-10 gap-y-8 md:grid-cols-3">
           {c.intro.features.map((f, i) => (
             <Entry
               key={i}
@@ -43,7 +43,7 @@ export default function Recruit() {
       </Plate>
 
       <Plate no="02" title={c.applicants.title}>
-        <ul className="mt-6 grid gap-x-12 md:grid-cols-2">
+        <ul className="grid gap-x-12 md:grid-cols-2">
           {c.applicants.items.map((item, i) => (
             <li
               key={i}
@@ -61,7 +61,7 @@ export default function Recruit() {
 
       {/* 1년의 흐름 — 연감의 색인과 같은 판형(왼쪽 시기, 오른쪽 내용). */}
       <Plate no="03" title={c.flow.title}>
-        <ol className="mt-6">
+        <ol>
           {c.flow.steps.map((step, i) => (
             <li
               key={i}
@@ -85,7 +85,7 @@ export default function Recruit() {
       </Plate>
 
       <Plate no="04" title={c.schedule.title}>
-        <ol className="mt-6">
+        <ol>
           {c.schedule.steps.map((step, i) => (
             <li
               key={i}
@@ -109,7 +109,7 @@ export default function Recruit() {
       </Plate>
 
       <Plate no="05" title={c.faqTeaser.title}>
-        <dl className="mt-6">
+        <dl>
           {c.faqTeaser.items.map((item, i) => (
             <div key={i} className="border-t py-5" style={annualRule}>
               <dt className="text-base font-bold tracking-[-0.02em]">
