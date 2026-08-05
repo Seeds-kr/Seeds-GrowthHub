@@ -14,6 +14,7 @@ import { Link } from "wouter";
 import { useState } from "react";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
+import { EmptyState } from "@/components/EmptyState";
 
 const TYPES = ["orientation", "workshop", "mentoring", "project_work", "presentation", "review", "other"] as const;
 const STATUSES = ["scheduled", "completed", "cancelled"] as const;
@@ -169,7 +170,10 @@ export default function AdminSessions() {
           <TableHeader><TableRow><TableHead>제목</TableHead><TableHead>기수/프로그램</TableHead><TableHead>일시</TableHead><TableHead>담당자</TableHead><TableHead>준비</TableHead><TableHead>상태</TableHead><TableHead></TableHead></TableRow></TableHeader>
           <TableBody>
             {isLoading ? <TableRow><TableCell colSpan={7} className="h-24 text-center"><Loader2 className="animate-spin mx-auto" /></TableCell></TableRow>
-            : data?.items.length === 0 ? <TableRow><TableCell colSpan={7} className="h-24 text-center text-muted-foreground">모임이 없습니다.</TableCell></TableRow>
+            : data?.items.length === 0 ? <TableRow><TableCell colSpan={7} className="p-0">
+                <EmptyState title="모임이 없습니다."
+                  hint="모임을 만들면 출석 체크를 할 수 있습니다." />
+              </TableCell></TableRow>
             : data?.items.map((s) => (
               <TableRow key={s.id}>
                 <TableCell className="font-medium">

@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
+import { EmptyState } from "@/components/EmptyState";
 
 export default function AdminFeedback() {
   const qc = useQueryClient();
@@ -73,7 +74,9 @@ export default function AdminFeedback() {
           <TableHeader><TableRow><TableHead>날짜</TableHead><TableHead>대상</TableHead><TableHead>학생</TableHead><TableHead>유형</TableHead><TableHead>공개</TableHead><TableHead>내용</TableHead><TableHead></TableHead></TableRow></TableHeader>
           <TableBody>
             {isLoading ? <TableRow><TableCell colSpan={7} className="h-24 text-center"><Loader2 className="animate-spin mx-auto" /></TableCell></TableRow>
-            : data?.items.length === 0 ? <TableRow><TableCell colSpan={7} className="h-24 text-center text-muted-foreground">피드백이 없습니다.</TableCell></TableRow>
+            : data?.items.length === 0 ? <TableRow><TableCell colSpan={7} className="p-0">
+                <EmptyState title="피드백이 없습니다." />
+              </TableCell></TableRow>
             : data?.items.map((f) => (
               <TableRow key={f.id}>
                 <TableCell className="text-sm">{formatKoreanDate(f.createdAt)}</TableCell>

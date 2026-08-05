@@ -38,6 +38,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
+import { EmptyState } from "@/components/EmptyState";
 
 type FormState = {
   kind: PeopleKind;
@@ -246,12 +247,9 @@ export default function AdminPeople() {
               </TableRow>
             ) : !data || data.items.length === 0 ? (
               <TableRow>
-                <TableCell
-                  colSpan={7}
-                  className="h-24 text-center text-muted-foreground"
-                >
-                  항목이 없습니다.
-                </TableCell>
+                <TableCell colSpan={7} className="p-0">
+                <EmptyState title="항목이 없습니다." />
+              </TableCell>
               </TableRow>
             ) : (
               data.items.map((p) => (

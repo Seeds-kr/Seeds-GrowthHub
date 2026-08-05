@@ -29,6 +29,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { EmptyState } from "@/components/EmptyState";
 
 export default function AdminEvaluators() {
   const queryClient = useQueryClient();
@@ -175,9 +176,9 @@ export default function AdminEvaluators() {
               </TableRow>
             ) : (data?.items ?? []).length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                  등록된 평가자가 없습니다.
-                </TableCell>
+                <TableCell colSpan={5} className="p-0">
+                <EmptyState title="등록된 평가자가 없습니다." />
+              </TableCell>
               </TableRow>
             ) : (
               data?.items.map((u) => (

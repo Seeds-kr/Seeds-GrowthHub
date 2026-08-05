@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { RoleSwitcher, effectiveRoles, pickRedirectFor } from "./RoleSwitcher";
 import { visibleNavSections, type NavSection } from "@/lib/admin-nav";
+import { motion, useReducedMotion } from "framer-motion";
 
 function isActive(currentPath: string, href: string): boolean {
   if (href === "/admin") return currentPath === "/admin";
@@ -98,18 +99,31 @@ function SidebarContent({
                   const active = isActive(currentPath, item.href);
                   const Icon = item.icon;
                   return (
-                    <li key={item.href}>
+                    <li key={item.href} className="relative">
+                      {/* 현재 항목 배경이 항목 사이를 미끄러진다. 어디에서
+                          어디로 옮겨왔는지가 보여서 사이드바가 긴 목록이어도
+                          위치 감각이 유지된다. */}
+                      {active ? (
+                        <motion.span
+                          layoutId="admin-nav-active"
+                          className="absolute inset-0 rounded-md bg-primary/10"
+                          transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                        />
+                      ) : null}
                       <Link
                         href={item.href}
                         onClick={onNavigate}
-                        className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+                        aria-current={active ? "page" : undefined}
+                        className={`relative flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
                           active
-                            ? "bg-primary/10 text-primary font-semibold"
+                            ? "text-primary font-semibold"
                             : "text-muted-foreground hover:bg-muted hover:text-foreground"
                         }`}
                         data-testid={`admin-nav-${item.href.replace(/\//g, "-")}`}
                       >
-                        <Icon className="w-4 h-4 shrink-0" />
+                        {/* 현재 항목의 아이콘만 살짝 커진다. 아이콘 줄이 길어
+                            라벨만으로는 눈이 바로 못 찾는다. */}
+                        <Icon className={`w-4 h-4 shrink-0 transition-transform duration-200 ${active ? "scale-110" : ""}`} />
                         <span className="truncate">{item.label}</span>
                         {item.badgeKey && badges[item.badgeKey] > 0 ? (
                           <span
@@ -134,6 +148,7 @@ function SidebarContent({
 
 export function AdminLayout({ children }: { children: ReactNode }) {
   const [location, setLocation] = useLocation();
+  const reduce = useReducedMotion();
   const queryClient = useQueryClient();
   const { data: admin, isLoading, isError } = useAdminMe({
     query: { retry: false, queryKey: getAdminMeQueryKey() },
@@ -289,9 +304,15 @@ export function AdminLayout({ children }: { children: ReactNode }) {
         </div>
       ) : null}
 
-      <main className="lg:pl-60">
+      <motion.main
+        key={location}
+        className="lg:pl-60"
+        initial={reduce ? false : { opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+      >
         <div className="px-6 lg:px-10 py-8 max-w-[1400px] mx-auto">{children}</div>
-      </main>
+      </motion.main>
     </div>
   );
 }

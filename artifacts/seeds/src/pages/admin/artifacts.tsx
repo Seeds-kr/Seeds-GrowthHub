@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
+import { EmptyState } from "@/components/EmptyState";
 
 export default function AdminArtifacts() {
   const qc = useQueryClient();
@@ -57,7 +58,9 @@ export default function AdminArtifacts() {
           <TableHeader><TableRow><TableHead>제목</TableHead><TableHead>유형</TableHead><TableHead>학생</TableHead><TableHead>프로젝트</TableHead><TableHead>공개</TableHead><TableHead>링크</TableHead><TableHead>생성일</TableHead><TableHead></TableHead></TableRow></TableHeader>
           <TableBody>
             {isLoading ? <TableRow><TableCell colSpan={8} className="h-24 text-center"><Loader2 className="animate-spin mx-auto" /></TableCell></TableRow>
-            : data?.items.length === 0 ? <TableRow><TableCell colSpan={8} className="h-24 text-center text-muted-foreground">아티팩트가 없습니다.</TableCell></TableRow>
+            : data?.items.length === 0 ? <TableRow><TableCell colSpan={8} className="p-0">
+                <EmptyState title="아티팩트가 없습니다." />
+              </TableCell></TableRow>
             : data?.items.map((a) => (
               <TableRow key={a.id}>
                 <TableCell className="font-medium">{a.title}</TableCell>

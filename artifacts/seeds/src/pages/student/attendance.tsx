@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ResourceMissing } from "@/components/ResourceMissing";
+import { EmptyState } from "@/components/EmptyState";
 
 type Resp = {
   items: { id: number; sessionId: number; sessionTitle: string; scheduledAt: string; status: string; note: string | null }[];
@@ -40,7 +41,9 @@ export default function StudentAttendance() {
         <Table>
           <TableHeader><TableRow><TableHead>모임</TableHead><TableHead>일시</TableHead><TableHead>상태</TableHead><TableHead>노트</TableHead></TableRow></TableHeader>
           <TableBody>
-            {data.items.length === 0 ? <TableRow><TableCell colSpan={4} className="h-24 text-center text-muted-foreground">출석 기록이 없습니다.</TableCell></TableRow>
+            {data.items.length === 0 ? <TableRow><TableCell colSpan={4} className="p-0">
+                <EmptyState title="출석 기록이 없습니다." />
+              </TableCell></TableRow>
             : data.items.map((r) => (
               <TableRow key={r.id}>
                 <TableCell className="font-medium">{r.sessionTitle}</TableCell>

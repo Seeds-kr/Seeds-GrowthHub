@@ -15,6 +15,7 @@ import { Link } from "wouter";
 import { useState } from "react";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
+import { EmptyState } from "@/components/EmptyState";
 
 export default function AdminAssignments() {
   const qc = useQueryClient();
@@ -79,7 +80,10 @@ export default function AdminAssignments() {
           <TableHeader><TableRow><TableHead>제목</TableHead><TableHead>기수/프로그램</TableHead><TableHead>마감일</TableHead><TableHead>상태</TableHead><TableHead></TableHead></TableRow></TableHeader>
           <TableBody>
             {isLoading ? <TableRow><TableCell colSpan={5} className="h-24 text-center"><Loader2 className="animate-spin mx-auto" /></TableCell></TableRow>
-            : data?.items.length === 0 ? <TableRow><TableCell colSpan={5} className="h-24 text-center text-muted-foreground">과제가 없습니다.</TableCell></TableRow>
+            : data?.items.length === 0 ? <TableRow><TableCell colSpan={5} className="p-0">
+                <EmptyState title="과제가 없습니다."
+                  hint="과제를 만들고 [게시]까지 해야 학생에게 보입니다." />
+              </TableCell></TableRow>
             : data?.items.map((a) => (
               <TableRow key={a.id}>
                 <TableCell className="font-medium">{a.title}</TableCell>

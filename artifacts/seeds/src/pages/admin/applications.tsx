@@ -10,6 +10,7 @@ import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ApplicationStatus } from "@workspace/api-zod";
+import { EmptyState } from "@/components/EmptyState";
 
 const statusLabels: Record<string, string> = {
   submitted: "제출 완료",
@@ -113,9 +114,10 @@ export default function AdminApplications() {
               </TableRow>
             ) : data?.items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
-                  조건에 맞는 지원서가 없습니다.
-                </TableCell>
+                <TableCell colSpan={6} className="p-0">
+                <EmptyState title="조건에 맞는 지원서가 없습니다."
+                  hint="모집이 열리면 여기에 쌓입니다." />
+              </TableCell>
               </TableRow>
             ) : (
               data?.items.map((app) => (

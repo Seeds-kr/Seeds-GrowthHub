@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
+import { EmptyState } from "@/components/EmptyState";
 
 export default function AdminAnnouncements() {
   const qc = useQueryClient();
@@ -65,7 +66,10 @@ export default function AdminAnnouncements() {
           <TableHeader><TableRow><TableHead>제목</TableHead><TableHead>대상</TableHead><TableHead>발행</TableHead><TableHead>작성일</TableHead><TableHead></TableHead></TableRow></TableHeader>
           <TableBody>
             {isLoading ? <TableRow><TableCell colSpan={5} className="h-24 text-center"><Loader2 className="animate-spin mx-auto" /></TableCell></TableRow>
-            : data?.items.length === 0 ? <TableRow><TableCell colSpan={5} className="h-24 text-center text-muted-foreground">공지가 없습니다.</TableCell></TableRow>
+            : data?.items.length === 0 ? <TableRow><TableCell colSpan={5} className="p-0">
+                <EmptyState title="공지가 없습니다."
+                  hint="공지를 작성하면 학생 화면에 바로 뜹니다. 초안으로 저장하면 아직 안 보입니다." />
+              </TableCell></TableRow>
             : data?.items.map((a) => (
               <TableRow key={a.id}>
                 <TableCell className="font-medium">{a.title}</TableCell>

@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import { format } from "date-fns";
+import { EmptyState } from "@/components/EmptyState";
 
 type Item = {
   id: number; title: string; description: string | null; dueAt: string | null; status: string;
@@ -22,7 +23,10 @@ export default function StudentAssignments() {
           <TableHeader><TableRow><TableHead>제목</TableHead><TableHead>마감일</TableHead><TableHead>상태</TableHead><TableHead>제출 상태</TableHead></TableRow></TableHeader>
           <TableBody>
             {isLoading ? <TableRow><TableCell colSpan={4} className="h-24 text-center"><Loader2 className="animate-spin mx-auto" /></TableCell></TableRow>
-            : data?.items.length === 0 ? <TableRow><TableCell colSpan={4} className="h-24 text-center text-muted-foreground">과제가 없습니다.</TableCell></TableRow>
+            : data?.items.length === 0 ? <TableRow><TableCell colSpan={4} className="p-0">
+                <EmptyState title="과제가 없습니다."
+                  hint="과제를 만들고 [게시]까지 해야 학생에게 보입니다." />
+              </TableCell></TableRow>
             : data?.items.map((a) => (
               <TableRow key={a.id} className="cursor-pointer relative focus-within:bg-muted/60 focus-within:outline focus-within:outline-2 focus-within:outline-offset-[-2px] focus-within:outline-[hsl(var(--ring))]">
                 <TableCell className="font-medium">

@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
+import { EmptyState } from "@/components/EmptyState";
 
 export default function AdminActivityRecords() {
   const qc = useQueryClient();
@@ -98,7 +99,9 @@ export default function AdminActivityRecords() {
           <TableHeader><TableRow><TableHead>날짜</TableHead><TableHead>학생</TableHead><TableHead>유형</TableHead><TableHead>제목</TableHead><TableHead>공개</TableHead><TableHead>태그</TableHead><TableHead></TableHead></TableRow></TableHeader>
           <TableBody>
             {isLoading ? <TableRow><TableCell colSpan={7} className="h-24 text-center"><Loader2 className="animate-spin mx-auto" /></TableCell></TableRow>
-            : data?.items.length === 0 ? <TableRow><TableCell colSpan={7} className="h-24 text-center text-muted-foreground">기록이 없습니다.</TableCell></TableRow>
+            : data?.items.length === 0 ? <TableRow><TableCell colSpan={7} className="p-0">
+                <EmptyState title="기록이 없습니다." />
+              </TableCell></TableRow>
             : data?.items.map((r) => (
               <TableRow key={r.id}>
                 <TableCell className="text-sm">{formatKoreanDate(r.activityDate)}</TableCell>

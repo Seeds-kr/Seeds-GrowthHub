@@ -12,6 +12,7 @@ import { Link } from "wouter";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { Copy, Check } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 
 type AcceptedApp = {
   id: number;
@@ -117,7 +118,10 @@ export default function AdminStudents() {
           </TableRow></TableHeader>
           <TableBody>
             {isLoading ? <TableRow><TableCell colSpan={4} className="h-24 text-center"><Loader2 className="animate-spin mx-auto" /></TableCell></TableRow>
-            : data?.items.length === 0 ? <TableRow><TableCell colSpan={4} className="h-24 text-center text-muted-foreground">학생이 없습니다.</TableCell></TableRow>
+            : data?.items.length === 0 ? <TableRow><TableCell colSpan={4} className="p-0">
+                <EmptyState title="학생이 없습니다."
+                  hint="지원서를 최종 합격 처리하면 학생으로 전환됩니다." />
+              </TableCell></TableRow>
             : data?.items.map((s) => (
               <TableRow key={s.id} className="cursor-pointer relative focus-within:bg-muted/60 focus-within:outline focus-within:outline-2 focus-within:outline-offset-[-2px] focus-within:outline-[hsl(var(--ring))]">
                 <TableCell className="font-medium">
