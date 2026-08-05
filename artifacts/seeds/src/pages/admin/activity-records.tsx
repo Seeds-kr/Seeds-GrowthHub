@@ -93,7 +93,7 @@ export default function AdminActivityRecords() {
         </Select>
       </div>
 
-      <div className="rounded-lg bg-card border border-border">
+      <div className="rounded-lg bg-card border border-border elev-1">
         <Table>
           <TableHeader><TableRow><TableHead>날짜</TableHead><TableHead>학생</TableHead><TableHead>유형</TableHead><TableHead>제목</TableHead><TableHead>공개</TableHead><TableHead>태그</TableHead><TableHead></TableHead></TableRow></TableHeader>
           <TableBody>

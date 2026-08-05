@@ -155,7 +155,7 @@ export default function AdminEvaluators() {
         </Dialog>
       </div>
 
-      <div className="rounded-lg bg-card border border-border">
+      <div className="rounded-lg bg-card border border-border elev-1">
         <Table>
           <TableHeader>
             <TableRow>

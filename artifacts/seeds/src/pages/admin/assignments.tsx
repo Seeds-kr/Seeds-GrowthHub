@@ -74,7 +74,7 @@ export default function AdminAssignments() {
         <h1 className="text-3xl font-serif font-bold">과제 관리</h1>
         <Button onClick={openNew}>+ 새 과제</Button>
       </div>
-      <div className="rounded-lg bg-card border border-border">
+      <div className="rounded-lg bg-card border border-border elev-1">
         <Table>
           <TableHeader><TableRow><TableHead>제목</TableHead><TableHead>기수/프로그램</TableHead><TableHead>마감일</TableHead><TableHead>상태</TableHead><TableHead></TableHead></TableRow></TableHeader>
           <TableBody>

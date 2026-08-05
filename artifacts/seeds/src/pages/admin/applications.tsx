@@ -92,7 +92,7 @@ export default function AdminApplications() {
         </div>
       </div>
 
-      <div className="rounded-lg bg-card border border-border">
+      <div className="rounded-lg bg-card border border-border elev-1">
         <Table>
           <TableHeader>
             <TableRow>

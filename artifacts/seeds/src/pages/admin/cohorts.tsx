@@ -57,7 +57,7 @@ export default function AdminCohorts() {
         <h1 className="text-3xl font-serif font-bold">기수 관리</h1>
         <Button onClick={openNew}>+ 새 기수</Button>
       </div>
-      <div className="rounded-lg bg-card border border-border">
+      <div className="rounded-lg bg-card border border-border elev-1">
         <Table>
           <TableHeader><TableRow><TableHead>이름</TableHead><TableHead>기간</TableHead><TableHead>상태</TableHead><TableHead></TableHead></TableRow></TableHeader>
           <TableBody>

@@ -52,7 +52,7 @@ export default function AdminArtifacts() {
         <h1 className="text-3xl font-serif font-bold">아티팩트</h1>
         <Button onClick={() => { setForm({ studentId: "", projectId: "", title: "", description: "", url: "", artifactType: "link", visibility: "student_visible" }); setOpen(true); }}>+ 새 아티팩트</Button>
       </div>
-      <div className="rounded-lg bg-card border border-border">
+      <div className="rounded-lg bg-card border border-border elev-1">
         <Table>
           <TableHeader><TableRow><TableHead>제목</TableHead><TableHead>유형</TableHead><TableHead>학생</TableHead><TableHead>프로젝트</TableHead><TableHead>공개</TableHead><TableHead>링크</TableHead><TableHead>생성일</TableHead><TableHead></TableHead></TableRow></TableHeader>
           <TableBody>

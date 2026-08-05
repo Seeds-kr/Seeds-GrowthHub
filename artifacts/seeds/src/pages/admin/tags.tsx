@@ -36,7 +36,7 @@ export default function AdminTags() {
         <h1 className="text-3xl font-serif font-bold">스킬 태그</h1>
         <Button className="" onClick={() => { setEditing(null); setForm({ name: "", description: "" }); setOpen(true); }}>+ 새 태그</Button>
       </div>
-      <div className="rounded-lg bg-card border border-border">
+      <div className="rounded-lg bg-card border border-border elev-1">
         <Table>
           <TableHeader><TableRow><TableHead>이름</TableHead><TableHead>설명</TableHead><TableHead></TableHead></TableRow></TableHeader>
           <TableBody>

@@ -278,3 +278,37 @@
   .rise { animation: none !important; }
   .spotlight-card::before { display: none; }
 }
+
+/* ── 어드민 깊이 ──────────────────────────────────────────────────────────
+   어드민 화면이 완전히 평평했다. 카드 8곳이 `shadow-none` 으로 그림자를 아예
+   꺼 놨고, 그 결과 1px 선만 남아 종이 위에 인쇄한 표처럼 보였다. 무엇이 위에
+   있고 무엇이 배경인지 구분이 안 된다.
+
+   과하면 어드민이 장난감처럼 보이므로, 얕고 배경색을 띤 그림자를 쓴다.
+   순수 검정 그림자는 밝은 배경에서 때가 낀 것처럼 보인다. */
+@layer components {
+  .elev-1 {
+    box-shadow:
+      0 1px 2px hsl(220 15% 8% / 0.04),
+      0 1px 1px hsl(220 15% 8% / 0.03);
+  }
+  .elev-2 {
+    box-shadow:
+      0 2px 4px hsl(220 15% 8% / 0.05),
+      0 4px 12px hsl(220 15% 8% / 0.06);
+  }
+  /* 눌러서 들어갈 수 있는 카드. 떠오르면서 그림자가 깊어진다. */
+  .elev-hover {
+    transition: box-shadow 180ms ease, transform 180ms ease, border-color 180ms ease;
+  }
+  .elev-hover:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 4px 8px hsl(220 15% 8% / 0.06),
+      0 10px 24px hsl(220 15% 8% / 0.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .elev-hover:hover { transform: none; }
+}

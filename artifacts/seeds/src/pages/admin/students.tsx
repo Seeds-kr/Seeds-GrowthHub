@@ -110,7 +110,7 @@ export default function AdminStudents() {
           </Select>
         </div>
       </div>
-      <div className="rounded-lg bg-card border border-border">
+      <div className="rounded-lg bg-card border border-border elev-1">
         <Table>
           <TableHeader><TableRow>
             <TableHead>이름</TableHead><TableHead>이메일</TableHead><TableHead>학교</TableHead><TableHead>활성화</TableHead>

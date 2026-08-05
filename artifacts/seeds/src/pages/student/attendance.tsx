@@ -36,7 +36,7 @@ export default function StudentAttendance() {
         <div>결석: <strong>{data.summary.absent}</strong></div>
         <div>인정: <strong>{data.summary.excused}</strong></div>
       </CardContent></Card>
-      <div className="rounded-lg bg-card border border-border">
+      <div className="rounded-lg bg-card border border-border elev-1">
         <Table>
           <TableHeader><TableRow><TableHead>모임</TableHead><TableHead>일시</TableHead><TableHead>상태</TableHead><TableHead>노트</TableHead></TableRow></TableHeader>
           <TableBody>
