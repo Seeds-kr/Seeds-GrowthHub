@@ -11,7 +11,7 @@ export default function StudentSessions() {
   return (
     <StudentLayout>
       <h1 className="text-3xl font-serif font-bold mb-6">모임</h1>
-      <div className="bg-card border border-border">
+      <div className="rounded-lg bg-card border border-border">
         <Table>
           <TableHeader><TableRow><TableHead>제목</TableHead><TableHead>일시</TableHead><TableHead>장소/링크</TableHead><TableHead>유형</TableHead><TableHead>상태</TableHead></TableRow></TableHeader>
           <TableBody>
@@ -23,7 +23,7 @@ export default function StudentSessions() {
                 <TableCell>{format(new Date(s.scheduledAt), "yyyy-MM-dd HH:mm")}</TableCell>
                 <TableCell>{s.locationOrLink ?? "-"}</TableCell>
                 <TableCell>{s.sessionType}</TableCell>
-                <TableCell><Badge className="rounded-none">{s.status}</Badge></TableCell>
+                <TableCell><Badge className="">{s.status}</Badge></TableCell>
               </TableRow>
             ))}
           </TableBody>

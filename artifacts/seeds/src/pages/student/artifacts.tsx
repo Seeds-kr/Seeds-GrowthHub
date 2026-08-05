@@ -20,17 +20,17 @@ export default function StudentArtifacts() {
       {isLoading ? <Loader2 className="animate-spin mx-auto" />
       : data?.items.length === 0 ? <div className="text-muted-foreground">아티팩트가 없습니다.</div>
       : <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{data?.items.map((a) => (
-        <Card key={a.id} className="rounded-none">
+        <Card key={a.id} className="">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <a className="hover:underline" href={a.url} target="_blank" rel="noreferrer">{a.title}</a>
-              <Badge variant="outline" className="rounded-none">{ARTIFACT_TYPE_LABEL[a.artifactType]}</Badge>
+              <Badge variant="outline" className="">{ARTIFACT_TYPE_LABEL[a.artifactType]}</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground space-y-1">
             <div>{a.description ?? ""}</div>
             <div className="flex gap-2 items-center">
-              <Badge variant="outline" className="rounded-none">{ARTIFACT_VISIBILITY_LABEL[a.visibility]}</Badge>
+              <Badge variant="outline" className="">{ARTIFACT_VISIBILITY_LABEL[a.visibility]}</Badge>
               <span>{format(new Date(a.createdAt), "yyyy-MM-dd")}</span>
             </div>
           </CardContent>

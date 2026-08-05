@@ -203,7 +203,7 @@ export default function AdminPeople() {
     <AdminLayout>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-serif font-bold">사람들</h1>
-        <Button className="rounded-none" onClick={openCreate}>
+        <Button className="" onClick={openCreate}>
           + 새 항목 ({PEOPLE_KIND_LABEL[kind]})
         </Button>
       </div>
@@ -224,7 +224,7 @@ export default function AdminPeople() {
         ))}
       </div>
 
-      <div className="bg-card border border-border">
+      <div className="rounded-lg bg-card border border-border">
         <Table>
           <TableHeader>
             <TableRow>
@@ -298,7 +298,7 @@ export default function AdminPeople() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="rounded-none"
+                      className=""
                       onClick={() => openEdit(p)}
                     >
                       수정
@@ -306,7 +306,7 @@ export default function AdminPeople() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="rounded-none"
+                      className=""
                       onClick={() => setAvatarTarget(p)}
                       title="AI 캐릭터 아바타 생성 (Gemini)"
                     >
@@ -315,7 +315,7 @@ export default function AdminPeople() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="rounded-none"
+                      className=""
                       onClick={() => {
                         if (confirm("삭제?")) del.mutate(p.id);
                       }}
@@ -331,7 +331,7 @@ export default function AdminPeople() {
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="rounded-none max-w-2xl">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
               {editing ? "프로필 수정" : "새 프로필"}
@@ -346,7 +346,7 @@ export default function AdminPeople() {
                   setForm({ ...form, kind: v as PeopleKind })
                 }
               >
-                <SelectTrigger className="rounded-none">
+                <SelectTrigger className="">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -361,7 +361,7 @@ export default function AdminPeople() {
             <div>
               <Label className="text-xs">이름</Label>
               <Input
-                className="rounded-none"
+                className=""
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
               />
@@ -370,7 +370,7 @@ export default function AdminPeople() {
               <div>
                 <Label className="text-xs">직함 / 직책</Label>
                 <Input
-                  className="rounded-none"
+                  className=""
                   placeholder="예: 시니어 엔지니어, 3기 학생"
                   value={form.roleTitle}
                   onChange={(e) =>
@@ -381,7 +381,7 @@ export default function AdminPeople() {
               <div>
                 <Label className="text-xs">소속</Label>
                 <Input
-                  className="rounded-none"
+                  className=""
                   placeholder="예: ABC회사, OO대학교"
                   value={form.affiliation}
                   onChange={(e) =>
@@ -393,7 +393,7 @@ export default function AdminPeople() {
             <div>
               <Label className="text-xs">사진 URL</Label>
               <Input
-                className="rounded-none"
+                className=""
                 placeholder="https://..."
                 value={form.photoUrl}
                 onChange={(e) =>
@@ -404,7 +404,7 @@ export default function AdminPeople() {
             <div>
               <Label className="text-xs">전화번호 (로그인 회원에게만 표시)</Label>
               <Input
-                className="rounded-none"
+                className=""
                 placeholder="010-0000-0000"
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
@@ -413,7 +413,7 @@ export default function AdminPeople() {
             <div>
               <Label className="text-xs">소개</Label>
               <Textarea
-                className="rounded-none min-h-[120px]"
+                className="min-h-[120px]"
                 maxLength={5000}
                 value={form.bio}
                 onChange={(e) => setForm({ ...form, bio: e.target.value })}
@@ -422,7 +422,7 @@ export default function AdminPeople() {
             <div>
               <Label className="text-xs">태그 (쉼표로 구분)</Label>
               <Input
-                className="rounded-none"
+                className=""
                 placeholder="예: 백엔드, 디자인, 창업"
                 value={form.tagsCsv}
                 onChange={(e) =>
@@ -435,7 +435,7 @@ export default function AdminPeople() {
                 <Label className="text-xs">표시 순서 (작을수록 먼저)</Label>
                 <Input
                   type="number"
-                  className="rounded-none"
+                  className=""
                   value={form.displayOrder}
                   onChange={(e) =>
                     setForm({
@@ -457,13 +457,13 @@ export default function AdminPeople() {
           <DialogFooter>
             <Button
               variant="outline"
-              className="rounded-none"
+              className=""
               onClick={() => setOpen(false)}
             >
               취소
             </Button>
             <Button
-              className="rounded-none"
+              className=""
               disabled={!form.name || save.isPending}
               onClick={() => save.mutate()}
             >
@@ -645,7 +645,7 @@ function AvatarSelect<V extends string>({
           onChange(v === SELECT_AUTO ? "" : (v as V))
         }
       >
-        <SelectTrigger className="rounded-none">
+        <SelectTrigger className="">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -739,7 +739,7 @@ function AvatarDialog({
         }
       }}
     >
-      <DialogContent className="rounded-none max-w-2xl">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>
             AI 아바타 생성{target ? ` — ${target.name}` : ""}
@@ -833,7 +833,7 @@ function AvatarDialog({
           <div>
             <Label className="text-xs">추가 지시사항 (선택, 한/영 모두 가능)</Label>
             <Input
-              className="rounded-none"
+              className=""
               maxLength={300}
               placeholder="예: 수염 있음, 모자 착용, 친근한 인상"
               value={form.notes}
@@ -845,7 +845,7 @@ function AvatarDialog({
             <Input
               type="file"
               accept="image/jpeg,image/png,image/webp"
-              className="rounded-none"
+              className=""
               onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
             />
             <p className="text-[11px] text-muted-foreground mt-1">
@@ -866,14 +866,14 @@ function AvatarDialog({
         <DialogFooter>
           <Button
             variant="outline"
-            className="rounded-none"
+            className=""
             onClick={onClose}
             disabled={isPending}
           >
             취소
           </Button>
           <Button
-            className="rounded-none"
+            className=""
             disabled={isPending}
             onClick={submit}
           >

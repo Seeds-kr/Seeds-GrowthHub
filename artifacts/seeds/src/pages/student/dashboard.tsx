@@ -27,13 +27,13 @@ export default function StudentDashboard() {
       <h1 className="text-3xl font-serif font-bold mb-6">안녕하세요, {me.data?.student.name}님</h1>
 
       <div className="grid md:grid-cols-2 gap-6 mb-6">
-        <Card className="rounded-none"><CardHeader><CardTitle>내 기수 / 프로그램</CardTitle></CardHeader><CardContent className="space-y-2">
-          <div className="flex flex-wrap gap-2">{me.data?.cohorts.map((c) => <Badge key={c.id} className="rounded-none">{c.name}</Badge>)}</div>
-          <div className="flex flex-wrap gap-2">{me.data?.programs.map((p) => <Badge key={p.id} variant="outline" className="rounded-none">{p.name}</Badge>)}</div>
+        <Card className=""><CardHeader><CardTitle>내 기수 / 프로그램</CardTitle></CardHeader><CardContent className="space-y-2">
+          <div className="flex flex-wrap gap-2">{me.data?.cohorts.map((c) => <Badge key={c.id} className="">{c.name}</Badge>)}</div>
+          <div className="flex flex-wrap gap-2">{me.data?.programs.map((p) => <Badge key={p.id} variant="outline" className="">{p.name}</Badge>)}</div>
           {me.data?.cohorts.length === 0 && <div className="text-sm text-muted-foreground">아직 배정된 기수가 없습니다.</div>}
         </CardContent></Card>
 
-        <Card className="rounded-none"><CardHeader><CardTitle>최근 공지</CardTitle></CardHeader><CardContent className="space-y-2">
+        <Card className=""><CardHeader><CardTitle>최근 공지</CardTitle></CardHeader><CardContent className="space-y-2">
           {(announcements.data?.items ?? []).slice(0, 3).map((a) => (
             <div key={a.id} className="border-b pb-2 last:border-0">
               <div className="font-medium">{a.title}</div>
@@ -44,14 +44,14 @@ export default function StudentDashboard() {
         </CardContent></Card>
       </div>
 
-      <Card className="rounded-none mb-6"><CardHeader><CardTitle>다가오는 모임</CardTitle></CardHeader><CardContent>
+      <Card className="mb-6"><CardHeader><CardTitle>다가오는 모임</CardTitle></CardHeader><CardContent>
         {upcoming.length === 0 ? <div className="text-sm text-muted-foreground">예정된 모임이 없습니다.</div>
         : <ul className="space-y-2 text-sm">{upcoming.map((s) => (
             <li key={s.id} className="flex justify-between border-b pb-2 last:border-0"><span>{s.title}</span><span>{format(new Date(s.scheduledAt), "yyyy-MM-dd HH:mm")}</span></li>
           ))}</ul>}
       </CardContent></Card>
 
-      <Card className="rounded-none"><CardHeader><CardTitle>활성 과제</CardTitle></CardHeader><CardContent>
+      <Card className=""><CardHeader><CardTitle>활성 과제</CardTitle></CardHeader><CardContent>
         {(assignments.data?.items ?? []).filter((a) => a.status === "published").length === 0 ? <div className="text-sm text-muted-foreground">진행 중인 과제가 없습니다.</div>
         : <ul className="space-y-2 text-sm">{(assignments.data?.items ?? []).filter((a) => a.status === "published").map((a) => (
             <li key={a.id} className="flex justify-between border-b pb-2 last:border-0">

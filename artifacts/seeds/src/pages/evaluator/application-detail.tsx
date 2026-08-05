@@ -129,12 +129,12 @@ export default function EvaluatorApplicationDetail() {
   if (error || !data) {
     return (
       <EvaluatorLayout>
-        <div className="bg-card border border-border p-8 text-center">
+        <div className="rounded-lg bg-card border border-border p-8 text-center">
           <p className="text-muted-foreground">
             이 지원서를 열람할 권한이 없거나 존재하지 않습니다.
           </p>
           <Link href="/evaluator">
-            <Button variant="outline" className="rounded-none mt-4">
+            <Button variant="outline" className="mt-4">
               목록으로
             </Button>
           </Link>
@@ -149,7 +149,7 @@ export default function EvaluatorApplicationDetail() {
     <EvaluatorLayout>
       <div className="mb-6 flex items-center gap-4">
         <Link href="/evaluator">
-          <Button variant="outline" size="icon" className="rounded-none">
+          <Button variant="outline" size="icon" className="">
             <ArrowLeft className="w-4 h-4" />
           </Button>
         </Link>
@@ -158,7 +158,7 @@ export default function EvaluatorApplicationDetail() {
 
       <div className="grid md:grid-cols-3 gap-8">
         <div className="md:col-span-2 space-y-6">
-          <div className="bg-card border border-border p-6 space-y-4">
+          <div className="rounded-lg bg-card border border-border p-6 space-y-4">
             <h2 className="text-lg font-serif font-bold border-b border-border pb-2">
               기본 정보
             </h2>
@@ -170,7 +170,7 @@ export default function EvaluatorApplicationDetail() {
             </div>
           </div>
 
-          <div className="bg-card border border-border p-6 space-y-4">
+          <div className="rounded-lg bg-card border border-border p-6 space-y-4">
             <h2 className="text-lg font-serif font-bold border-b border-border pb-2">
               상세 응답
             </h2>
@@ -180,7 +180,7 @@ export default function EvaluatorApplicationDetail() {
             <Section label="기대하는 점" value={app.expectation} />
           </div>
 
-          <div className="bg-card border border-border p-6">
+          <div className="rounded-lg bg-card border border-border p-6">
             <h2 className="text-lg font-serif font-bold border-b border-border pb-2 mb-4">
               내 배정 현황
             </h2>
@@ -188,7 +188,7 @@ export default function EvaluatorApplicationDetail() {
               {data.myAssignments.map((a) => (
                 <li key={a.id} className="flex items-center justify-between text-sm">
                   <span>{stageLabels[a.stage] ?? a.stage}</span>
-                  <Badge variant="outline" className="rounded-none font-normal">
+                  <Badge variant="outline" className="font-normal">
                     {assignmentStatusLabels[a.status] ?? a.status}
                   </Badge>
                 </li>
@@ -204,7 +204,7 @@ export default function EvaluatorApplicationDetail() {
             <div>
               <Label>평가 단계</Label>
               <Select value={stage} onValueChange={(v) => setStage(v as EvaluationStage)}>
-                <SelectTrigger className="rounded-none bg-background" data-testid="select-stage">
+                <SelectTrigger className="bg-background" data-testid="select-stage">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -234,7 +234,7 @@ export default function EvaluatorApplicationDetail() {
                 value={recommendation}
                 onValueChange={(v) => setRecommendation(v as Recommendation)}
               >
-                <SelectTrigger className="rounded-none bg-background" data-testid="select-recommendation">
+                <SelectTrigger className="bg-background" data-testid="select-recommendation">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -248,7 +248,7 @@ export default function EvaluatorApplicationDetail() {
             <div>
               <Label>의견</Label>
               <Textarea
-                className="min-h-[100px] rounded-none bg-background resize-none"
+                className="min-h-[100px] bg-background resize-none"
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 data-testid="input-comment"
@@ -258,7 +258,7 @@ export default function EvaluatorApplicationDetail() {
             <Button
               onClick={handleSubmit}
               disabled={submit.isPending}
-              className="w-full rounded-none"
+              className="w-full"
               data-testid="button-submit-evaluation"
             >
               {submit.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
@@ -305,7 +305,7 @@ function ScoreInput({
           const n = Number(e.target.value);
           if (Number.isFinite(n)) onChange(Math.max(1, Math.min(5, n)));
         }}
-        className="rounded-none bg-background"
+        className="bg-background"
         data-testid={testId}
       />
     </div>

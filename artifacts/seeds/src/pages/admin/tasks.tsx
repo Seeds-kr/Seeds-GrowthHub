@@ -253,7 +253,7 @@ export default function AdminTasksPage() {
       {isLoading ? (
         <Loader2 className="w-6 h-6 animate-spin" />
       ) : !data || data.items.length === 0 ? (
-        <div className="border border-dashed border-border rounded p-12 text-center text-muted-foreground">
+        <div className="border border-dashed border-border rounded-lg p-12 text-center text-muted-foreground">
           작업이 없습니다. 회의록에서 액션 아이템을 만들거나 직접 추가해 보세요.
         </div>
       ) : (
@@ -281,7 +281,7 @@ export default function AdminTasksPage() {
                   e.preventDefault();
                   handleDrop(status);
                 }}
-                className={`rounded border p-2 ${STATUS_COLUMN_BG[status]} min-h-40 transition-colors ${
+                className={`rounded-lg border p-2 ${STATUS_COLUMN_BG[status]} min-h-40 transition-colors ${
                   dropTarget === status
                     ? "border-primary ring-2 ring-primary/40"
                     : "border-border"
@@ -310,7 +310,7 @@ export default function AdminTasksPage() {
                         e.dataTransfer.setData("text/plain", String(t.id));
                       }}
                       onDragEnd={endDrag}
-                      className={`bg-card border border-border rounded p-2 text-xs space-y-1 cursor-grab active:cursor-grabbing ${
+                      className={`bg-card border border-border rounded-md p-2 text-xs space-y-1 cursor-grab active:cursor-grabbing ${
                         draggingId === t.id ? "opacity-40" : ""
                       }`}
                       data-testid={`task-card-${t.id}`}

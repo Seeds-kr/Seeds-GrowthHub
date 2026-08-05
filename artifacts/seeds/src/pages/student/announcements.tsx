@@ -13,7 +13,7 @@ export default function StudentAnnouncements() {
       {isLoading ? <Loader2 className="animate-spin mx-auto" />
       : data?.items.length === 0 ? <div className="text-muted-foreground">공지가 없습니다.</div>
       : <div className="space-y-4">{data?.items.map((a) => (
-          <Card key={a.id} className="rounded-none">
+          <Card key={a.id} className="">
             <CardHeader><CardTitle className="text-base">{a.title}</CardTitle>
               <div className="text-xs text-muted-foreground">{a.publishedAt ? format(new Date(a.publishedAt), "yyyy-MM-dd HH:mm") : ""}</div>
             </CardHeader>

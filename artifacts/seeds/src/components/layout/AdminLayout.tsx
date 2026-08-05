@@ -81,7 +81,7 @@ function SidebarContent({
               <button
                 type="button"
                 onClick={() => toggle(section.key)}
-                className="w-full flex items-center justify-between px-3 mb-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold hover:text-foreground transition-colors"
+                className="w-full flex items-center justify-between px-3 mb-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold hover:text-foreground transition-colors rounded-md"
                 aria-expanded={isOpen}
               >
                 <span>{section.title}</span>

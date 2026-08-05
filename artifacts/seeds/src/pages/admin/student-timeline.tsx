@@ -32,12 +32,12 @@ function TimelineItem({ r, allTags, onChange }: { r: ActivityRecord; allTags?: S
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-tag-mappings", "activity_record", r.id] }); onChange(); },
   });
   return (
-    <Card className="rounded-none">
+    <Card className="">
       <CardContent className="pt-4 space-y-2">
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">{format(new Date(r.activityDate), "yyyy-MM-dd")}</span>
-          <Badge variant="outline" className="rounded-none">{ACTIVITY_SOURCE_LABEL[r.sourceType]}</Badge>
-          <Badge variant="outline" className="rounded-none">{ACTIVITY_VISIBILITY_LABEL[r.visibility]}</Badge>
+          <Badge variant="outline" className="">{ACTIVITY_SOURCE_LABEL[r.sourceType]}</Badge>
+          <Badge variant="outline" className="">{ACTIVITY_VISIBILITY_LABEL[r.visibility]}</Badge>
         </div>
         <div className="font-medium">{r.title}</div>
         {r.description && <div className="text-sm whitespace-pre-wrap">{r.description}</div>}
@@ -46,10 +46,10 @@ function TimelineItem({ r, allTags, onChange }: { r: ActivityRecord; allTags?: S
             <RemovableTag key={m.mappingId} name={m.name} onRemove={() => detach.mutate(m.mappingId)} disabled={detach.isPending} />
           ))}
           <Select value={tagSel} onValueChange={setTagSel}>
-            <SelectTrigger className="rounded-none w-32 h-7"><SelectValue placeholder="+ 태그" /></SelectTrigger>
+            <SelectTrigger className="w-32 h-7"><SelectValue placeholder="+ 태그" /></SelectTrigger>
             <SelectContent>{allTags?.map((t) => <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>)}</SelectContent>
           </Select>
-          <Button size="sm" className="rounded-none h-7" disabled={!tagSel} onClick={() => attach.mutate()}>추가</Button>
+          <Button size="sm" className="h-7" disabled={!tagSel} onClick={() => attach.mutate()}>추가</Button>
         </div>
       </CardContent>
     </Card>
@@ -71,8 +71,8 @@ export default function AdminStudentTimeline() {
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-3xl font-serif font-bold">활동 타임라인</h1>
         <div className="flex gap-2">
-          <Link href={`/admin/students/${id}`}><Button variant="outline" className="rounded-none">학생 상세</Button></Link>
-          <Link href={`/admin/students/${id}/report`}><Button className="rounded-none">리포트 보기</Button></Link>
+          <Link href={`/admin/students/${id}`}><Button variant="outline" className="">학생 상세</Button></Link>
+          <Link href={`/admin/students/${id}/report`}><Button className="">리포트 보기</Button></Link>
         </div>
       </div>
       {isLoading ? <Loader2 className="animate-spin mx-auto" />

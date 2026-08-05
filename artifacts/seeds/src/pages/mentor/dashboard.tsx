@@ -26,7 +26,7 @@ export default function MentorDashboard() {
         </div>
 
         {data && data.teamCount > 0 && (
-          <Card className="rounded-none border-primary/40">
+          <Card className="border-primary/40">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
                 <FolderKanban className="h-4 w-4 text-primary" /> 담당 팀 {data.teamCount}개
@@ -78,7 +78,7 @@ export default function MentorDashboard() {
               )}
 
               <Link href="/mentor/teams">
-                <Button size="sm" className="gap-1 rounded-none">
+                <Button size="sm" className="gap-1">
                   담당 팀 전체 보기 <ArrowRight className="h-3.5 w-3.5" />
                 </Button>
               </Link>
@@ -87,7 +87,7 @@ export default function MentorDashboard() {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="rounded-none">
+          <Card className="">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <UserCircle className="w-4 h-4 text-primary" /> 내 프로필
@@ -96,12 +96,12 @@ export default function MentorDashboard() {
             <CardContent className="text-sm text-muted-foreground space-y-3">
               <p>공개 페이지에 표시되는 내 소개·연락처를 수정합니다.</p>
               <Link href="/mentor/profile">
-                <Button size="sm" className="rounded-none">프로필 편집</Button>
+                <Button size="sm" className="">프로필 편집</Button>
               </Link>
             </CardContent>
           </Card>
 
-          <Card className="rounded-none">
+          <Card className="">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <Users className="w-4 h-4 text-primary" /> 회원 디렉터리
@@ -110,12 +110,12 @@ export default function MentorDashboard() {
             <CardContent className="text-sm text-muted-foreground space-y-3">
               <p>멘토 · 운영진 · 학생 명단과 연락처를 볼 수 있습니다.</p>
               <Link href="/people">
-                <Button size="sm" variant="outline" className="rounded-none">디렉터리 열기</Button>
+                <Button size="sm" variant="outline" className="">디렉터리 열기</Button>
               </Link>
             </CardContent>
           </Card>
 
-          <Card className="rounded-none">
+          <Card className="">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <ClipboardList className="w-4 h-4 text-primary" /> 평가 배정
@@ -124,7 +124,7 @@ export default function MentorDashboard() {
             <CardContent className="text-sm text-muted-foreground space-y-3">
               <p>운영진이 배정한 지원자 평가가 있다면 여기서 확인합니다.</p>
               <Link href="/evaluator">
-                <Button size="sm" variant="outline" className="rounded-none">평가 화면</Button>
+                <Button size="sm" variant="outline" className="">평가 화면</Button>
               </Link>
             </CardContent>
           </Card>

@@ -20,7 +20,7 @@ export default function Recruit() {
           {c.hero.body}
         </p>
         <Link href="/apply">
-          <Button size="lg" className="text-lg px-8 h-14 rounded-none">
+          <Button size="lg" className="text-lg px-8 h-14">
             {c.hero.ctaLabel}
           </Button>
         </Link>
@@ -125,7 +125,7 @@ export default function Recruit() {
             ))}
           </div>
           <Link href="/faq">
-            <Button variant="outline" className="rounded-none">
+            <Button variant="outline" className="">
               {c.faqTeaser.ctaLabel}
             </Button>
           </Link>
@@ -140,7 +140,7 @@ export default function Recruit() {
             {c.cta.body}
           </p>
           <Link href="/apply">
-            <Button size="lg" variant="secondary" className="text-lg px-8 h-14 rounded-none">
+            <Button size="lg" variant="secondary" className="text-lg px-8 h-14">
               {c.cta.ctaLabel}
             </Button>
           </Link>

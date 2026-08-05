@@ -79,21 +79,21 @@ export default function Apply() {
                 <FormField control={form.control} name="name" render={({ field }) => (
                   <FormItem>
                     <FormLabel>이름 *</FormLabel>
-                    <FormControl><Input placeholder="홍길동" className="rounded-none" {...field} /></FormControl>
+                    <FormControl><Input placeholder="홍길동" className="" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <FormField control={form.control} name="email" render={({ field }) => (
                   <FormItem>
                     <FormLabel>이메일 *</FormLabel>
-                    <FormControl><Input type="email" placeholder="example@email.com" className="rounded-none" {...field} /></FormControl>
+                    <FormControl><Input type="email" placeholder="example@email.com" className="" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <FormField control={form.control} name="phone" render={({ field }) => (
                   <FormItem>
                     <FormLabel>연락처 *</FormLabel>
-                    <FormControl><Input type="tel" placeholder="010-0000-0000" className="rounded-none" {...field} /></FormControl>
+                    <FormControl><Input type="tel" placeholder="010-0000-0000" className="" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
@@ -101,7 +101,7 @@ export default function Apply() {
                   <FormItem>
                     <FormLabel>출생연도 *</FormLabel>
                     <FormControl>
-                      <Input type="number" min={1950} max={2025} className="rounded-none" 
+                      <Input type="number" min={1950} max={2025} className="" 
                         {...field} 
                         onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} 
                       />
@@ -112,7 +112,7 @@ export default function Apply() {
                 <FormField control={form.control} name="school" render={({ field }) => (
                   <FormItem>
                     <FormLabel>학교 *</FormLabel>
-                    <FormControl><Input placeholder="ㅇㅇ고등학교 / ㅇㅇ대학교" className="rounded-none" {...field} /></FormControl>
+                    <FormControl><Input placeholder="ㅇㅇ고등학교 / ㅇㅇ대학교" className="" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
@@ -121,7 +121,7 @@ export default function Apply() {
                     <FormLabel>학년 *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger className="rounded-none">
+                        <SelectTrigger className="">
                           <SelectValue placeholder="학년 선택" />
                         </SelectTrigger>
                       </FormControl>
@@ -140,7 +140,7 @@ export default function Apply() {
                 <FormField control={form.control} name="interestArea" render={({ field }) => (
                   <FormItem className="md:col-span-2">
                     <FormLabel>주요 관심 분야 *</FormLabel>
-                    <FormControl><Input placeholder="예: 환경, 교육, 기술, 사회적 기업 등" className="rounded-none" {...field} /></FormControl>
+                    <FormControl><Input placeholder="예: 환경, 교육, 기술, 사회적 기업 등" className="" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
@@ -156,7 +156,7 @@ export default function Apply() {
                   <FormLabel>1. 지원 동기 *</FormLabel>
                   <p className="text-sm text-muted-foreground mb-2">Seeds 프로그램에 지원하게 된 계기와 이를 통해 이루고 싶은 목표를 서술해 주세요.</p>
                   <FormControl>
-                    <Textarea className="min-h-[150px] rounded-none" {...field} />
+                    <Textarea className="min-h-[150px]" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -167,7 +167,7 @@ export default function Apply() {
                   <FormLabel>2. 관련 경험 *</FormLabel>
                   <p className="text-sm text-muted-foreground mb-2">지금까지 사이드 프로젝트·해커톤·스터디 등에서 무언가를 직접 만들어 본 경험을 구체적으로 서술해 주세요. 사용한 기술, 맡은 역할, 배운 점을 함께 적어주시면 좋습니다.</p>
                   <FormControl>
-                    <Textarea className="min-h-[150px] rounded-none" {...field} />
+                    <Textarea className="min-h-[150px]" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -178,7 +178,7 @@ export default function Apply() {
                   <FormLabel>3. 문제 인식 *</FormLabel>
                   <p className="text-sm text-muted-foreground mb-2">현재 우리 사회에서 가장 시급하게 해결해야 한다고 생각하는 문제는 무엇이며, 그 이유는 무엇인가요?</p>
                   <FormControl>
-                    <Textarea className="min-h-[150px] rounded-none" {...field} />
+                    <Textarea className="min-h-[150px]" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -189,7 +189,7 @@ export default function Apply() {
                   <FormLabel>4. 프로그램 기대사항 *</FormLabel>
                   <p className="text-sm text-muted-foreground mb-2">본 프로그램을 통해 본인에게 어떤 변화가 일어나기를 기대하시나요?</p>
                   <FormControl>
-                    <Textarea className="min-h-[150px] rounded-none" {...field} />
+                    <Textarea className="min-h-[150px]" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -218,7 +218,7 @@ export default function Apply() {
                 </FormItem>
               )} />
 
-              <Button type="submit" size="lg" className="w-full text-lg h-14 rounded-none" disabled={createMutation.isPending}>
+              <Button type="submit" size="lg" className="w-full text-lg h-14" disabled={createMutation.isPending}>
                 {createMutation.isPending ? <Loader2 className="w-6 h-6 animate-spin mr-2" /> : null}
                 지원서 제출하기
               </Button>

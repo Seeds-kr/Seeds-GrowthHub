@@ -232,17 +232,17 @@ export default function AdminApplicationDetail() {
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/admin/applications">
-            <Button variant="outline" size="icon" className="rounded-none">
+            <Button variant="outline" size="icon" className="">
               <ArrowLeft className="w-4 h-4" />
             </Button>
           </Link>
           <div>
             <h1 className="text-2xl font-serif font-bold">{application.name} 지원서</h1>
             <div className="flex items-center gap-2 mt-1">
-              <Badge variant="secondary" className="rounded-none font-normal">
+              <Badge variant="secondary" className="font-normal">
                 {lifecycleLabels[application.applicationStatus] ?? application.applicationStatus}
               </Badge>
-              <Badge variant="outline" className="rounded-none font-normal">
+              <Badge variant="outline" className="font-normal">
                 최종: {finalDecisionLabels[application.finalDecision] ?? application.finalDecision}
               </Badge>
             </div>
@@ -253,7 +253,7 @@ export default function AdminApplicationDetail() {
       <div className="grid md:grid-cols-3 gap-8">
         <div className="md:col-span-2 space-y-6">
           {/* Basic info */}
-          <div className="bg-card border border-border p-6 space-y-4">
+          <div className="rounded-lg bg-card border border-border p-6 space-y-4">
             <h2 className="text-lg font-serif font-bold border-b border-border pb-2">
               기본 정보
             </h2>
@@ -268,7 +268,7 @@ export default function AdminApplicationDetail() {
           </div>
 
           {/* Detailed responses */}
-          <div className="bg-card border border-border p-6 space-y-6">
+          <div className="rounded-lg bg-card border border-border p-6 space-y-6">
             <h2 className="text-lg font-serif font-bold border-b border-border pb-2">
               상세 응답
             </h2>
@@ -279,7 +279,7 @@ export default function AdminApplicationDetail() {
           </div>
 
           {/* Assignments */}
-          <div className="bg-card border border-border p-6">
+          <div className="rounded-lg bg-card border border-border p-6">
             <h2 className="text-lg font-serif font-bold border-b border-border pb-2 mb-4">
               평가자 배정
             </h2>
@@ -301,7 +301,7 @@ export default function AdminApplicationDetail() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="rounded-none"
+                      className=""
                       onClick={() => handleDelete(a.id)}
                       data-testid={`button-unassign-${a.id}`}
                     >
@@ -315,7 +315,7 @@ export default function AdminApplicationDetail() {
               <div>
                 <Label>평가자</Label>
                 <Select value={newEvaluatorId} onValueChange={setNewEvaluatorId}>
-                  <SelectTrigger className="rounded-none" data-testid="select-evaluator">
+                  <SelectTrigger className="" data-testid="select-evaluator">
                     <SelectValue placeholder="평가자 선택" />
                   </SelectTrigger>
                   <SelectContent>
@@ -333,7 +333,7 @@ export default function AdminApplicationDetail() {
                   value={newStage}
                   onValueChange={(v) => setNewStage(v as EvaluationStage)}
                 >
-                  <SelectTrigger className="rounded-none" data-testid="select-new-stage">
+                  <SelectTrigger className="" data-testid="select-new-stage">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -346,7 +346,7 @@ export default function AdminApplicationDetail() {
               <Button
                 onClick={handleAssign}
                 disabled={createAssignment.isPending || !newEvaluatorId}
-                className="rounded-none"
+                className=""
                 data-testid="button-assign"
               >
                 <UserPlus className="w-4 h-4 mr-2" />
@@ -356,7 +356,7 @@ export default function AdminApplicationDetail() {
           </div>
 
           {/* Evaluations */}
-          <div className="bg-card border border-border p-6">
+          <div className="rounded-lg bg-card border border-border p-6">
             <h2 className="text-lg font-serif font-bold border-b border-border pb-2 mb-4">
               평가 결과
               {application.avgDocReviewScore !== null && (
@@ -375,7 +375,7 @@ export default function AdminApplicationDetail() {
                       <div className="font-medium">
                         {e.evaluatorName} <span className="text-muted-foreground">· {stageLabels[e.stage] ?? e.stage}</span>
                       </div>
-                      <Badge className="rounded-none font-normal">
+                      <Badge className="font-normal">
                         {recommendationLabels[e.recommendation] ?? e.recommendation}
                       </Badge>
                     </div>
@@ -399,7 +399,7 @@ export default function AdminApplicationDetail() {
           </div>
 
           {/* Decision logs */}
-          <div className="bg-card border border-border p-6">
+          <div className="rounded-lg bg-card border border-border p-6">
             <h2 className="text-lg font-serif font-bold border-b border-border pb-2 mb-4">
               결정 이력
             </h2>
@@ -434,7 +434,7 @@ export default function AdminApplicationDetail() {
             <div>
               <Label>지원 상태 (레거시)</Label>
               <Select value={status} onValueChange={(v) => setStatus(v as ApplicationStatus)}>
-                <SelectTrigger className="rounded-none bg-background" data-testid="select-legacy-status">
+                <SelectTrigger className="bg-background" data-testid="select-legacy-status">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -447,7 +447,7 @@ export default function AdminApplicationDetail() {
             <div>
               <Label>관리자 메모</Label>
               <Textarea
-                className="min-h-[120px] rounded-none bg-background resize-none"
+                className="min-h-[120px] bg-background resize-none"
                 value={adminNote}
                 onChange={(e) => setAdminNote(e.target.value)}
                 data-testid="input-admin-note"
@@ -456,7 +456,7 @@ export default function AdminApplicationDetail() {
             <Button
               onClick={handleSaveStatus}
               disabled={updateMutation.isPending}
-              className="w-full rounded-none"
+              className="w-full"
               data-testid="button-save-status"
             >
               <Save className="w-4 h-4 mr-2" />
@@ -473,7 +473,7 @@ export default function AdminApplicationDetail() {
                 type="datetime-local"
                 value={interviewScheduledAt}
                 onChange={(e) => setInterviewScheduledAt(e.target.value)}
-                className="rounded-none bg-background"
+                className="bg-background"
                 data-testid="input-interview-when"
               />
             </div>
@@ -482,7 +482,7 @@ export default function AdminApplicationDetail() {
               <Input
                 value={interviewLocation}
                 onChange={(e) => setInterviewLocation(e.target.value)}
-                className="rounded-none bg-background"
+                className="bg-background"
                 data-testid="input-interview-location"
               />
             </div>
@@ -492,7 +492,7 @@ export default function AdminApplicationDetail() {
                 value={interviewStatus}
                 onValueChange={(v) => setInterviewStatus(v as InterviewStatus)}
               >
-                <SelectTrigger className="rounded-none bg-background" data-testid="select-interview-status">
+                <SelectTrigger className="bg-background" data-testid="select-interview-status">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -505,7 +505,7 @@ export default function AdminApplicationDetail() {
             <div>
               <Label>면접관 메모</Label>
               <Textarea
-                className="min-h-[80px] rounded-none bg-background resize-none"
+                className="min-h-[80px] bg-background resize-none"
                 value={interviewNote}
                 onChange={(e) => setInterviewNote(e.target.value)}
                 data-testid="input-interview-note"
@@ -514,7 +514,7 @@ export default function AdminApplicationDetail() {
             <Button
               onClick={handleSaveInterview}
               disabled={upsertInterview.isPending}
-              className="w-full rounded-none"
+              className="w-full"
               data-testid="button-save-interview"
             >
               <Save className="w-4 h-4 mr-2" />
@@ -531,7 +531,7 @@ export default function AdminApplicationDetail() {
                 value={finalDecision}
                 onValueChange={(v) => setFinalDecisionState(v as FinalDecision)}
               >
-                <SelectTrigger className="rounded-none bg-background" data-testid="select-final-decision">
+                <SelectTrigger className="bg-background" data-testid="select-final-decision">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -544,7 +544,7 @@ export default function AdminApplicationDetail() {
             <div>
               <Label>사유 *</Label>
               <Textarea
-                className="min-h-[80px] rounded-none bg-background resize-none"
+                className="min-h-[80px] bg-background resize-none"
                 value={decisionReason}
                 onChange={(e) => setDecisionReason(e.target.value)}
                 data-testid="input-decision-reason"
@@ -553,7 +553,7 @@ export default function AdminApplicationDetail() {
             <Button
               onClick={handleFinal}
               disabled={setFinal.isPending}
-              className="w-full rounded-none"
+              className="w-full"
               data-testid="button-save-decision"
             >
               <Save className="w-4 h-4 mr-2" />

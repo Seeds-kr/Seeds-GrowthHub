@@ -54,17 +54,17 @@ export default function StudentAssignmentDetail() {
       <div className="mb-4"><Link href="/student/assignments" className="text-sm text-muted-foreground hover:text-primary">← 과제 목록</Link></div>
       <h1 className="text-3xl font-serif font-bold mb-2">{data.assignment.title}</h1>
       <div className="text-sm text-muted-foreground mb-6">
-        <Badge className="rounded-none mr-2">{data.assignment.status}</Badge>
+        <Badge className="mr-2">{data.assignment.status}</Badge>
         마감: {data.assignment.dueAt ? format(new Date(data.assignment.dueAt), "yyyy-MM-dd HH:mm") : "없음"}
       </div>
-      {data.assignment.description && <Card className="rounded-none mb-6"><CardContent className="pt-6 whitespace-pre-wrap text-sm">{data.assignment.description}</CardContent></Card>}
+      {data.assignment.description && <Card className="mb-6"><CardContent className="pt-6 whitespace-pre-wrap text-sm">{data.assignment.description}</CardContent></Card>}
 
-      <Card className="rounded-none mb-6">
+      <Card className="mb-6">
         <CardHeader><CardTitle>{data.mySubmission ? "내 제출 (수정 가능)" : "제출하기"}</CardTitle></CardHeader>
         <CardContent className="space-y-3">
-          <Textarea className="rounded-none min-h-32" placeholder="텍스트 답변 (선택)" value={content} onChange={(e) => setContent(e.target.value)} disabled={closed} />
-          <Input className="rounded-none" placeholder="제출 URL (선택, https://…)" value={externalUrl} onChange={(e) => setExternalUrl(e.target.value)} disabled={closed} />
-          <Button className="rounded-none" disabled={closed || submit.isPending || (!content && !externalUrl)} onClick={() => submit.mutate()}>
+          <Textarea className="min-h-32" placeholder="텍스트 답변 (선택)" value={content} onChange={(e) => setContent(e.target.value)} disabled={closed} />
+          <Input className="" placeholder="제출 URL (선택, https://…)" value={externalUrl} onChange={(e) => setExternalUrl(e.target.value)} disabled={closed} />
+          <Button className="" disabled={closed || submit.isPending || (!content && !externalUrl)} onClick={() => submit.mutate()}>
             {submit.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
             {data.mySubmission ? "재제출" : "제출"}
           </Button>
@@ -73,7 +73,7 @@ export default function StudentAssignmentDetail() {
       </Card>
 
       {data.mySubmission?.feedback && (
-        <Card className="rounded-none">
+        <Card className="">
           <CardHeader><CardTitle>피드백</CardTitle></CardHeader>
           <CardContent className="whitespace-pre-wrap text-sm">{data.mySubmission.feedback}</CardContent>
         </Card>

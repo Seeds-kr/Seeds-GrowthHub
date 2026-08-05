@@ -148,7 +148,7 @@ export default function AdminSessions() {
         <h1 className="text-3xl font-serif font-bold">모임 관리</h1>
         <Button onClick={openNew}>+ 새 모임</Button>
       </div>
-      <div className="bg-card border border-border p-4 mb-6 flex gap-4">
+      <div className="rounded-lg bg-card border border-border p-4 mb-6 flex gap-4">
         <Select value={filterCohort} onValueChange={setFilterCohort}>
           <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -164,7 +164,7 @@ export default function AdminSessions() {
           </SelectContent>
         </Select>
       </div>
-      <div className="bg-card border border-border">
+      <div className="rounded-lg bg-card border border-border">
         <Table>
           <TableHeader><TableRow><TableHead>제목</TableHead><TableHead>기수/프로그램</TableHead><TableHead>일시</TableHead><TableHead>담당자</TableHead><TableHead>준비</TableHead><TableHead>상태</TableHead><TableHead></TableHead></TableRow></TableHeader>
           <TableBody>

@@ -74,7 +74,7 @@ export default function AdminSessionAttendance() {
       <DesktopOnly feature="일괄 출석 입력">
       {data.roster.length === 0 ? <div className="text-muted-foreground">이 모임의 기수에 학생이 없습니다.</div> : (
         <>
-          <div className="bg-card border border-border mb-6">
+          <div className="rounded-lg bg-card border border-border mb-6">
             <Table>
               <TableHeader><TableRow><TableHead>학생</TableHead><TableHead>이메일</TableHead><TableHead>출석 상태</TableHead><TableHead>메모</TableHead></TableRow></TableHeader>
               <TableBody>

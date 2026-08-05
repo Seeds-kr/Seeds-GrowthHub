@@ -51,7 +51,7 @@ export default function AdminPrograms() {
         <h1 className="text-3xl font-serif font-bold">프로그램 / 트랙</h1>
         <Button onClick={openNew}>+ 새 프로그램</Button>
       </div>
-      <div className="bg-card border border-border">
+      <div className="rounded-lg bg-card border border-border">
         <Table>
           <TableHeader><TableRow><TableHead>이름</TableHead><TableHead>기수</TableHead><TableHead>상태</TableHead><TableHead></TableHead></TableRow></TableHeader>
           <TableBody>

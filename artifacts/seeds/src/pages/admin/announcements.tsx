@@ -60,7 +60,7 @@ export default function AdminAnnouncements() {
         <h1 className="text-3xl font-serif font-bold">공지사항</h1>
         <Button onClick={openNew}>+ 새 공지</Button>
       </div>
-      <div className="bg-card border border-border">
+      <div className="rounded-lg bg-card border border-border">
         <Table>
           <TableHeader><TableRow><TableHead>제목</TableHead><TableHead>대상</TableHead><TableHead>발행</TableHead><TableHead>작성일</TableHead><TableHead></TableHead></TableRow></TableHeader>
           <TableBody>

@@ -258,7 +258,7 @@ export function MarkdownEditor({
           onPaste={onPaste}
           onDrop={onDrop}
           data-testid={testId}
-          className="rounded-none border-0 font-mono text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+          className="border-0 font-mono text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
         />
       ) : (
         <div className="prose prose-sm dark:prose-invert max-w-none p-3">

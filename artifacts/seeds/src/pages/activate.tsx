@@ -55,7 +55,7 @@ export default function ActivatePage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md bg-card border border-border p-8 shadow-sm">
+      <div className="w-full max-w-md rounded-lg bg-card border border-border p-8 shadow-sm">
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-12 h-12 bg-primary/10 mb-3">
             <KeyRound className="w-6 h-6 text-primary" />
@@ -69,17 +69,17 @@ export default function ActivatePage() {
         {isLoading ? (
           <div className="flex justify-center py-8"><Loader2 className="animate-spin" /></div>
         ) : errMessage ? (
-          <Alert variant="destructive" className="rounded-none">
+          <Alert variant="destructive" className="">
             <AlertTriangle className="w-4 h-4" />
             <AlertDescription>
               {errMessage}
               <div className="mt-3">
-                <Button variant="outline" className="rounded-none" onClick={() => setLocation("/login")}>로그인 페이지로</Button>
+                <Button variant="outline" className="" onClick={() => setLocation("/login")}>로그인 페이지로</Button>
               </div>
             </AlertDescription>
           </Alert>
         ) : done ? (
-          <Alert className="rounded-none">
+          <Alert className="">
             <CheckCircle2 className="w-4 h-4" />
             <AlertDescription>
               활성화가 완료되었습니다. 잠시 후 로그인 페이지로 이동합니다…
@@ -105,7 +105,7 @@ export default function ActivatePage() {
               <Input
                 id="pw1"
                 type="password"
-                className="rounded-none mt-1"
+                className="mt-1"
                 value={pw1}
                 onChange={(e) => setPw1(e.target.value)}
                 minLength={8}
@@ -118,7 +118,7 @@ export default function ActivatePage() {
               <Input
                 id="pw2"
                 type="password"
-                className="rounded-none mt-1"
+                className="mt-1"
                 value={pw2}
                 onChange={(e) => setPw2(e.target.value)}
                 minLength={8}
@@ -129,11 +129,11 @@ export default function ActivatePage() {
               )}
             </div>
             {consume.isError && (
-              <Alert variant="destructive" className="rounded-none">
+              <Alert variant="destructive" className="">
                 <AlertDescription>활성화에 실패했습니다. 링크가 만료되었거나 이미 사용되었을 수 있습니다.</AlertDescription>
               </Alert>
             )}
-            <Button type="submit" className="w-full rounded-none" disabled={pw1.length < 8 || pw1 !== pw2 || consume.isPending}>
+            <Button type="submit" className="w-full" disabled={pw1.length < 8 || pw1 !== pw2 || consume.isPending}>
               {consume.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               비밀번호 설정 후 활성화
             </Button>

@@ -12,7 +12,7 @@ export default function Program() {
         </Reveal>
 
         <div className="grid md:grid-cols-2 gap-12 mb-16">
-          <Reveal className="bg-card border border-border p-8">
+          <Reveal className="rounded-lg bg-card border border-border p-8">
             <h2 className="text-2xl font-serif font-bold mb-4">{c.curriculum.heading}</h2>
             <ul className="space-y-4 text-muted-foreground">
               {c.curriculum.items.map((it, i) => (
@@ -24,7 +24,7 @@ export default function Program() {
             </ul>
           </Reveal>
 
-          <Reveal delay={0.12} className="bg-card border border-border p-8 bg-primary text-primary-foreground">
+          <Reveal delay={0.12} className="rounded-lg bg-card border border-border p-8 bg-primary text-primary-foreground">
             <h2 className="text-2xl font-serif font-bold mb-4">{c.benefits.heading}</h2>
             <ul className="space-y-4 opacity-90">
               {c.benefits.items.map((it, i) => (

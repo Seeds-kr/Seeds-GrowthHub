@@ -43,10 +43,10 @@ export default function StudentProjectDetail() {
     <StudentLayout>
       <div className="mb-4">
         <h1 className="text-3xl font-serif font-bold">{p.title}</h1>
-        <Badge variant="outline" className="rounded-none mt-1">{PROJECT_STATUS_LABEL[p.status]}</Badge>
+        <Badge variant="outline" className="mt-1">{PROJECT_STATUS_LABEL[p.status]}</Badge>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <Card className="rounded-none">
+        <Card className="">
           <CardHeader><CardTitle>프로젝트 정보</CardTitle></CardHeader>
           <CardContent className="text-sm space-y-2">
             <div><span className="text-muted-foreground">설명: </span>{p.description ?? "-"}</div>
@@ -55,39 +55,39 @@ export default function StudentProjectDetail() {
             <div><span className="text-muted-foreground">내 역할: </span>{data.myMembership.role ?? "-"}</div>
           </CardContent>
         </Card>
-        <Card className="rounded-none">
+        <Card className="">
           <CardHeader><CardTitle>팀원</CardTitle></CardHeader>
           <CardContent className="text-sm space-y-1">
             {data.members.map((m) => <div key={m.id}>{m.studentName}{m.role ? ` · ${m.role}` : ""}</div>)}
           </CardContent>
         </Card>
-        <Card className="rounded-none">
+        <Card className="">
           <CardHeader><CardTitle>아티팩트</CardTitle></CardHeader>
           <CardContent className="text-sm space-y-1">
             {data.artifacts.length === 0 ? <span className="text-muted-foreground">없음</span>
             : data.artifacts.map((a) => (
-              <div key={a.id}><Badge variant="outline" className="rounded-none mr-2">{ARTIFACT_TYPE_LABEL[a.artifactType]}</Badge><a className="hover:underline" href={a.url} target="_blank" rel="noreferrer">{a.title}</a></div>
+              <div key={a.id}><Badge variant="outline" className="mr-2">{ARTIFACT_TYPE_LABEL[a.artifactType]}</Badge><a className="hover:underline" href={a.url} target="_blank" rel="noreferrer">{a.title}</a></div>
             ))}
           </CardContent>
         </Card>
-        <Card className="rounded-none">
+        <Card className="">
           <CardHeader><CardTitle>피드백</CardTitle></CardHeader>
           <CardContent className="text-sm space-y-2">
             {data.feedback.length === 0 ? <span className="text-muted-foreground">없음</span>
             : data.feedback.map((f) => (
               <div key={f.id} className="border-b border-border py-1">
-                <Badge variant="outline" className="rounded-none">{FEEDBACK_TYPE_LABEL[f.feedbackType]}</Badge>
+                <Badge variant="outline" className="">{FEEDBACK_TYPE_LABEL[f.feedbackType]}</Badge>
                 <span className="text-xs text-muted-foreground ml-2">{format(new Date(f.createdAt), "yyyy-MM-dd")}</span>
                 <div className="mt-1 whitespace-pre-wrap">{f.content}</div>
               </div>
             ))}
           </CardContent>
         </Card>
-        <Card className="rounded-none md:col-span-2">
+        <Card className="md:col-span-2">
           <CardHeader><CardTitle>스킬 태그</CardTitle></CardHeader>
           <CardContent>
             {data.tags.length === 0 ? <span className="text-sm text-muted-foreground">태그 없음</span>
-            : <div className="flex flex-wrap gap-1">{data.tags.map((t) => <Badge key={t.id} variant="outline" className="rounded-none">{t.name}</Badge>)}</div>}
+            : <div className="flex flex-wrap gap-1">{data.tags.map((t) => <Badge key={t.id} variant="outline" className="">{t.name}</Badge>)}</div>}
           </CardContent>
         </Card>
       </div>

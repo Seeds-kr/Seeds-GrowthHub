@@ -197,7 +197,7 @@ export default function AdminMeetingsPage() {
         </Button>
       </div>
 
-      <div className="bg-card border border-border">
+      <div className="rounded-lg bg-card border border-border">
         <Table>
           <TableHeader>
             <TableRow>

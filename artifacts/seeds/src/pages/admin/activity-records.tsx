@@ -70,7 +70,7 @@ export default function AdminActivityRecords() {
         <Button onClick={openNew}>+ 새 기록</Button>
       </div>
 
-      <div className="bg-card border border-border p-4 mb-4 grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="rounded-lg bg-card border border-border p-4 mb-4 grid grid-cols-2 md:grid-cols-5 gap-3">
         <Select value={filters.studentId || "all"} onValueChange={(v) => setFilters({ ...filters, studentId: v === "all" ? "" : v })}>
           <SelectTrigger><SelectValue placeholder="학생" /></SelectTrigger>
           <SelectContent><SelectItem value="all">학생 전체</SelectItem>{students?.items.map((s) => <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>)}</SelectContent>
@@ -93,7 +93,7 @@ export default function AdminActivityRecords() {
         </Select>
       </div>
 
-      <div className="bg-card border border-border">
+      <div className="rounded-lg bg-card border border-border">
         <Table>
           <TableHeader><TableRow><TableHead>날짜</TableHead><TableHead>학생</TableHead><TableHead>유형</TableHead><TableHead>제목</TableHead><TableHead>공개</TableHead><TableHead>태그</TableHead><TableHead></TableHead></TableRow></TableHeader>
           <TableBody>

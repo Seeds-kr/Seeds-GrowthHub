@@ -34,9 +34,9 @@ export default function AdminTags() {
     <AdminLayout>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-serif font-bold">스킬 태그</h1>
-        <Button className="rounded-none" onClick={() => { setEditing(null); setForm({ name: "", description: "" }); setOpen(true); }}>+ 새 태그</Button>
+        <Button className="" onClick={() => { setEditing(null); setForm({ name: "", description: "" }); setOpen(true); }}>+ 새 태그</Button>
       </div>
-      <div className="bg-card border border-border">
+      <div className="rounded-lg bg-card border border-border">
         <Table>
           <TableHeader><TableRow><TableHead>이름</TableHead><TableHead>설명</TableHead><TableHead></TableHead></TableRow></TableHeader>
           <TableBody>
@@ -47,8 +47,8 @@ export default function AdminTags() {
                 <TableCell className="font-medium">{t.name}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{t.description ?? "-"}</TableCell>
                 <TableCell className="space-x-2">
-                  <Button variant="outline" size="sm" className="rounded-none" onClick={() => { setEditing(t); setForm({ name: t.name, description: t.description ?? "" }); setOpen(true); }}>수정</Button>
-                  <Button variant="outline" size="sm" className="rounded-none" onClick={() => { if (confirm("삭제?")) del.mutate(t.id); }}>삭제</Button>
+                  <Button variant="outline" size="sm" className="" onClick={() => { setEditing(t); setForm({ name: t.name, description: t.description ?? "" }); setOpen(true); }}>수정</Button>
+                  <Button variant="outline" size="sm" className="" onClick={() => { if (confirm("삭제?")) del.mutate(t.id); }}>삭제</Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -57,15 +57,15 @@ export default function AdminTags() {
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="rounded-none">
+        <DialogContent className="">
           <DialogHeader><DialogTitle>{editing ? "태그 수정" : "새 태그"}</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <Input className="rounded-none" placeholder="이름" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-            <Textarea className="rounded-none" placeholder="설명 (선택)" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            <Input className="" placeholder="이름" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <Textarea className="" placeholder="설명 (선택)" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
           </div>
           <DialogFooter>
-            <Button variant="outline" className="rounded-none" onClick={() => setOpen(false)}>취소</Button>
-            <Button className="rounded-none" disabled={!form.name || save.isPending} onClick={() => save.mutate()}>저장</Button>
+            <Button variant="outline" className="" onClick={() => setOpen(false)}>취소</Button>
+            <Button className="" disabled={!form.name || save.isPending} onClick={() => save.mutate()}>저장</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

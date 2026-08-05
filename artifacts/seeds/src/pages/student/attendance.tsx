@@ -29,14 +29,14 @@ export default function StudentAttendance() {
       <h1 className="text-3xl font-serif font-bold mb-6">출석 현황</h1>
       {/* W11 (design/05 §6.2/§6.4) — A tier: five fixed columns put ~65px under
           each "지각: 3" at 375px and pushed the card wider than the viewport. */}
-      <Card className="rounded-none mb-6"><CardHeader><CardTitle>요약</CardTitle></CardHeader><CardContent className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-3 lg:grid-cols-5">
+      <Card className="mb-6"><CardHeader><CardTitle>요약</CardTitle></CardHeader><CardContent className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-3 lg:grid-cols-5">
         <div>총: <strong>{data.summary.total}</strong></div>
         <div>출석: <strong>{data.summary.present}</strong></div>
         <div>지각: <strong>{data.summary.late}</strong></div>
         <div>결석: <strong>{data.summary.absent}</strong></div>
         <div>인정: <strong>{data.summary.excused}</strong></div>
       </CardContent></Card>
-      <div className="bg-card border border-border">
+      <div className="rounded-lg bg-card border border-border">
         <Table>
           <TableHeader><TableRow><TableHead>모임</TableHead><TableHead>일시</TableHead><TableHead>상태</TableHead><TableHead>노트</TableHead></TableRow></TableHeader>
           <TableBody>
@@ -45,7 +45,7 @@ export default function StudentAttendance() {
               <TableRow key={r.id}>
                 <TableCell className="font-medium">{r.sessionTitle}</TableCell>
                 <TableCell>{format(new Date(r.scheduledAt), "yyyy-MM-dd HH:mm")}</TableCell>
-                <TableCell><Badge className="rounded-none">{r.status}</Badge></TableCell>
+                <TableCell><Badge className="">{r.status}</Badge></TableCell>
                 <TableCell>{r.note ?? "-"}</TableCell>
               </TableRow>
             ))}

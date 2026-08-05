@@ -57,7 +57,7 @@ export default function AdminFeedback() {
         <Button onClick={() => { setForm({ targetType: "student", targetId: "", studentId: "", feedbackType: "general", content: "", visibility: "admin_only" }); setOpen(true); }}>+ 새 피드백</Button>
       </div>
 
-      <div className="bg-card border border-border p-4 mb-4 grid grid-cols-2 gap-3">
+      <div className="rounded-lg bg-card border border-border p-4 mb-4 grid grid-cols-2 gap-3">
         <Select value={filters.targetType || "all"} onValueChange={(v) => setFilters({ ...filters, targetType: v === "all" ? "" : v })}>
           <SelectTrigger><SelectValue placeholder="대상 유형" /></SelectTrigger>
           <SelectContent><SelectItem value="all">대상 전체</SelectItem>{FEEDBACK_TARGETS.map((t) => <SelectItem key={t} value={t}>{FEEDBACK_TARGET_LABEL[t]}</SelectItem>)}</SelectContent>
@@ -68,7 +68,7 @@ export default function AdminFeedback() {
         </Select>
       </div>
 
-      <div className="bg-card border border-border">
+      <div className="rounded-lg bg-card border border-border">
         <Table>
           <TableHeader><TableRow><TableHead>날짜</TableHead><TableHead>대상</TableHead><TableHead>학생</TableHead><TableHead>유형</TableHead><TableHead>공개</TableHead><TableHead>내용</TableHead><TableHead></TableHead></TableRow></TableHeader>
           <TableBody>
