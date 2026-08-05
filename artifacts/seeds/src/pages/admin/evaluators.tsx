@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import {
   useListUsers,
   useCreateUser,
@@ -95,7 +94,7 @@ export default function AdminEvaluators() {
   };
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <h1 className="text-3xl font-serif font-bold">평가자 관리</h1>
         <Dialog open={open} onOpenChange={setOpen}>
@@ -213,6 +212,6 @@ export default function AdminEvaluators() {
           </TableBody>
         </Table>
       </div>
-    </AdminLayout>
+    </>
   );
 }

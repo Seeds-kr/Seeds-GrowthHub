@@ -1,4 +1,3 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShieldCheck, Info, Wrench } from "lucide-react";
@@ -71,7 +70,7 @@ const ROLES: RoleRow[] = [
 
 export default function AdminRoles() {
   return (
-    <AdminLayout>
+    <>
       <div className="space-y-6">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold">
@@ -241,6 +240,6 @@ export default function AdminRoles() {
           </CardContent>
         </Card>
       </div>
-    </AdminLayout>
+    </>
   );
 }

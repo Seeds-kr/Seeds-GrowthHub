@@ -1,4 +1,3 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import {
@@ -43,7 +42,7 @@ export default function AdminProjects() {
   });
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-serif font-bold">프로젝트</h1>
         <Button onClick={() => { setForm({ cohortId: "", programId: "", title: "", description: "", status: "ideation" }); setOpen(true); }}>+ 새 프로젝트</Button>
@@ -113,6 +112,6 @@ export default function AdminProjects() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 }

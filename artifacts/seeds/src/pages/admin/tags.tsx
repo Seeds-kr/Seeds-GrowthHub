@@ -1,4 +1,3 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, type SkillTag } from "@/lib/mvp3-api";
 import { Loader2 } from "lucide-react";
@@ -32,7 +31,7 @@ export default function AdminTags() {
   });
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-serif font-bold">스킬 태그</h1>
         <Button className="" onClick={() => { setEditing(null); setForm({ name: "", description: "" }); setOpen(true); }}>+ 새 태그</Button>
@@ -72,6 +71,6 @@ export default function AdminTags() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 }

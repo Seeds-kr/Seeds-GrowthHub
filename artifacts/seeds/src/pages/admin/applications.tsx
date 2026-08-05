@@ -1,4 +1,3 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useListApplications } from "@workspace/api-client-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, Search, Download } from "lucide-react";
@@ -59,7 +58,7 @@ export default function AdminApplications() {
   };
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <h1 className="text-3xl font-serif font-bold">지원서 관리</h1>
         <Button onClick={handleExport} variant="outline" className="">
@@ -145,6 +144,6 @@ export default function AdminApplications() {
           </TableBody>
         </Table>
       </div>
-    </AdminLayout>
+    </>
   );
 }

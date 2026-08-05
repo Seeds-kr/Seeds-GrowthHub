@@ -3,7 +3,6 @@ import { Link, useParams } from "wouter";
 import ReactMarkdown from "react-markdown";
 import { MarkdownEditor } from "@/components/markdown/MarkdownEditor";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { DesktopOnly } from "@/components/DesktopOnly";
 import { useIsDesktop } from "@/hooks/use-desktop";
 import { api, ApiError } from "@/lib/mvp3-api";
@@ -219,24 +218,24 @@ export default function AdminMeetingDetailPage() {
 
   if (isLoading) {
     return (
-      <AdminLayout>
+      <>
         <Loader2 className="w-6 h-6 animate-spin" />
-      </AdminLayout>
+      </>
     );
   }
   if (error || !data) {
     return (
-      <AdminLayout>
+      <>
         <div className="text-muted-foreground">회의록을 찾을 수 없습니다.</div>
         <Link href="/admin/meetings" className="text-primary text-sm mt-4 inline-block">
           ← 목록으로
         </Link>
-      </AdminLayout>
+      </>
     );
   }
 
   return (
-    <AdminLayout>
+    <>
       <Link
         href="/admin/meetings"
         className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1 mb-4"
@@ -468,6 +467,6 @@ export default function AdminMeetingDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 }

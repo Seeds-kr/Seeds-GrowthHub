@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useRoute, Link } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { MentorLayout } from "@/components/layout/MentorLayout";
 import { DesktopOnly } from "@/components/DesktopOnly";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -277,16 +276,16 @@ export default function MentorProjectDetailPage() {
 
   if (isLoading) {
     return (
-      <MentorLayout>
+      <>
         <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
-      </MentorLayout>
+      </>
     );
   }
 
   // Unowned projects return 404 by design — do not hint that the id exists.
   if (isError || !data) {
     return (
-      <MentorLayout>
+      <>
         <Card>
           <CardContent className="py-10 text-center">
             <p className="text-sm text-muted-foreground">
@@ -299,7 +298,7 @@ export default function MentorProjectDetailPage() {
             </Link>
           </CardContent>
         </Card>
-      </MentorLayout>
+      </>
     );
   }
 
@@ -311,7 +310,7 @@ export default function MentorProjectDetailPage() {
   ].filter((l) => l.url);
 
   return (
-    <MentorLayout>
+    <>
       <div className="mb-4">
         <Link href="/mentor/teams">
           <Button variant="ghost" size="sm" className="mb-2 gap-1 px-2">
@@ -559,6 +558,6 @@ export default function MentorProjectDetailPage() {
           </CardContent>
         </Card>
       </div>
-    </MentorLayout>
+    </>
   );
 }

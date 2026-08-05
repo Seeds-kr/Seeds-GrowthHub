@@ -1,4 +1,3 @@
-import { StudentLayout } from "@/components/layout/StudentLayout";
 import { useQuery } from "@tanstack/react-query";
 import {
   api, PROJECT_STATUS_LABEL, ARTIFACT_TYPE_LABEL,
@@ -19,15 +18,15 @@ export default function StudentReportPage() {
   });
   // 로딩과 "없음"을 갈라야 한다. 하나로 묶으면 없는 자료를 열었을 때
   // 스피너가 영원히 돈다(느린 건지 없는 건지 알 수 없다).
-  if (isLoading) return <StudentLayout><Loader2 className="animate-spin mx-auto" /></StudentLayout>;
+  if (isLoading) return <><Loader2 className="animate-spin mx-auto" /></>;
   if (!data)
     return (
-      <StudentLayout>
+      <>
         <ResourceMissing label="리포트" backHref="/student" />
-      </StudentLayout>
+      </>
     );
   return (
-    <StudentLayout>
+    <>
       <div className="mb-6 flex items-center justify-between print:hidden">
         <h1 className="text-3xl font-serif font-bold">내 활동 리포트</h1>
         <Button className="" onClick={() => window.print()}>인쇄</Button>
@@ -120,6 +119,6 @@ export default function StudentReportPage() {
           </CardContent>
         </Card>
       </div>
-    </StudentLayout>
+    </>
   );
 }

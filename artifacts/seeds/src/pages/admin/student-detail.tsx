@@ -1,4 +1,3 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, type Cohort, type Program } from "@/lib/mvp3-api";
 import { useRoute, Link } from "wouter";
@@ -60,23 +59,23 @@ export default function AdminStudentDetail() {
 
   // 스피너가 영원히 돈다(느린 건지 없는 건지 알 수 없다).
 
-  if (isLoading) return <AdminLayout><div className="flex justify-center py-12"><Loader2 className="animate-spin" /></div></AdminLayout>;
+  if (isLoading) return <><div className="flex justify-center py-12"><Loader2 className="animate-spin" /></div></>;
 
   if (!data)
 
     return (
 
-      <AdminLayout>
+      <>
 
         <ResourceMissing label="학생" backHref="/admin/students" />
 
-      </AdminLayout>
+      </>
 
     );
   const s = data.student;
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-6">
         <Link href="/admin/students" className="text-sm text-muted-foreground hover:text-primary">← 학생 목록</Link>
       </div>
@@ -143,7 +142,7 @@ export default function AdminStudentDetail() {
             <li key={s2.id} className="flex justify-between border-b pb-2"><span>{s2.assignmentTitle}</span><span><Badge className="mr-2">{s2.status}</Badge>{s2.submittedAt ? format(new Date(s2.submittedAt), "yyyy-MM-dd HH:mm") : "-"}</span></li>
           ))}</ul>}
       </CardContent></Card>
-    </AdminLayout>
+    </>
   );
 }
 

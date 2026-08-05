@@ -1,4 +1,3 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, type Submission } from "@/lib/mvp3-api";
 import { useRoute, Link } from "wouter";
@@ -43,15 +42,15 @@ export default function AdminAssignmentDetail() {
   });
   // 로딩과 "없음"을 갈라야 한다. 하나로 묶으면 없는 자료를 열었을 때
   // 스피너가 영원히 돈다(느린 건지 없는 건지 알 수 없다).
-  if (isLoading) return <AdminLayout><div className="flex justify-center py-12"><Loader2 className="animate-spin" /></div></AdminLayout>;
+  if (isLoading) return <><div className="flex justify-center py-12"><Loader2 className="animate-spin" /></div></>;
   if (!data)
     return (
-      <AdminLayout>
+      <>
         <ResourceMissing label="과제" backHref="/admin/assignments" />
-      </AdminLayout>
+      </>
     );
   return (
-    <AdminLayout>
+    <>
       <div className="mb-4"><Link href="/admin/assignments" className="text-sm text-muted-foreground hover:text-primary">← 과제 목록</Link></div>
       <h1 className="text-3xl font-serif font-bold mb-2">{data.assignment.title}</h1>
       <div className="text-sm text-muted-foreground mb-6">
@@ -78,6 +77,6 @@ export default function AdminAssignmentDetail() {
           ))}
         </div>
       )}
-    </AdminLayout>
+    </>
   );
 }

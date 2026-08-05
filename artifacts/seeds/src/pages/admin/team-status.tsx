@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, LayoutGrid, AlertCircle } from "lucide-react";
@@ -39,7 +38,7 @@ export default function AdminTeamStatus() {
     (data?.items ?? []).filter((i) => (i.teamStatus ?? "none") === k);
 
   return (
-    <AdminLayout>
+    <>
       <div className="space-y-4">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold">
@@ -123,6 +122,6 @@ export default function AdminTeamStatus() {
           </div>
         )}
       </div>
-    </AdminLayout>
+    </>
   );
 }

@@ -1,4 +1,3 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, type Student, type Cohort } from "@/lib/mvp3-api";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -91,7 +90,7 @@ export default function AdminStudents() {
   };
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-8 flex items-center justify-between">
         <h1 className="text-3xl font-serif font-bold">학생 관리</h1>
         <Button className="" onClick={() => setConvertOpen(true)}>합격자 → 학생 전환</Button>
@@ -193,6 +192,6 @@ export default function AdminStudents() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 }

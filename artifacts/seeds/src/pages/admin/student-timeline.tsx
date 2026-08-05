@@ -1,4 +1,3 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useRoute, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -67,7 +66,7 @@ export default function AdminStudentTimeline() {
   });
   const { data: tags } = useQuery({ queryKey: ["admin-tags"], queryFn: () => api<{ items: SkillTag[] }>("/admin/tags") });
   return (
-    <AdminLayout>
+    <>
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-3xl font-serif font-bold">활동 타임라인</h1>
         <div className="flex gap-2">
@@ -80,6 +79,6 @@ export default function AdminStudentTimeline() {
       : <div className="space-y-3">
           {data?.items.map((r) => <TimelineItem key={r.id} r={r} allTags={tags?.items} onChange={() => qc.invalidateQueries({ queryKey: ["admin-student-timeline", id] })} />)}
         </div>}
-    </AdminLayout>
+    </>
   );
 }

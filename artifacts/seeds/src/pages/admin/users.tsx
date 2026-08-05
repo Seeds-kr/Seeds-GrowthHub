@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAdminMe } from "@workspace/api-client-react";
 import { Link } from "wouter";
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { api } from "@/lib/mvp3-api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -217,7 +216,7 @@ export default function AdminUsers() {
   }, [data, q]);
 
   return (
-    <AdminLayout>
+    <>
       <div className="space-y-4">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -386,6 +385,6 @@ export default function AdminUsers() {
 
         <OpsRolesDialog user={editing} onClose={() => setEditing(null)} />
       </div>
-    </AdminLayout>
+    </>
   );
 }

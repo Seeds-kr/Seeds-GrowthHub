@@ -1,4 +1,3 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useParams, Link } from "wouter";
 import {
   useGetApplication,
@@ -211,24 +210,24 @@ export default function AdminApplicationDetail() {
   // 스피너가 영원히 돈다(느린 건지 없는 건지 알 수 없다).
   if (isLoading) {
     return (
-      <AdminLayout>
+      <>
         <div className="flex justify-center py-24">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
-      </AdminLayout>
+      </>
     );
   }
   if (!application) {
     return (
-      <AdminLayout>
+      <>
         <ResourceMissing label="지원서" backHref="/admin/applications" />
-      </AdminLayout>
+      </>
     );
   }
   const evaluatorOptions = (evaluators.data?.items ?? []).filter((u) => u.isActive);
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/admin/applications">
@@ -562,7 +561,7 @@ export default function AdminApplicationDetail() {
           </div>
         </div>
       </div>
-    </AdminLayout>
+    </>
   );
 }
 

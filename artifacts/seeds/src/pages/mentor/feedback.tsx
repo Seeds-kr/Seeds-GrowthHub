@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { format } from "date-fns";
-import { MentorLayout } from "@/components/layout/MentorLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, MessageSquare } from "lucide-react";
@@ -34,7 +33,7 @@ export default function MentorFeedback() {
   });
 
   return (
-    <MentorLayout>
+    <>
       <div className="mb-6">
         <h1 className="flex items-center gap-2 text-2xl font-bold">
           <MessageSquare className="h-6 w-6 text-primary" />내 피드백
@@ -89,6 +88,6 @@ export default function MentorFeedback() {
           </Card>
         ))}
       </div>
-    </MentorLayout>
+    </>
   );
 }

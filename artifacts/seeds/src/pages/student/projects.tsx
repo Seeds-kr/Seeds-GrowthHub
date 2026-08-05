@@ -1,4 +1,3 @@
-import { StudentLayout } from "@/components/layout/StudentLayout";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { api, PROJECT_STATUS_LABEL, type Project } from "@/lib/mvp3-api";
@@ -12,7 +11,7 @@ export default function StudentProjects() {
     queryFn: () => api<{ items: Project[] }>("/student/projects"),
   });
   return (
-    <StudentLayout>
+    <>
       <h1 className="text-3xl font-serif font-bold mb-6">내 프로젝트</h1>
       {isLoading ? <Loader2 className="animate-spin mx-auto" />
       : data?.items.length === 0 ? <div className="text-muted-foreground">참여 중인 프로젝트가 없습니다.</div>
@@ -29,6 +28,6 @@ export default function StudentProjects() {
           </Card>
         </Link>
       ))}</div>}
-    </StudentLayout>
+    </>
   );
 }

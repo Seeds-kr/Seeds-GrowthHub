@@ -1,4 +1,3 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { DesktopOnly } from "@/components/DesktopOnly";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/mvp3-api";
@@ -47,21 +46,21 @@ export default function AdminSessionAttendance() {
 
   // 스피너가 영원히 돈다(느린 건지 없는 건지 알 수 없다).
 
-  if (isLoading) return <AdminLayout><div className="flex justify-center py-12"><Loader2 className="animate-spin" /></div></AdminLayout>;
+  if (isLoading) return <><div className="flex justify-center py-12"><Loader2 className="animate-spin" /></div></>;
 
   if (!data)
 
     return (
 
-      <AdminLayout>
+      <>
 
         <ResourceMissing label="모임" backHref="/admin/sessions" />
 
-      </AdminLayout>
+      </>
 
     );
   return (
-    <AdminLayout>
+    <>
       <div className="mb-4"><Link href="/admin/sessions" className="text-sm text-muted-foreground hover:text-primary">← 모임 목록</Link></div>
       <h1 className="text-3xl font-serif font-bold mb-2">{data.session.title}</h1>
       <div className="text-muted-foreground text-sm mb-6">
@@ -100,6 +99,6 @@ export default function AdminSessionAttendance() {
         </>
       )}
       </DesktopOnly>
-    </AdminLayout>
+    </>
   );
 }

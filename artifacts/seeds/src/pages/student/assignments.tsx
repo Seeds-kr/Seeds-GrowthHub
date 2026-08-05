@@ -1,4 +1,3 @@
-import { StudentLayout } from "@/components/layout/StudentLayout";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/mvp3-api";
 import { Loader2 } from "lucide-react";
@@ -16,7 +15,7 @@ type Item = {
 export default function StudentAssignments() {
   const { data, isLoading } = useQuery({ queryKey: ["student-assignments"], queryFn: () => api<{ items: Item[] }>("/student/assignments") });
   return (
-    <StudentLayout>
+    <>
       <h1 className="text-3xl font-serif font-bold mb-6">과제</h1>
       <div className="rounded-lg bg-card border border-border elev-1">
         <Table>
@@ -45,6 +44,6 @@ export default function StudentAssignments() {
           </TableBody>
         </Table>
       </div>
-    </StudentLayout>
+    </>
   );
 }

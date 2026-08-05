@@ -64,3 +64,19 @@ node stories.mjs
 
 계정을 안 주면 그 역할은 `BLOCK` 으로 남는다. 통과로 세지 않는다.
 쓰기 스토리는 실제 데이터를 만든다 — 운영 DB 를 향해 돌리지 말 것.
+
+## routes.mjs — 전 라우트 훑기
+
+`stories.mjs` 는 29개라 화면의 절반쯤만 지난다. 라우팅처럼 **모든 화면에 동시에
+영향을 주는 변경** 앞뒤로는 전 화면이 여전히 렌더되는지 싸게 확인할 수단이 필요하다.
+각 라우트를 열어 본문이 비지 않았는지 · 콘솔 오류가 없는지 · 가로 스크롤이 없는지만 본다.
+
+```bash
+node routes.mjs > before.txt     # 변경 전
+# … 변경 …
+node routes.mjs > after.txt
+diff before.txt after.txt
+```
+
+실제로 이 도구가 라우터 구조 변경에서 인덱스 4개가 빈 화면이 된 걸 잡았다.
+계정 환경변수는 stories.mjs 와 같다.

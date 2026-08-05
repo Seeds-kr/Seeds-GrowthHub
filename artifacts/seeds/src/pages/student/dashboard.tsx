@@ -1,4 +1,3 @@
-import { StudentLayout } from "@/components/layout/StudentLayout";
 import { useQuery } from "@tanstack/react-query";
 import { api, type SessionItem, type AssignmentItem, type Announcement } from "@/lib/mvp3-api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,11 +18,11 @@ export default function StudentDashboard() {
   const assignments = useQuery({ queryKey: ["student-assignments"], queryFn: () => api<{ items: AssignmentItem[] }>("/student/assignments") });
   const announcements = useQuery({ queryKey: ["student-announcements"], queryFn: () => api<{ items: Announcement[] }>("/student/announcements") });
 
-  if (me.isLoading) return <StudentLayout><Loader2 className="animate-spin mx-auto" /></StudentLayout>;
+  if (me.isLoading) return <><Loader2 className="animate-spin mx-auto" /></>;
   const upcoming = (sessions.data?.items ?? []).filter((s) => new Date(s.scheduledAt).getTime() > Date.now() && s.status === "scheduled").slice(0, 5);
 
   return (
-    <StudentLayout>
+    <>
       <h1 className="text-3xl font-serif font-bold mb-6">안녕하세요, {me.data?.student.name}님</h1>
 
       <div className="grid md:grid-cols-2 gap-6 mb-6">
@@ -60,6 +59,6 @@ export default function StudentDashboard() {
             </li>
           ))}</ul>}
       </CardContent></Card>
-    </StudentLayout>
+    </>
   );
 }

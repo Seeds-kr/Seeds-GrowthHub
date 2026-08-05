@@ -1,4 +1,3 @@
-import { StudentLayout } from "@/components/layout/StudentLayout";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/mvp3-api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,15 +17,15 @@ export default function StudentAttendance() {
   const { data, isLoading } = useQuery({ queryKey: ["student-attendance"], queryFn: () => api<Resp>("/student/attendance") });
   // 로딩과 "없음"을 갈라야 한다. 하나로 묶으면 없는 자료를 열었을 때
   // 스피너가 영원히 돈다(느린 건지 없는 건지 알 수 없다).
-  if (isLoading) return <StudentLayout><Loader2 className="animate-spin mx-auto" /></StudentLayout>;
+  if (isLoading) return <><Loader2 className="animate-spin mx-auto" /></>;
   if (!data)
     return (
-      <StudentLayout>
+      <>
         <ResourceMissing label="출석 기록" backHref="/student" />
-      </StudentLayout>
+      </>
     );
   return (
-    <StudentLayout>
+    <>
       <h1 className="text-3xl font-serif font-bold mb-6">출석 현황</h1>
       {/* W11 (design/05 §6.2/§6.4) — A tier: five fixed columns put ~65px under
           each "지각: 3" at 375px and pushed the card wider than the viewport. */}
@@ -55,6 +54,6 @@ export default function StudentAttendance() {
           </TableBody>
         </Table>
       </div>
-    </StudentLayout>
+    </>
   );
 }

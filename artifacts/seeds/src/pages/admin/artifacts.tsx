@@ -1,4 +1,3 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   api, ARTIFACT_TYPES, ARTIFACT_TYPE_LABEL,
@@ -48,7 +47,7 @@ export default function AdminArtifacts() {
   });
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-serif font-bold">아티팩트</h1>
         <Button onClick={() => { setForm({ studentId: "", projectId: "", title: "", description: "", url: "", artifactType: "link", visibility: "student_visible" }); setOpen(true); }}>+ 새 아티팩트</Button>
@@ -132,6 +131,6 @@ export default function AdminArtifacts() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 }

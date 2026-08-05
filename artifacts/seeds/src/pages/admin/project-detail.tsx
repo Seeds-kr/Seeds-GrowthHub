@@ -1,4 +1,3 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useRoute, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -162,23 +161,23 @@ export default function AdminProjectDetail() {
 
   // 스피너가 영원히 돈다(느린 건지 없는 건지 알 수 없다).
 
-  if (isLoading) return <AdminLayout><Loader2 className="animate-spin mx-auto" /></AdminLayout>;
+  if (isLoading) return <><Loader2 className="animate-spin mx-auto" /></>;
 
   if (!data)
 
     return (
 
-      <AdminLayout>
+      <>
 
         <ResourceMissing label="프로젝트" backHref="/admin/projects" />
 
-      </AdminLayout>
+      </>
 
     );
   const p = data.project;
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-6">
         <h1 className="text-3xl font-serif font-bold">{p.title}</h1>
         <div className="text-sm text-muted-foreground">{p.cohortName ?? ""} · {PROJECT_STATUS_LABEL[p.status]}</div>
@@ -436,6 +435,6 @@ export default function AdminProjectDetail() {
           </CardContent>
         </Card>
       </div>
-    </AdminLayout>
+    </>
   );
 }

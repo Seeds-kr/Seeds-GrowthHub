@@ -1,4 +1,3 @@
-import { StudentLayout } from "@/components/layout/StudentLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, type PeopleProfile } from "@/lib/mvp3-api";
 import { useEffect, useState } from "react";
@@ -71,7 +70,7 @@ export default function StudentProfilePage() {
   });
 
   return (
-    <StudentLayout>
+    <>
       <div className="max-w-2xl mx-auto">
         <h1 className="text-3xl font-serif font-bold mb-2">내 공개 프로필</h1>
         <p className="text-sm text-muted-foreground mb-6">
@@ -181,6 +180,6 @@ export default function StudentProfilePage() {
           </div>
         )}
       </div>
-    </StudentLayout>
+    </>
   );
 }

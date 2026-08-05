@@ -1,4 +1,3 @@
-import { EvaluatorLayout } from "@/components/layout/EvaluatorLayout";
 import { useListMyAssignments } from "@workspace/api-client-react";
 import {
   Table,
@@ -19,7 +18,7 @@ export default function EvaluatorDashboard() {
   const { data, isLoading } = useListMyAssignments();
 
   return (
-    <EvaluatorLayout>
+    <>
       <div className="mb-8">
         <h1 className="text-3xl font-serif font-bold">내 평가 배정</h1>
         <p className="text-sm text-muted-foreground mt-2">
@@ -92,6 +91,6 @@ export default function EvaluatorDashboard() {
           </TableBody>
         </Table>
       </div>
-    </EvaluatorLayout>
+    </>
   );
 }

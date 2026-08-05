@@ -1,4 +1,3 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   api, FEEDBACK_TARGETS, FEEDBACK_TARGET_LABEL,
@@ -52,7 +51,7 @@ export default function AdminFeedback() {
   });
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-serif font-bold">피드백</h1>
         <Button onClick={() => { setForm({ targetType: "student", targetId: "", studentId: "", feedbackType: "general", content: "", visibility: "admin_only" }); setOpen(true); }}>+ 새 피드백</Button>
@@ -143,6 +142,6 @@ export default function AdminFeedback() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 }

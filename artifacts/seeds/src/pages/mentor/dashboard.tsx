@@ -1,7 +1,6 @@
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 
-import { MentorLayout } from "@/components/layout/MentorLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,7 +15,7 @@ export default function MentorDashboard() {
   });
 
   return (
-    <MentorLayout>
+    <>
       <div className="max-w-4xl mx-auto space-y-8">
         <div>
           <h1 className="text-3xl font-bold tracking-[-0.02em]">멘토 홈</h1>
@@ -130,6 +129,6 @@ export default function MentorDashboard() {
           </Card>
         </div>
       </div>
-    </MentorLayout>
+    </>
   );
 }

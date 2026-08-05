@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { api } from "@/lib/mvp3-api";
 import {
   type OpsTask,
@@ -186,7 +185,7 @@ export default function AdminTasksPage() {
   }, [data]);
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-3xl font-serif font-bold flex items-center gap-2">
@@ -561,6 +560,6 @@ export default function AdminTasksPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 }

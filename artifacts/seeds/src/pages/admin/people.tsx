@@ -1,4 +1,3 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   api,
@@ -201,7 +200,7 @@ export default function AdminPeople() {
   }
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-serif font-bold">사람들</h1>
         <Button className="" onClick={openCreate}>
@@ -584,7 +583,7 @@ export default function AdminPeople() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 }
 

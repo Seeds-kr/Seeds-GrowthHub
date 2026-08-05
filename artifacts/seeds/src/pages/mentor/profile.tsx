@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { MentorLayout } from "@/components/layout/MentorLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -80,18 +79,18 @@ export default function MentorProfile() {
 
   if (isLoading) {
     return (
-      <MentorLayout>
+      <>
         <div className="py-24 flex justify-center">
           <Loader2 className="w-6 h-6 animate-spin text-primary" />
         </div>
-      </MentorLayout>
+      </>
     );
   }
 
   if (isError) {
     const msg = (error as any)?.data?.error ?? "프로필을 불러올 수 없습니다.";
     return (
-      <MentorLayout>
+      <>
         <Card className="max-w-2xl mx-auto">
           <CardHeader>
             <CardTitle>프로필 없음</CardTitle>
@@ -100,14 +99,14 @@ export default function MentorProfile() {
             {msg}
           </CardContent>
         </Card>
-      </MentorLayout>
+      </>
     );
   }
 
   if (!form) return null;
 
   return (
-    <MentorLayout>
+    <>
       <div className="max-w-2xl mx-auto">
         <h1 className="text-3xl font-bold tracking-[-0.02em] mb-6">내 프로필</h1>
         <Card className="">
@@ -200,6 +199,6 @@ export default function MentorProfile() {
           </CardContent>
         </Card>
       </div>
-    </MentorLayout>
+    </>
   );
 }

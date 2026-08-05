@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "wouter";
-import { EvaluatorLayout } from "@/components/layout/EvaluatorLayout";
 import {
   useGetEvaluatorApplication,
   useSubmitEvaluation,
@@ -118,17 +117,17 @@ export default function EvaluatorApplicationDetail() {
 
   if (isLoading) {
     return (
-      <EvaluatorLayout>
+      <>
         <div className="flex justify-center py-24">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
-      </EvaluatorLayout>
+      </>
     );
   }
 
   if (error || !data) {
     return (
-      <EvaluatorLayout>
+      <>
         <div className="rounded-lg bg-card border border-border p-8 text-center">
           <p className="text-muted-foreground">
             이 지원서를 열람할 권한이 없거나 존재하지 않습니다.
@@ -139,14 +138,14 @@ export default function EvaluatorApplicationDetail() {
             </Button>
           </Link>
         </div>
-      </EvaluatorLayout>
+      </>
     );
   }
 
   const app = data.application;
 
   return (
-    <EvaluatorLayout>
+    <>
       <div className="mb-6 flex items-center gap-4">
         <Link href="/evaluator">
           <Button variant="outline" size="icon" className="">
@@ -267,7 +266,7 @@ export default function EvaluatorApplicationDetail() {
           </div>
         </div>
       </div>
-    </EvaluatorLayout>
+    </>
   );
 }
 

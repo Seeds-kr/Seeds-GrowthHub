@@ -1,4 +1,3 @@
-import { StudentLayout } from "@/components/layout/StudentLayout";
 import { useQuery } from "@tanstack/react-query";
 import {
   api, ARTIFACT_TYPE_LABEL, ARTIFACT_VISIBILITY_LABEL,
@@ -15,7 +14,7 @@ export default function StudentArtifacts() {
     queryFn: () => api<{ items: Mvp4Artifact[] }>("/student/artifacts"),
   });
   return (
-    <StudentLayout>
+    <>
       <h1 className="text-3xl font-serif font-bold mb-6">내 아티팩트</h1>
       {isLoading ? <Loader2 className="animate-spin mx-auto" />
       : data?.items.length === 0 ? <div className="text-muted-foreground">아티팩트가 없습니다.</div>
@@ -36,6 +35,6 @@ export default function StudentArtifacts() {
           </CardContent>
         </Card>
       ))}</div>}
-    </StudentLayout>
+    </>
   );
 }

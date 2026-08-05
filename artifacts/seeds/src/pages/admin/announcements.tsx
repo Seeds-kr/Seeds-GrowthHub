@@ -1,4 +1,3 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, type Announcement, type Cohort, type Program } from "@/lib/mvp3-api";
 import { ANNOUNCEMENT_TARGET_LABEL, formatKoreanDate } from "@/lib/admin-labels";
@@ -56,7 +55,7 @@ export default function AdminAnnouncements() {
   };
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-8 flex items-center justify-between">
         <h1 className="text-3xl font-serif font-bold">공지사항</h1>
         <Button onClick={openNew}>+ 새 공지</Button>
@@ -142,6 +141,6 @@ export default function AdminAnnouncements() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 }

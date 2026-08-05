@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import {
@@ -67,7 +66,7 @@ export default function AdminAttendancePage() {
   });
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-6">
         <h1 className="text-3xl font-serif font-bold flex items-center gap-2">
           <ClipboardList className="w-7 h-7 text-primary" />
@@ -174,6 +173,6 @@ export default function AdminAttendancePage() {
           </p>
         </>
       )}
-    </AdminLayout>
+    </>
   );
 }

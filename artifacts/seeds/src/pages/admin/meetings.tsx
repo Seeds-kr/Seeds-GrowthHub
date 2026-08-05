@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { MarkdownEditor } from "@/components/markdown/MarkdownEditor";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { api } from "@/lib/mvp3-api";
 import {
   type Meeting,
@@ -181,7 +180,7 @@ export default function AdminMeetingsPage() {
     }));
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-8 flex items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-serif font-bold flex items-center gap-2">
@@ -457,6 +456,6 @@ export default function AdminMeetingsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 }

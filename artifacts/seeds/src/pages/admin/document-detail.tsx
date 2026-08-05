@@ -3,7 +3,6 @@ import { Link, useLocation, useParams } from "wouter";
 import ReactMarkdown from "react-markdown";
 import { MarkdownEditor } from "@/components/markdown/MarkdownEditor";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { DesktopOnly } from "@/components/DesktopOnly";
 import { useIsDesktop } from "@/hooks/use-desktop";
 import { api, ApiError } from "@/lib/mvp3-api";
@@ -156,14 +155,14 @@ export default function AdminDocumentDetailPage() {
 
   if (isLoading) {
     return (
-      <AdminLayout>
+      <>
         <Loader2 className="w-6 h-6 animate-spin" />
-      </AdminLayout>
+      </>
     );
   }
   if (error || !data) {
     return (
-      <AdminLayout>
+      <>
         <div className="text-muted-foreground">문서를 찾을 수 없습니다.</div>
         <Link
           href="/admin/documents"
@@ -171,14 +170,14 @@ export default function AdminDocumentDetailPage() {
         >
           ← 목록으로
         </Link>
-      </AdminLayout>
+      </>
     );
   }
 
   const isArchived = data.archivedAt !== null;
 
   return (
-    <AdminLayout>
+    <>
       <Link
         href="/admin/documents"
         className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1 mb-4"
@@ -476,6 +475,6 @@ export default function AdminDocumentDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 }

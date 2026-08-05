@@ -1,4 +1,3 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useRoute } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -26,21 +25,21 @@ export default function AdminStudentReport() {
 
   // 스피너가 영원히 돈다(느린 건지 없는 건지 알 수 없다).
 
-  if (isLoading) return <AdminLayout><Loader2 className="animate-spin mx-auto" /></AdminLayout>;
+  if (isLoading) return <><Loader2 className="animate-spin mx-auto" /></>;
 
   if (!data)
 
     return (
 
-      <AdminLayout>
+      <>
 
         <ResourceMissing label="리포트" backHref="/admin/students" />
 
-      </AdminLayout>
+      </>
 
     );
   return (
-    <AdminLayout>
+    <>
       <div className="mb-6 flex items-center justify-between print:hidden">
         <h1 className="text-3xl font-serif font-bold">학생 활동 리포트</h1>
         <Button className="" onClick={() => window.print()}>인쇄</Button>
@@ -138,6 +137,6 @@ export default function AdminStudentReport() {
           </CardContent>
         </Card>
       </div>
-    </AdminLayout>
+    </>
   );
 }

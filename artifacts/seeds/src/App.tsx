@@ -1,4 +1,4 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -18,6 +18,10 @@ import AdminApplications from "@/pages/admin/applications";
 import AdminApplicationDetail from "@/pages/admin/application-detail";
 import AdminEvaluators from "@/pages/admin/evaluators";
 import AdminStudents from "@/pages/admin/students";
+import { StudentLayout } from "@/components/layout/StudentLayout";
+import { MentorLayout } from "@/components/layout/MentorLayout";
+import { EvaluatorLayout } from "@/components/layout/EvaluatorLayout";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import AdminStudentDetail from "@/pages/admin/student-detail";
 import AdminCohorts from "@/pages/admin/cohorts";
 import AdminPrograms from "@/pages/admin/programs";
@@ -94,8 +98,49 @@ const queryClient = new QueryClient({
   },
 });
 
+
+/**
+ * 현재 경로에 맞는 셸(레이아웃)을 고른다.
+ *
+ * 전에는 각 페이지가 저마다 <AdminLayout> 를 감쌌다. 그러면 화면을 옮길 때마다
+ * 레이아웃이 통째로 리마운트되고, 사이드바에서 손으로 펼친 섹션이 매번 접혔다
+ * (실측으로 확인). 셸을 Switch 바깥에 두면 같은 표면 안에서 이동할 때 레이아웃
+ * 컴포넌트가 그대로 유지되고 안쪽 내용만 바뀐다.
+ *
+ * wouter 의 중첩 라우팅(`<Route path="/admin*">` 안에 Switch)을 쓰지 않는 이유:
+ * 3.9 에서 `/admin/:rest*` 는 `/admin` 자체를 못 잡고, `/admin*` 은 하위 경로를
+ * 못 잡았다(둘 다 실측). 어느 쪽이 base 를 거는지 문서만으로 확신할 수 없어서,
+ * 라우트는 전부 평평한 절대 경로 그대로 두고 셸만 경로로 고른다. 라우팅 동작이
+ * 한 줄도 안 바뀌므로 이 변경으로 깨질 경로가 없다.
+ *
+ * 로그인 화면은 셸 밖이다 — AdminLayout 이 인증을 확인하고 되돌려보내므로
+ * 로그인 화면을 그 안에 넣으면 서로를 물고 늘어진다.
+ */
+const SHELLS: Array<{ prefix: string; except: string[]; Layout: React.ComponentType<{ children: React.ReactNode }> }> = [
+  { prefix: "/admin", except: ["/admin/login"], Layout: AdminLayout },
+  { prefix: "/evaluator", except: [], Layout: EvaluatorLayout },
+  { prefix: "/mentor", except: [], Layout: MentorLayout },
+  { prefix: "/student", except: ["/student/login"], Layout: StudentLayout },
+];
+
+function Passthrough({ children }: { children: React.ReactNode }) {
+  return <>{children}</>;
+}
+
+function shellFor(location: string) {
+  for (const { prefix, except, Layout } of SHELLS) {
+    if (except.includes(location)) continue;
+    if (location === prefix || location.startsWith(prefix + "/")) return Layout;
+  }
+  return Passthrough;
+}
+
 function Router() {
+  const [location] = useLocation();
+  const Shell = shellFor(location);
+
   return (
+    <Shell>
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/about" component={About} />
@@ -185,6 +230,7 @@ function Router() {
 
       <Route component={NotFound} />
     </Switch>
+    </Shell>
   );
 }
 

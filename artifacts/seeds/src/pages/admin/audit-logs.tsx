@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -83,7 +82,7 @@ export default function AdminAuditLogs() {
   // rather than showing an empty table.
   if (error?.status === 403) {
     return (
-      <AdminLayout>
+      <>
         <Card>
           <CardContent className="space-y-2 py-10 text-center">
             <ShieldAlert className="mx-auto h-8 w-8 text-muted-foreground" />
@@ -93,12 +92,12 @@ export default function AdminAuditLogs() {
             </p>
           </CardContent>
         </Card>
-      </AdminLayout>
+      </>
     );
   }
 
   return (
-    <AdminLayout>
+    <>
       <div className="space-y-4">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold">
@@ -187,6 +186,6 @@ export default function AdminAuditLogs() {
           </>
         )}
       </div>
-    </AdminLayout>
+    </>
   );
 }

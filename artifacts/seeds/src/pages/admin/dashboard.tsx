@@ -1,4 +1,3 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useAdminDashboard, useAdminMe, getAdminMeQueryKey } from "@workspace/api-client-react";
 import { OnboardingCard } from "@/components/OnboardingCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -212,7 +211,7 @@ export default function AdminDashboard() {
   });
 
   return (
-    <AdminLayout>
+    <>
       <OnboardingCard opsRoles={me?.opsRoles ?? []} />
 
       <div className="mb-8 flex items-end justify-between gap-4 flex-wrap">
@@ -538,6 +537,6 @@ export default function AdminDashboard() {
           </div>
         </>
       )}
-    </AdminLayout>
+    </>
   );
 }

@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { StudentLayout } from "@/components/layout/StudentLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, MessageSquare } from "lucide-react";
@@ -36,7 +35,7 @@ export default function StudentFeedback() {
   });
 
   return (
-    <StudentLayout>
+    <>
       <div className="space-y-4">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold">
@@ -81,6 +80,6 @@ export default function StudentFeedback() {
           ))}
         </div>
       </div>
-    </StudentLayout>
+    </>
   );
 }

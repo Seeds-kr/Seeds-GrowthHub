@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import {
@@ -77,18 +76,18 @@ export default function AdminInterviewsPage() {
   if (isError) {
     const httpStatus = (error as any)?.status;
     return (
-      <AdminLayout>
+      <>
         <div className="border border-dashed border-border rounded p-12 text-center text-muted-foreground">
           {httpStatus === 403
             ? "면접 정보는 모집(recruiting) 담당 운영진만 볼 수 있습니다."
             : `불러오지 못했습니다: ${(error as any)?.message ?? "알 수 없는 오류"}`}
         </div>
-      </AdminLayout>
+      </>
     );
   }
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-6">
         <h1 className="text-3xl font-serif font-bold flex items-center gap-2">
           <Mic className="w-7 h-7 text-primary" />
@@ -187,6 +186,6 @@ export default function AdminInterviewsPage() {
           </table>
         </div>
       )}
-    </AdminLayout>
+    </>
   );
 }

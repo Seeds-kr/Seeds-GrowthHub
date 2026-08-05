@@ -1,4 +1,3 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, type Cohort } from "@/lib/mvp3-api";
 import { COHORT_STATUSES, COHORT_STATUS_LABEL, COHORT_STATUS_TONE, formatKoreanDate, type CohortStatus } from "@/lib/admin-labels";
@@ -53,7 +52,7 @@ export default function AdminCohorts() {
   };
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-8 flex items-center justify-between">
         <h1 className="text-3xl font-serif font-bold">기수 관리</h1>
         <Button onClick={openNew}>+ 새 기수</Button>
@@ -118,6 +117,6 @@ export default function AdminCohorts() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 }

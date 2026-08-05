@@ -1,4 +1,3 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, type SessionDetail, type SessionMaterial, type SessionActionItem } from "@/lib/mvp3-api";
 import { Loader2, ArrowLeft, ExternalLink, Trash2, Plus } from "lucide-react";
@@ -100,11 +99,11 @@ export default function AdminSessionDetail() {
     onError: (e: any) => toast({ title: "생성 실패", description: e?.data?.error ?? e.message, variant: "destructive" }),
   });
 
-  if (isLoading) return <AdminLayout><div className="flex justify-center py-20"><Loader2 className="animate-spin" /></div></AdminLayout>;
-  if (!data) return <AdminLayout><p className="text-muted-foreground">모임을 찾을 수 없습니다.</p></AdminLayout>;
+  if (isLoading) return <><div className="flex justify-center py-20"><Loader2 className="animate-spin" /></div></>;
+  if (!data) return <><p className="text-muted-foreground">모임을 찾을 수 없습니다.</p></>;
 
   return (
-    <AdminLayout>
+    <>
       <Link href="/admin/sessions"><a className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"><ArrowLeft className="h-4 w-4" />모임 목록</a></Link>
 
       <div className="mb-8">
@@ -287,6 +286,6 @@ export default function AdminSessionDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 }

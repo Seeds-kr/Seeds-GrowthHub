@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { StudentLayout } from "@/components/layout/StudentLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -224,7 +223,7 @@ export default function StudentReflections() {
   });
 
   return (
-    <StudentLayout>
+    <>
       <div className="space-y-5">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold">
@@ -379,6 +378,6 @@ export default function StudentReflections() {
           </TabsContent>
         </Tabs>
       </div>
-    </StudentLayout>
+    </>
   );
 }

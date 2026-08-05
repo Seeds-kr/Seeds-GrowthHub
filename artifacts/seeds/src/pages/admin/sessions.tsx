@@ -1,4 +1,3 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, type Cohort, type Program, type SessionItem } from "@/lib/mvp3-api";
 import { Loader2 } from "lucide-react";
@@ -144,7 +143,7 @@ export default function AdminSessions() {
   };
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-8 flex items-center justify-between">
         <h1 className="text-3xl font-serif font-bold">모임 관리</h1>
         <Button onClick={openNew}>+ 새 모임</Button>
@@ -307,6 +306,6 @@ export default function AdminSessions() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 }

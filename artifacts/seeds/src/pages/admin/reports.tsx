@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Loader2, BarChart3, ArrowRight } from "lucide-react";
@@ -37,7 +36,7 @@ export default function AdminReportsPage() {
   );
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-6">
         <h1 className="text-3xl font-serif font-bold flex items-center gap-2">
           <BarChart3 className="w-7 h-7 text-primary" />
@@ -118,6 +117,6 @@ export default function AdminReportsPage() {
           </CardContent>
         </Card>
       </div>
-    </AdminLayout>
+    </>
   );
 }

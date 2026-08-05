@@ -1,4 +1,3 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, type Cohort, type Program } from "@/lib/mvp3-api";
 import { PROGRAM_STATUSES, PROGRAM_STATUS_LABEL, PROGRAM_STATUS_TONE, type ProgramStatus } from "@/lib/admin-labels";
@@ -47,7 +46,7 @@ export default function AdminPrograms() {
   const openEdit = (p: Program) => { setEditing(p); setForm({ cohortId: String(p.cohortId), name: p.name, description: p.description ?? "", status: p.status as ProgramStatus }); setOpen(true); };
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-8 flex items-center justify-between">
         <h1 className="text-3xl font-serif font-bold">프로그램 / 트랙</h1>
         <Button onClick={openNew}>+ 새 프로그램</Button>
@@ -109,6 +108,6 @@ export default function AdminPrograms() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 }

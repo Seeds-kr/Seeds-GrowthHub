@@ -1,4 +1,3 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   api, ACTIVITY_SOURCES, ACTIVITY_SOURCE_LABEL,
@@ -65,7 +64,7 @@ export default function AdminActivityRecords() {
   const openEdit = (r: ActivityRecord) => { setEditing(r); setForm({ studentId: String(r.studentId), cohortId: String(r.cohortId), programId: r.programId ? String(r.programId) : "", sourceType: r.sourceType, title: r.title, description: r.description ?? "", visibility: r.visibility }); setOpen(true); };
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-serif font-bold">활동 기록</h1>
         <Button onClick={openNew}>+ 새 기록</Button>
@@ -178,6 +177,6 @@ export default function AdminActivityRecords() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 }

@@ -1,7 +1,6 @@
 import { useRoute, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { StudentLayout } from "@/components/layout/StudentLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -50,16 +49,16 @@ export default function StudentStudyDetail() {
 
   if (isLoading) {
     return (
-      <StudentLayout>
+      <>
         <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
-      </StudentLayout>
+      </>
     );
   }
 
   // 404 covers both "does not exist" and "not in my cohort" — no distinction.
   if (isError || !data) {
     return (
-      <StudentLayout>
+      <>
         <Card>
           <CardContent className="py-10 text-center">
             <p className="text-sm text-muted-foreground">
@@ -72,14 +71,14 @@ export default function StudentStudyDetail() {
             </Link>
           </CardContent>
         </Card>
-      </StudentLayout>
+      </>
     );
   }
 
   const s = data.study;
 
   return (
-    <StudentLayout>
+    <>
       <div className="space-y-4">
         <div>
           <Link href="/student/studies">
@@ -175,6 +174,6 @@ export default function StudentStudyDetail() {
           </CardContent>
         </Card>
       </div>
-    </StudentLayout>
+    </>
   );
 }

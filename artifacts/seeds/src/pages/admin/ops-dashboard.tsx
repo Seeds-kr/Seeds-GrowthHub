@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { api } from "@/lib/mvp3-api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -202,7 +201,7 @@ export default function AdminOpsDashboard() {
   });
 
   return (
-    <AdminLayout>
+    <>
       <div className="space-y-6">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -582,6 +581,6 @@ export default function AdminOpsDashboard() {
           </div>
         )}
       </div>
-    </AdminLayout>
+    </>
   );
 }

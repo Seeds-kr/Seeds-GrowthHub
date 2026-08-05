@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { StudentLayout } from "@/components/layout/StudentLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, BookOpen, ChevronRight } from "lucide-react";
@@ -32,7 +31,7 @@ export default function StudentStudies() {
   const others = data?.items.filter((s) => !s.isMember) ?? [];
 
   return (
-    <StudentLayout>
+    <>
       <div className="space-y-5">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold">
@@ -111,6 +110,6 @@ export default function StudentStudies() {
           </section>
         )}
       </div>
-    </StudentLayout>
+    </>
   );
 }

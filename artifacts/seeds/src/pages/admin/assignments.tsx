@@ -1,4 +1,3 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, type Cohort, type Program, type AssignmentItem } from "@/lib/mvp3-api";
 import { TASK_STATUSES, TASK_STATUS_LABEL, TASK_STATUS_TONE, formatKoreanDateTime, type TaskStatus } from "@/lib/admin-labels";
@@ -70,7 +69,7 @@ export default function AdminAssignments() {
   };
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-8 flex items-center justify-between">
         <h1 className="text-3xl font-serif font-bold">과제 관리</h1>
         <Button onClick={openNew}>+ 새 과제</Button>
@@ -181,6 +180,6 @@ export default function AdminAssignments() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 }

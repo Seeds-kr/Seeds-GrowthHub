@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -187,7 +186,7 @@ export default function AdminStudies() {
   });
 
   return (
-    <AdminLayout>
+    <>
       <div className="space-y-4">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -333,6 +332,6 @@ export default function AdminStudies() {
           </DialogContent>
         </Dialog>
       </div>
-    </AdminLayout>
+    </>
   );
 }

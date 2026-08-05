@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -85,7 +84,7 @@ export default function AdminSiteContent() {
   }
 
   return (
-    <AdminLayout>
+    <>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-serif font-bold">홈페이지 콘텐츠</h1>
@@ -178,6 +177,6 @@ export default function AdminSiteContent() {
           </div>
         )}
       </div>
-    </AdminLayout>
+    </>
   );
 }

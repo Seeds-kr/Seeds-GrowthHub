@@ -1,4 +1,3 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useRoute, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { api, type CohortSummary } from "@/lib/mvp3-api";
@@ -17,15 +16,15 @@ export default function AdminCohortSummary() {
   });
   // 로딩과 "없음"을 갈라야 한다. 하나로 묶으면 없는 자료를 열었을 때
   // 스피너가 영원히 돈다(느린 건지 없는 건지 알 수 없다).
-  if (isLoading) return <AdminLayout><Loader2 className="animate-spin mx-auto" /></AdminLayout>;
+  if (isLoading) return <><Loader2 className="animate-spin mx-auto" /></>;
   if (!data)
     return (
-      <AdminLayout>
+      <>
         <ResourceMissing label="기수 요약" backHref="/admin/cohorts" />
-      </AdminLayout>
+      </>
     );
   return (
-    <AdminLayout>
+    <>
       <h1 className="text-3xl font-serif font-bold mb-4">{data.cohort.name} · 활동 요약</h1>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
         <Card className=""><CardHeader><CardTitle className="text-sm">학생 수</CardTitle></CardHeader><CardContent className="text-2xl font-bold">{data.studentCount}</CardContent></Card>
@@ -68,6 +67,6 @@ export default function AdminCohortSummary() {
           </CardContent>
         </Card>
       </div>
-    </AdminLayout>
+    </>
   );
 }

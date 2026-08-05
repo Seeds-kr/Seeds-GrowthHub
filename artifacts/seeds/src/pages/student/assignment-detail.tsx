@@ -1,4 +1,3 @@
-import { StudentLayout } from "@/components/layout/StudentLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/mvp3-api";
 import { useRoute, Link } from "wouter";
@@ -44,13 +43,13 @@ export default function StudentAssignmentDetail() {
     onError: (e: any) => toast({ title: "실패", description: e?.data?.error ?? e.message, variant: "destructive" }),
   });
 
-  if (isLoading) return <StudentLayout><Loader2 className="animate-spin mx-auto" /></StudentLayout>;
-  if (error || !data) return <StudentLayout><div className="text-muted-foreground">접근할 수 없습니다.</div></StudentLayout>;
+  if (isLoading) return <><Loader2 className="animate-spin mx-auto" /></>;
+  if (error || !data) return <><div className="text-muted-foreground">접근할 수 없습니다.</div></>;
 
   const closed = data.assignment.status === "closed";
 
   return (
-    <StudentLayout>
+    <>
       <div className="mb-4"><Link href="/student/assignments" className="text-sm text-muted-foreground hover:text-primary">← 과제 목록</Link></div>
       <h1 className="text-3xl font-serif font-bold mb-2">{data.assignment.title}</h1>
       <div className="text-sm text-muted-foreground mb-6">
@@ -78,6 +77,6 @@ export default function StudentAssignmentDetail() {
           <CardContent className="whitespace-pre-wrap text-sm">{data.mySubmission.feedback}</CardContent>
         </Card>
       )}
-    </StudentLayout>
+    </>
   );
 }
