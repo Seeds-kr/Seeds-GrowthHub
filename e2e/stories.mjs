@@ -289,7 +289,22 @@ console.log("\n── 운영진 ────────────────
     await p.waitForTimeout(900);
     const found = await p.locator(`text=${title}`).count();
     if (!found) throw new Error("새로고침 후 목록에 없음");
-    return `"${title}" 게시 확인`;
+
+    // 새 공지는 "초안" 으로 저장되고 초안은 학생에게 안 내려간다
+    // (student.ts 가 isPublished=true 만 본다). 발행까지 해야 스토리가 끝난다.
+    // 이걸 빼먹어서 S2 가 "공지가 없습니다" 만 보고도 통과하고 있었다.
+    const row = p.locator("tr").filter({ hasText: title });
+    const pub = row.locator("button", { hasText: /^발행$/ });
+    if (!(await pub.count())) throw new Error("목록에 발행 버튼이 없음");
+    await pub.click();
+    await p.waitForTimeout(1800);
+    await p.reload({ waitUntil: "networkidle" });
+    await p.waitForTimeout(1200);
+    const after = p.locator("tr").filter({ hasText: title });
+    if ((await after.locator("text=초안").count()) > 0) throw new Error("발행 후에도 초안");
+    // 학생 스토리가 이 제목을 실제로 읽었는지 확인할 수 있게 넘긴다.
+    globalThis.__publishedAnnouncement = title;
+    return `"${title}" 작성 + 발행`;
   });
 
   await story("O4", "모임을 만들고 출석을 체크한다", async () => {
@@ -587,10 +602,15 @@ console.log("\n── 학생 ─────────────────
     await p.goto(BASE + "/student/announcements", { waitUntil: "networkidle" });
     await p.waitForTimeout(900);
     const t = (await p.locator("main").innerText()).trim();
-    // 데이터가 없을 때 "공지가 없습니다" 를 보여주면 그건 정상이다.
-    // 처음엔 글자 수 20자로 잘라 이걸 결함으로 잘못 적었다.
     if (!t) throw new Error("화면이 완전히 비어 있음(빈 상태 문구조차 없음)");
-    return `"${t.replace(/\s+/g, " ").slice(0, 40)}"`;
+    // 운영진이 방금 발행한 공지를 학생이 실제로 읽는지까지 본다.
+    // 전에는 "공지가 없습니다" 만 보고도 통과했다 — 읽기 경로가 사실상 미검증이었다.
+    const expected = globalThis.__publishedAnnouncement;
+    if (expected) {
+      if (!t.includes(expected)) throw new Error(`운영진이 발행한 공지 "${expected}" 가 학생 화면에 없음`);
+      return `발행된 공지를 읽음: "${expected}"`;
+    }
+    return `"${t.replace(/\s+/g, " ").slice(0, 40)}" (발행된 공지가 없어 빈 상태만 확인)`;
   });
 
   await story("S3", "과제를 확인하고 제출한다", async () => {
