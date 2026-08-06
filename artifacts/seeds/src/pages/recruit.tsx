@@ -6,6 +6,7 @@ import { Reveal, Stagger, StaggerItem } from "@/lib/motion";
 import { SurfaceCard } from "@/components/SurfaceCard";
 import { YearTrack } from "@/components/YearTrack";
 import { Timeline } from "@/components/Timeline";
+import { LiquidBackdrop } from "@/components/LiquidBackdrop";
 
 /**
  * 제목 앞에 붙은 장식용 이모지를 뗀다(🗓 정기모집 → 정기모집).
@@ -23,7 +24,10 @@ export default function Recruit() {
   return (
     <PublicLayout>
       {/* Hero */}
-      <Reveal as="section" className="py-24 md:py-32 flex flex-col items-center justify-center text-center px-4 bg-gradient-to-b from-muted/50 to-background">
+      <section className="relative flex flex-col items-center justify-center overflow-hidden px-4 py-24 text-center md:py-32">
+        {/* /program·/faq 와 같은 배경. 세로 그라디언트 한 겹만 있던 자리다. */}
+        <LiquidBackdrop />
+        <Reveal className="relative flex flex-col items-center">
         <div className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-6 font-medium">
           {c.hero.eyebrow}
         </div>
@@ -38,7 +42,8 @@ export default function Recruit() {
             {c.hero.ctaLabel}
           </Button>
         </Link>
-      </Reveal>
+        </Reveal>
+      </section>
 
       {/* What is Seeds? */}
       <Reveal as="section" className="py-24 px-4 border-t border-border">
@@ -181,8 +186,9 @@ export default function Recruit() {
       </Reveal>
 
       {/* Apply CTA */}
-      <Reveal as="section" className="py-24 px-4 bg-primary text-primary-foreground">
-        <div className="container mx-auto max-w-3xl text-center">
+      <section className="relative overflow-hidden bg-primary px-4 py-24 text-primary-foreground">
+        <LiquidBackdrop tone="brand" />
+        <Reveal className="container relative mx-auto max-w-3xl text-center">
           <h2 className="text-3xl md:text-4xl font-serif font-bold mb-6">{c.cta.title}</h2>
           <p className="text-primary-foreground text-lg mb-10 leading-relaxed whitespace-pre-line">
             {c.cta.body}
@@ -192,8 +198,8 @@ export default function Recruit() {
               {c.cta.ctaLabel}
             </Button>
           </Link>
-        </div>
-      </Reveal>
+        </Reveal>
+      </section>
     </PublicLayout>
   );
 }

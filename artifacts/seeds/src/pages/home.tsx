@@ -246,6 +246,9 @@ export default function Home() {
 
       {/* ── Recruit banner ───────────────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-primary px-4 py-24 text-primary-foreground">
+        {/* 사이트에서 가장 납작한 면이었다 — 초록 한 색으로 꽉 찬 판. 같은 초록의
+            명도만 흔들어 물속에 빛이 든 것처럼 만든다. */}
+        <LiquidBackdrop tone="brand" />
         <div className="container relative mx-auto max-w-3xl text-center">
           <Reveal>
             <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-primary-foreground">

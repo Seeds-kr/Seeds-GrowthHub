@@ -3,6 +3,7 @@ import { Stagger, StaggerItem } from "@/lib/motion";
 import { SurfaceCard } from "@/components/SurfaceCard";
 import { ArrowRight, Loader2, Phone, Users } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
+import { LiquidBackdrop } from "@/components/LiquidBackdrop";
 import {
   api,
   PEOPLE_KIND_LABEL,
@@ -153,8 +154,10 @@ export function PeopleGrid({
   });
 
   return (
-    <section className="px-4 pb-20 pt-16">
-      <div className="container mx-auto max-w-6xl">
+    <section className="relative overflow-hidden px-4 pb-20 pt-16">
+      {/* 표제 뒤가 비어 있었다. 다른 공개 페이지와 같은 배경을 깐다. */}
+      <LiquidBackdrop className="h-[26rem]" />
+      <div className="container relative mx-auto max-w-6xl">
         <div className="mb-8 text-center">
           <div className="text-[11px] uppercase tracking-[0.22em] text-primary mb-3 font-semibold">
             Seeds People
