@@ -44,15 +44,23 @@ export function SurfaceCard({
   children,
   href,
   dense,
+  flush,
   className = "",
 }: {
   children: ReactNode;
   /** 넘기면 카드 전체가 링크가 된다. 진짜 <a> 라 새 탭·링크 복사가 동작한다. */
   href?: string;
   dense?: boolean;
+  /**
+   * 안쪽 여백을 없앤다. 사진처럼 카드 가장자리까지 닿아야 하는 내용에 쓴다
+   * (여백을 className 으로 덮으려 하면 Tailwind 에서 어느 쪽이 이길지가
+   * 클래스 순서에 달려 불안정하다).
+   */
+  flush?: boolean;
   className?: string;
 }) {
-  const cls = `group ${BASE} ${dense ? "p-5" : "p-6"} ${href ? INTERACTIVE : STATIC_HOVER} ${className}`;
+  const pad = flush ? "overflow-hidden" : dense ? "p-5" : "p-6";
+  const cls = `group ${BASE} ${pad} ${href ? INTERACTIVE : STATIC_HOVER} ${className}`;
   if (href) {
     return (
       <Link href={href} className={cls} onPointerMove={trackSpot}>

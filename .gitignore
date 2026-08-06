@@ -47,3 +47,7 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# 원본 사진. 웹용으로 줄인 것은 artifacts/seeds/src/assets/photos 에 커밋한다
+# (61MB → 1.8MB). 원본까지 넣으면 clone 이 무거워진다.
+images/
