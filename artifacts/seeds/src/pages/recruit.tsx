@@ -2,7 +2,20 @@ import { PublicLayout } from "@/components/layout/PublicLayout";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useSiteContent, RECRUIT_DEFAULT } from "@/lib/site-content";
-import { Reveal } from "@/lib/motion";
+import { Reveal, Stagger, StaggerItem } from "@/lib/motion";
+import { SurfaceCard } from "@/components/SurfaceCard";
+import { YearTrack } from "@/components/YearTrack";
+
+/**
+ * 제목 앞에 붙은 장식용 이모지를 뗀다(🗓 정기모집 → 정기모집).
+ *
+ * 운영진이 관리자 화면에서 쓰는 문구라 내용은 건드리지 않고 앞머리 기호만
+ * 없앤다. 이모지를 아이콘처럼 쓰면 글꼴·플랫폼마다 크기와 정렬이 달라져
+ * 제목 줄이 흔들린다. 운영진이 원하면 site-content 에서 그대로 지우면 된다.
+ */
+function cleanPhase(text: string): string {
+  return text.replace(/^[\p{Extended_Pictographic}\u{FE0F}\u{200D}\s]+/u, "").trim() || text;
+}
 
 export default function Recruit() {
   const { value: c } = useSiteContent("page.recruit", RECRUIT_DEFAULT);
@@ -93,19 +106,35 @@ export default function Recruit() {
           <div className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-3 font-medium">
             {c.schedule.eyebrow}
           </div>
-          <h2 className="text-3xl md:text-4xl font-serif font-bold mb-12">{c.schedule.title}</h2>
-          <div className="grid md:grid-cols-4 gap-8">
+          <h2 className="mb-10 font-serif text-3xl font-bold md:text-4xl">
+            {c.schedule.title}
+          </h2>
+
+          {/* 한 해 어디쯤인지를 먼저 보여준다. 방문자가 이 판에서 묻는 건
+              "지금 지원할 수 있나" 하나인데, 전에는 그 답이 본문 괄호 안에
+              묻혀 있었다. */}
+          <YearTrack
+            items={c.schedule.steps.map((s) => ({ label: cleanPhase(s.phase), date: s.date }))}
+          />
+
+          {/* `Step 1/2/3` 을 없앴다. 이건 단계가 아니다 — 정기모집과 수시모집은
+              나란한 두 경로이고 문의는 연락처다. 번호를 매기면 "1을 거쳐야 2로
+              간다" 는 잘못된 인상을 준다. 대신 날짜가 표제 자리를 갖는다. */}
+          <Stagger className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {c.schedule.steps.map((step, i) => (
-              <div key={i} className="flex flex-col p-6 border border-border bg-card">
-                <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
-                  Step {i + 1}
-                </div>
-                <div className="text-sm font-semibold text-primary mb-2">{step.date}</div>
-                <div className="text-xl font-bold mb-3">{step.phase}</div>
-                <div className="text-sm text-muted-foreground">{step.desc}</div>
-              </div>
+              <StaggerItem key={i}>
+                <SurfaceCard className="h-full">
+                  <div className="text-sm font-semibold text-primary">{step.date}</div>
+                  <h3 className="mt-1.5 text-xl font-bold tracking-tight">
+                    {cleanPhase(step.phase)}
+                  </h3>
+                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                    {step.desc}
+                  </p>
+                </SurfaceCard>
+              </StaggerItem>
             ))}
-          </div>
+          </Stagger>
         </div>
       </Reveal>
 
