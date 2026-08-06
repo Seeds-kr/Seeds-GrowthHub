@@ -37,8 +37,16 @@ snap으로 격리된 환경(이 저장소를 검증한 머신이 그랬다)에�
 
 | 이름 | 변수 | 무엇 |
 |---|---|---|
-| 운영진 | `ADMIN_EMAIL` · `ADMIN_PASSWORD` | 부트스트랩 어드민 |
+| 운영진 | `ADMIN_EMAIL` · `ADMIN_PASSWORD` | 부트스트랩 어드민. `program_lead` 는 모든 ops 검사를 통과하는 전권이다 |
 | 일반 사용자 | `TEST_STUDENT_EMAIL` · `TEST_STUDENT_PASSWORD` | 학생 시점. `/student/login` 으로 들어간다 |
+| 멘토 | `TEST_MENTOR_EMAIL` · `TEST_MENTOR_PASSWORD` | 멘토 시점. `/login` 으로 들어간다. 공개 프로필이 붙어 있어 `/mentor/profile` 편집 폼까지 볼 수 있다 |
+
+역할은 `admin`·`mentor`·`student` 셋뿐이다. **평가위원 역할은 없다** — 제거됐고
+`/evaluator/*` 는 `requireAdminOrMentor` 다. 즉 멘토 계정이 평가위원 계정이다.
+
+`smoke-mentor` 는 일부러 공개 프로필 없이 둔다. `/mentor/profile` 의 "아직 프로필이
+없습니다" 경로를 덮는 계정이 하나는 있어야 하기 때문이다. 그래서 라우트 훑기에
+`/mentor/profile` 이 404 로 찍히는데, 이건 회귀가 아니라 그 상태를 재현한 것이다.
 
 일반 사용자 계정은 **직접 INSERT 하지 않고** 제품의 실제 경로로 만들었다 —
 공개 지원서 제출 → `PATCH /admin/applications/:id/final-decision` 로 합격 →

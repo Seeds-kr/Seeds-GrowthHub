@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import { createRateLimit, clientIp } from "../lib/rate-limit";
+import { parseStrict } from "../lib/strict-body";
 import { and, asc, desc, eq, ilike, or, sql, inArray } from "drizzle-orm";
 import {
   AdminLoginBody,
@@ -488,9 +489,13 @@ router.patch("/admin/applications/:id", requireRecruiting, async (req, res) => {
     res.status(404).json({ error: "Not found" });
     return;
   }
-  const parsed = UpdateApplicationBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: "Invalid update" });
+  // 모르는 키는 400 이다. 전에는 zod 가 조용히 버려서, `finalDecision` 처럼
+  // 다른 라우트에 속한 필드를 보내도 200 이 나가고 아무것도 안 바뀌었다.
+  // 이 엔드포인트의 유일한 호출자(admin/application-detail.tsx)는
+  // status·adminNote 만 보낸다 — 조여도 깨지는 곳이 없다.
+  const parsed = parseStrict(UpdateApplicationBody, req.body);
+  if (!parsed.ok) {
+    res.status(400).json({ error: parsed.error });
     return;
   }
   const update: Record<string, unknown> = { updatedAt: new Date() };
