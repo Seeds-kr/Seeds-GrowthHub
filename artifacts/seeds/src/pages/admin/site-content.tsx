@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -85,7 +84,7 @@ export default function AdminSiteContent() {
   }
 
   return (
-    <AdminLayout>
+    <>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-serif font-bold">홈페이지 콘텐츠</h1>
@@ -130,7 +129,7 @@ export default function AdminSiteContent() {
                     </div>
                     {PREVIEW_PATH[selected.key] && (
                       <Link href={PREVIEW_PATH[selected.key]}>
-                        <Button variant="outline" size="sm" className="rounded-none">
+                        <Button variant="outline" size="sm" className="">
                           <ExternalLink className="w-4 h-4 mr-2" />
                           미리보기
                         </Button>
@@ -143,7 +142,7 @@ export default function AdminSiteContent() {
                   <Textarea
                     value={draft}
                     onChange={(e) => onDraftChange(e.target.value)}
-                    className="font-mono text-xs min-h-[480px] rounded-none"
+                    className="font-mono text-xs min-h-[480px]"
                     spellCheck={false}
                   />
                   {parseError && (
@@ -155,7 +154,7 @@ export default function AdminSiteContent() {
                     <Button
                       onClick={onSave}
                       disabled={saving || !!parseError}
-                      className="rounded-none"
+                      className=""
                     >
                       {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                       저장
@@ -165,7 +164,7 @@ export default function AdminSiteContent() {
                       variant="outline"
                       onClick={onReset}
                       disabled={saving}
-                      className="rounded-none"
+                      className=""
                     >
                       변경 취소
                     </Button>
@@ -178,6 +177,6 @@ export default function AdminSiteContent() {
           </div>
         )}
       </div>
-    </AdminLayout>
+    </>
   );
 }

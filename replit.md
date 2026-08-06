@@ -61,7 +61,8 @@ Naming notes:
 
 Core (MVP1/2):
 - `applications` — MVP1 cols + `application_status` (submitted → document_review → interview → final_decision_made / withdrawn) + `final_decision` (pending|accepted|rejected|waitlisted|withdrawn). Legacy `status` enum preserved.
-- `users` — email unique, name, password_hash (bcrypt), role primary (`admin|mentor|student`), `extra_roles text[] not null default '{}'` (multi-role), `is_active`, timestamps. Bootstrapped from `ADMIN_EMAIL`/`ADMIN_PASSWORD` on startup. Effective roles = unique union of `[role, ...extraRoles]`; helpers `getEffectiveRoles(user)` and `canViewMemberContacts(user)` from `@workspace/db`. Session payload `{userId, role, roles, exp}`; `verifySessionToken` falls back to `[role]` for older tokens. `/admin/login` and `/admin/me` return `{...user, role, roles}`. Admins toggle extra roles from `/admin/students/:id` via `PATCH /admin/users/:id { extraRoles }`. The legacy `evaluator` role was removed — evaluation work is performed by users with `admin` or `mentor` in their effective roles, assigned per-application via `/admin/evaluators`.
+- `users` — email unique, name, password_hash (bcrypt), role primary (`admin|mentor|student`), `extra_roles text[] not null default '{}'` (multi-role), `is_active`, timestamps. Bootstrapped from `ADMIN_EMAIL`/`ADMIN_PASSWORD` on startup. Effective roles = unique union of `[role, ...extraRoles]`; helpers `getEffectiveRoles(user)` and `canViewMemberContacts(user)` from `@workspace/db`. Session payload `{userId, role, roles, exp}`; `verifySessionToken` falls back to `[role]` for older tokens. `/admin/login` and `/admin/me` return `{...user, role, roles, opsRoles}`. Admins toggle extra roles from `/admin/students/:id` via `PATCH /admin/users/:id { extraRoles }`. The legacy `evaluator` role was removed — evaluation work is performed by users with `admin` or `mentor` in their effective roles, assigned per-application via `/admin/evaluators`.
+  - **`ops_roles text[] not null default '{}'`** (ADR-002) — functional ops roles, ORTHOGONAL to `role`/`extra_roles`. Values: `program_lead|ops|recruiting|finance|growth|community|system`. `getOpsRoles(user)` returns `[]` unless effective roles include `admin`, so a mentor/student cannot gain capability from this column. `hasOpsRole(user, code)` is satisfied by `program_lead` (superuser). Edited at `/admin/users` via `PATCH /admin/users/:id { opsRoles }` (needs `system`); the last active `program_lead` cannot be removed or deactivated (409). **Not carried in the session cookie** — every gate re-reads the DB, so revocation is immediate. `backfillOpsRolesOnce()` runs at startup BEFORE `bootstrapAdminFromEnv()` and grants `program_lead` to all existing admins; it self-disables once any user holds any ops role.
 - `evaluation_assignments` — `(application_id, evaluator_id, stage)` unique; status `assigned|in_progress|completed`.
 - `evaluations` — `(application_id, evaluator_id, stage)` unique; sub-scores (motivation, problem_awareness, initiative, collaboration, fit) + overall (1-5) + recommendation + comment.
 - `interviews` — `(application_id)` unique.
@@ -106,6 +107,10 @@ Student-side visibility rules in code:
 ## Required env / secrets
 
 - `DATABASE_URL` (provisioned), `SESSION_SECRET`, `ADMIN_EMAIL` / `ADMIN_PASSWORD`, `NODE_ENV`.
+- **Optional (notifications, W10)** — all absent-safe; a missing value disables the feature without erroring:
+  - `SEEDS_DISCORD_OPS_WEBHOOK_URL`, `SEEDS_DISCORD_MENTOR_WEBHOOK_URL` — public channel webhooks.
+  - `APP_BASE_URL` — used to build deep links in notifications. Without it, messages ship without a link.
+  - `CRON_SECRET` — shared secret for `POST /internal/cron/*`. Unset ⇒ those routes return 503.
 
 ## Local run / commands
 
@@ -126,9 +131,108 @@ Deploy: `suggest_deploy`. Proxy auto-routes `/api/*` to API server in production
 
 - bcrypt password hashing; admin bootstrapped from `ADMIN_EMAIL`/`ADMIN_PASSWORD`.
 - `requireAdmin`/`requireEvaluator`/`requireStudent`/`requireAuth` gate every protected route. Evaluator endpoints additionally check assignment ownership.
+- `requireOpsRole(code)` (ADR-002) gates the restricted-read areas on top of admin. Current mapping:
+  - `recruiting` — `admin.ts` (all `/admin/applications*`), `admin-assignments.ts`, `admin-interview.ts`, `admin-decision.ts`, and in `admin-students.ts` only `POST /admin/applications/:id/convert-to-student` + `GET /admin/applications-accepted-pending`.
+  - `finance` — all of `admin-finance.ts`.
+  - `system` — `POST /admin/users`, `PATCH /admin/users/:id`. `GET /admin/users` stays `requireAdmin` (the evaluator picker needs it).
+  - Everything else stays `requireAdmin` (read-wide) — dashboards expose counts only, no applicant PII.
+  - ⚠️ **`/evaluator/*` must NOT be gated on `recruiting`** — it is a separate axis (`requireAdminOrMentor` + per-application assignment ownership). Gating it would lock out assigned mentors.
+- Admin sidebar hides restricted-read menus via `visibleNavSections(opsRoles)`; this is cosmetic only, the server gate is the boundary.
 - Session cookie HMAC-signed via `SESSION_SECRET`, `httpOnly`, `sameSite=lax`, `Secure` in prod.
 - All public form input server-side validated with generated Zod schemas + trimmed.
 - `decision_logs` append-only with changing user. CSV export has formula-injection guard.
+
+## Mentor Workspace & team signals (W2–W4)
+
+- `project_mentors` — N:N mentor↔project (ADR-003). References `users` (not `students`); `(project_id, mentor_user_id)` UNIQUE. Unassigning sets `status='ended'` + `endedAt` rather than deleting, so feedback written during the assignment keeps its context. Re-assigning a former mentor REACTIVATES the row. Access is cut the moment status flips to `ended`.
+- `project_status_checks` — **append-only**, no PATCH/DELETE route. `team_status` ∈ good|watch|risk|blocked, plus `blocker`, `next_focus`, `needs_ops_support`/`ops_support_note`, and an `ops_resolved_at`/`ops_resolved_by` stamp (the only permitted mutation, via `POST /admin/status-checks/:id/resolve`, guarded on `IS NULL`). Visibility enum is `admin_only|mentor_visible` — **there is deliberately no student value and no student route**.
+- `project_milestones` — no visibility column; inherits the project's. `dropped` means plan change, not failure (UI must stay neutral).
+- `projects` gained `github_url`, `demo_url`, `deck_url`, `target_users` (non-destructive). Blocker/next-action are NOT columns — they are read from the latest status check, since they are point-in-time.
+- Mentor routes (`artifacts/api-server/src/routes/mentor-teams.ts`): `GET /mentor/teams`, `GET /mentor/projects/:id`, `POST /mentor/projects/:id/{status-checks,feedback}`, `GET /mentor/feedback`, `GET /mentor/dashboard`.
+  - `requireMentor` is necessary but NOT sufficient — every handler re-checks an ACTIVE assignment via `lib/mentor-scope.ts` (`getMentorProjectIds` / `mentorOwnsProject`), mirroring the evaluator surface's per-application ownership check. Unowned ids return **404, not 403**, to avoid leaking which projects exist.
+  - **ADR-004**: feedback on an owned project is returned in full — any author, any type, any visibility, including `admin_note`. Access is gated by ASSIGNMENT, not visibility; `feedback`'s enum was NOT extended. Consequence: keep sensitive ops-internal notes about students in `meetings`/`documents` (both `admin_only`), not in `feedback`.
+  - Artifacts exclude `visibility='private'` — a student's unfinished personal draft stays private even from their mentor.
+- Ops dashboard gained `teamSupport` (open `needs_ops_support` requests) and `staleStatusChecks` (active projects with no check in 14d). The former is the mentor→ops signal that makes the 30-second status check worth filling in.
+
+## Studies & reflections (W6)
+
+- `studies` / `study_members` — a clone of the `projects` shape. **No visibility column**: a study is open within its cohort (adding a 4th visibility enum would violate visibility-policy §1 원칙 2). Weekly plan is one `weekly_plan_md` field, not a table — Growth v3 §8.3 deferred progress tracking. Outputs attach via the new `artifacts.study_id` and keep artifacts' own 4-level visibility.
+- `reflections` — **ADR-001 is enforced structurally, not by convention.**
+  - The enum is `private | team_visible | mentor_visible | cohort_visible`. **`admin_only` is absent and must never be added** — with no ops-facing value there is nothing an ops-wide screen could select on.
+  - There is **no `admin-reflections.ts`** and the `/admin/reflections` nav placeholder was removed. The only file referencing `reflectionsTable` is `routes/student-growth.ts`.
+  - All four handlers resolve the student from the session (`getStudentForUser(req.sessionUser!.id)`) and scope on `studentId = me` **in the WHERE clause** (INSERT sets it from the session in VALUES). The Zod body does not accept `studentId`, so a student cannot author or read as someone else.
+  - Narrowing visibility is always allowed — a student may take a reflection back. Hard delete is allowed too: a reflection is the student's, not an audit record, and reflections are on the audit denylist.
+  - **Ops has NO reflections read path at all** — not even for `cohort_visible`. The two reader endpoints are `/student/reflections/shared` (teammates see `team_visible`↑, same-cohort sees `cohort_visible`) and `/mentor/reflections` (assigned mentor sees `mentor_visible`↑). Without those the visibility picker would name audiences that cannot exist. Team-risk detection is `project_status_checks`' job.
+  - `project_status_checks.visibility` is now actually enforced: mentors only receive `mentor_visible` rows, and ops can create `admin_only` ones via `POST /admin/projects/:id/status-checks`. Previously the column was written-never, read-never.
+  - `GET /student/projects/:id` feedback is scoped to `studentId IS NULL OR studentId = me` — without it, feedback naming one teammate was returned to the whole project.
+  - `/student/assignments/:id` returns 404 (not 403) for out-of-scope or draft assignments, matching the mentor-scope rule: a differing status code lets a student enumerate which assignments exist.
+- Student screens: `/student/studies`, `/student/reflections`, `/student/feedback`. Reflections are NOT auto-included in `student/report` or `/student/timeline` — that would make the report read like an assessment.
+
+## Audit & attachments (W5)
+
+- `audit_logs` — **append-only**, no write/update/delete API; rows come only from `lib/audit.ts` at mutation sites. Read is gated on the `system` ops role. `decision_logs` stays separate (recruitment-domain) and is NOT absorbed.
+- `diffFields()` reduces before/after to **only the keys that actually changed** and drops a denylist of free-text fields (`content`, `contentMd`, `bodyMd`, `decisionsMd`, `comment`, `blocker`, `nextFocus`, `opsSupportNote`, `description`, `passwordHash`, `receiptUrl`). Enforced in the helper, not trusted to call sites — the audit trail must not itself become a leak. Reflections are never audited (ADR-001).
+- Write sites: `role_change` (PATCH /admin/users/:id), `finance_status` (status transitions only), `data_export` (applications CSV — row count only), `account_activation` (token re-issue — never the token), `permission_denied` (every `requireOpsRole` 403; repeated hits usually mean a mis-assigned role).
+- IP is stored as a truncated HMAC keyed on `SESSION_SECRET`, never raw.
+- `attachments` — stores **`objectPath`, not a URL**. Objects get ACL `visibility=private` at registration, so they are unreachable via the unauthenticated `GET /api/storage/objects/*` path that serves avatars. The only read path is `GET /api/attachments/:id/download` (`requireAdmin`, streams after the check, never redirects). Receipts (`linkedObjectType='finance_record'`) additionally require the `finance` ops role and are force-set to `admin_only` regardless of what the client sends.
+- Link targets are validated on write (422 if the target row is missing); `linkedObjectType` is constrained by the shared `LINKABLE_TYPES` whitelist in `lib/db/src/schema/_linkable.ts`.
+- Markdown image paste/drop uploads through this pipeline, inserting `![name](/api/attachments/:id/download)` — an authenticated URL, not a storage path.
+
+## Editing & meeting templates (W9)
+
+- `MarkdownEditor` (`artifacts/seeds/src/components/markdown/`) — a thin toolbar over the existing `Textarea`; markdown stays the stored format (ADR-005). No editor library was added: `@uiw/react-md-editor` et al. bring their own theme and would fight shadcn/ui + Pretendard. Selection maths lives in `markdown-insert.ts` (pure, unit-verified). Checklist (`- [ ]`) is a first-class button because event/recruitment checklists depend on it.
+- `meetings.body_md` (new) holds the template-seeded free-form body. `decisions_md` stays a SEPARATE column across every template — dashboards, handover and audit all extract decisions alone (ADR-006). Legacy `agenda_md`/`notes_md`/`pending_md` are retained but no longer written; `backfillMeetingBodies()` folded their content into `body_md` on rows where it was still empty, and the detail page shows them read-only under "이전 형식 기록". Drop them after a cohort.
+- Meeting-note templates are `documents` rows (`is_template=true`, `linked_object_type='meeting_type'`), NOT hardcoded — ops edit them at `/admin/documents` and the next meeting picks up the change with no deploy. `bootstrapMeetingTemplates()` seeds only what is missing.
+- Meeting notes previously had **no edit path at all** (create-only). W9 added per-section inline editing via `PATCH /admin/meetings/:id`.
+
+## Notifications (W10)
+
+- Discord webhook + in-app badges. **No email, no new table** — every dispatch is logged to `communication_logs` with `channel='discord'` (ADR-007).
+- `lib/notify.ts` — `notifySafely()` is fire-and-forget; a webhook failure can never surface to the caller or block the mutation. One retry, 5s timeout, then logged as `failed`.
+- **Payload rules (enforced, not stylistic):** public channels only (never a DM), and NEVER student names / evaluation content / reflections / raw blocker text. The message is "what happened + link"; the content is read inside GrowthHub behind permission checks. No student-addressed notifications exist.
+- Immediate: team-support requests (`needsOpsSupport`) fire from the mentor status-check route. Scheduled: `POST /internal/cron/daily-digest` and `/weekly-mentor-nudge`, authed by `x-cron-secret` (a machine caller, not a session), guarded against double-fire by a per-template per-day check, and silent when there is nothing to report.
+- In-app badges reuse `GET /admin/ops-dashboard/summary` — they show what is currently OPEN, not unread. There is deliberately no read state and no `notifications` table.
+
+## Responsive tiers (W11)
+
+- Every route carries an A/B/C tier. `artifacts/seeds/src/lib/responsive-tiers.ts` is the register — all 85 `<Route>` paths in `App.tsx` (incl. the 8 W8 placeholders and the pathless 404) have a row, verified both directions with no gaps. **A new screen adds a row here**; that is what ADR-008 / design/05 §6.1 means by "등급을 명시한다".
+- `A` mobile-read guaranteed (public site, all `/student/*`, mentor read screens, and every login/activation entry point). `B` mobile-viewable (admin lists + detail reads, ops-dashboard, `/evaluator/*`). `C` desktop-only.
+- `useIsDesktop()` (`hooks/use-desktop.tsx`) gates at **1024px** = Tailwind `lg`. Deliberately NOT `useIsMobile()` (768px) — that one drives the sidebar drawer and §6.4 keeps the drawer where it is, so sharing a hook would drag the drawer breakpoint with it. State is seeded synchronously from `window.innerWidth` (client-only SPA, no SSR) so desktop does not flash the blocked-notice on first paint.
+- `<DesktopOnly feature="...">` **does not render its children** below `lg` — it is not a CSS hide. `display:none` would leave the blocked tree focusable and still able to produce the horizontal overflow §6.4 forbids; a 6-column kanban is exactly that tree. The label is interpolated with an em dash, not a topic particle: 는/은 depends on a 받침 ("작업 보드는" vs "일괄 출석 입력은") so a fixed particle would be ungrammatical for half the call sites.
+- C surfaces: `/admin/tasks` (kanban), `/admin/sessions/:id/attendance` (bulk entry), `/admin/documents/:id` (split editor), `/admin/meetings/:id` (edit mode), and the status-check form on `/mentor/projects/:id`.
+- **Two screens are mixed** (`MIXED_TIER_SCREENS`): `/mentor/projects/:id` is A to read but C to submit a status check, and `/admin/meetings/:id` keeps its rendered note readable while only edit mode is C. The guard wraps the *section*, not the route. Their entry buttons (문서 `편집`, 회의록 `편집`) are **hidden** below `lg` rather than disabled — a button that only ever yields a notice promises an audience that isn't there.
+- Task board drag-and-drop is **native HTML5 DnD, no new dependency**: the board is C, so pointer dragging is the entire requirement (design/05 §7) and a DnD library for one desktop-only screen isn't worth the weight. `dragstart` bails out inside `[data-no-drag]` so the status `Select` still opens, a drop onto the origin column is a no-op rather than a PATCH, and **the `Select` stays** as the only keyboard-reachable way to move a task (native drag has no keyboard affordance).
+- ADR-008's accepted cost is "멘토가 폰에서 상태체크 불가", offset by ADR-007's Discord notifications. design/05 §9 leaves mentor input rate open — if it comes in low for the first cohort, ADR-008 is what gets revisited, not this guard alone.
+- **Unverified: no browser was available in the implementing session.** 375px measurement, drag behaviour and the banner rendering are all static/build-level only.
+
+## External links & attachments (W7 / W5)
+
+- `external_links` — reference material hung off an arbitrary object (design/04 §4). NOT `artifacts`: those are student-produced growth evidence, these keep operational context (a Discord channel, a Drive folder, a spec). A project's three headline URLs (github/demo/deck) are **columns on `projects`**, not rows here.
+- **Reads are an INTERSECTION, never the `visibility` column alone** (visibility-policy §5.1): `readable ⟺ viewer can reach the linked object AND link.visibility allows them`. Checking only `visibility` leaks — flipping a link on an `admin_only` meeting to `cohort_visible` would publish that meeting's existence and material URL to a whole cohort via the link title. Every decision goes through `src/lib/external-link-scope.ts` so no single route can forget it.
+- Parent types that grant a student/mentor audience (`project`, `study`, `session`, `cohort`, `program`) have **no `visibility` column at all** — only `meetings`/`documents` do, and students have no access to those. So "inherit the parent's visibility" resolves to **the parent's own access rule** (membership/scope), which is what the resolver implements.
+- **Visibility values that the parent has no audience for are rejected at write time with 422** (`meeting`+`cohort_visible`, `cohort`+`team_visible`). Storing them would leave a value that reads filter out anyway — a dead value by another route.
+- `linked_object_type` is narrower than `LINKABLE_TYPES`: `meeting_type` keys off a type string and `channel` has no table, so neither can satisfy the design/04 §2 rule-2 existence check. Both are 422.
+- Parent ops gate re-checked on read, same shape as the receipt gate: `finance_record` needs `finance`, `application` needs `recruiting`. A `community`-only admin gets **404** (not 403) on those — a denied filter must not confirm the type is gated.
+- `private` is **owner-only and that beats being an admin.** Another admin does not see it, cannot download it, cannot delete it (404 each). This is what keeps `private` distinguishable from `admin_only` instead of a dead synonym.
+- **`attachments.visibility` lost `team_visible` in W7.** It was a dead value: every attachment route is `requireAdmin`, `attachmentsTable` is referenced in no other file, and no student/mentor surface read it — yet visibility-policy §5 promised `team_visible`=팀 and 멘토=담당 팀. Removed rather than given a reader, because attachments only ever come from MarkdownEditor paste (meeting/document context) and finance receipts, both ops-only; a student download route would have built a reader for an audience the product does not have. Restore it together with that route when students actually own attachments.
+- Writes are ops-only for both tables. No student write path exists or is planned.
+- **No frontend yet for `external_links`** — API only. Ships with W8 when the placeholder screens are settled.
+
+## Placeholder cleanup (W8)
+
+Eight informational placeholder screens existed so the IA v2 tree was fully navigable. All are gone: four became real, four were removed. **Empty screens: 0.** The machinery is gone too (`ADMIN_PLACEHOLDER_ITEMS`, `findPlaceholderItem`, `_placeholder.tsx`, `NavItem.placeholder`) — a nav entry now requires a working screen, because an entry without one promises a feature that does not exist.
+
+Built:
+- `/admin/media` — `external_links` management; this is where W7's missing UI landed. Attachments deliberately get no flat index: every attachment route is admin-scoped and reached from the object it hangs off, and `private` ones are owner-only, so a browse-all surface would imply access the permission model does not grant. The visibility dropdown offers only what the parent can serve (same table the server enforces), so it cannot offer an audience that would 422.
+- `/admin/interviews` — new `GET /admin/interviews` (`recruiting`-gated, joins applicant name). Read-only: writes stay on `PUT /admin/applications/:id/interview` so one row has one write path. The row and its upsert already existed; only a way to see the schedule as a whole was missing.
+- `/admin/attendance` — new `GET /admin/attendance?cohortId=` rollup. Rate = (present + late) / (sessions − excused): `excused` leaves the denominator rather than scoring as an absence. The denominator counts **sessions**, not attendance rows, so a session nobody marked still counts — otherwise a forgotten roll call silently inflates everyone's rate. Sorted lowest-first because the screen exists to surface who is slipping. `requireAdmin`, not an ops role — attendance is general operations and gating it on `recruiting` would hide it from the people running sessions.
+- `/admin/reports` — thin index into the existing `/admin/students/:id/report` and `/admin/cohorts/:id/summary`. No new endpoint; building one would duplicate two working aggregations.
+
+Removed (rationale lives at each site in `lib/admin-nav.ts`):
+- `/admin/integrations` — design/04 §8 makes automatic sync (`sync_logs`, `integration_accounts`) an **explicit non-goal**, and the baseline is "links first, API integration only once the need is proven". An integration *status* screen needs the sync layer that was deliberately not built. Same shape as `/admin/reflections` vs ADR-001. Link-based integration is real and lives in `/admin/media`.
+- `/admin/settings` — the promised items are env vars (`SESSION_SECRET`, `ADMIN_EMAIL`); exposing them in a UI is a regression. And making "default visibility policy" runtime-editable would dissolve the structural guarantee ADR-001 rests on.
+- `/admin/members` — `/admin/people` is already the person-level directory across kinds. IA v2 §7.2 flagged an unresolved **placement** for `/admin/students`, not a missing fourth people list.
+- `/admin/public-pages` — publish state and SEO meta have no schema; `site_contents` is a key→body map. Restore alongside that schema extension, not before.
 
 ## Finance (GrowthHub Ops)
 

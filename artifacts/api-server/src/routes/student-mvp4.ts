@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import {
   db,
   studentsTable,
@@ -199,6 +199,13 @@ router.get("/student/projects/:id", requireStudent, async (req, res) => {
     );
   // Feedback on the project (student-visible only) OR feedback specifically about
   // this student that targets this project.
+  //
+  // The studentId condition was missing: without it, feedback naming a specific
+  // teammate was returned to every member of the project. visibility-policy §2
+  // defines feedback's `student_visible` as 대상형 — readable by the ONE student
+  // in `studentId` — and §5 pins the 학생 column to "대상=본인 AND student_visible".
+  // A NULL studentId means the feedback is about the project itself, so it stays
+  // visible to the whole team.
   const fbs = await db
     .select()
     .from(feedbackTable)
@@ -207,6 +214,10 @@ router.get("/student/projects/:id", requireStudent, async (req, res) => {
         eq(feedbackTable.targetType, "project"),
         eq(feedbackTable.targetId, id),
         eq(feedbackTable.visibility, "student_visible"),
+        or(
+          isNull(feedbackTable.studentId),
+          eq(feedbackTable.studentId, student.id),
+        ),
       ),
     );
   const tags = await db

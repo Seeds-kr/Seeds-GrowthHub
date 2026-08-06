@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { api } from "@/lib/mvp3-api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,9 @@ import {
   ClipboardCheck,
   FileWarning,
   FileText,
+  FolderKanban,
   Gauge,
+  LifeBuoy,
   Loader2,
   Wallet,
   ExternalLink,
@@ -84,6 +85,24 @@ type OpsDashboard = {
   };
   recentDocuments: DocItem[];
   staleDocuments: DocItem[];
+  teamSupport: {
+    openCount: number;
+    items: {
+      checkId: number;
+      projectId: number;
+      projectTitle: string;
+      teamStatus: string;
+      note: string | null;
+      blocker: string | null;
+      checkedAt: string;
+      authorName: string | null;
+    }[];
+  };
+  staleStatusChecks: {
+    projectId: number;
+    projectTitle: string;
+    lastCheckedAt: string | null;
+  }[];
 };
 
 const PRIORITY_BADGE: Record<string, string> = {
@@ -177,12 +196,12 @@ function SectionCard({
 export default function AdminOpsDashboard() {
   const { data, isLoading, isError, error, refetch } = useQuery<OpsDashboard>({
     queryKey: ["admin", "ops-dashboard"],
-    queryFn: () => api<OpsDashboard>("/api/admin/ops-dashboard/summary"),
+    queryFn: () => api<OpsDashboard>("/admin/ops-dashboard/summary"),
     refetchOnWindowFocus: false,
   });
 
   return (
-    <AdminLayout>
+    <>
       <div className="space-y-6">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -438,6 +457,68 @@ export default function AdminOpsDashboard() {
               )}
             </SectionCard>
 
+            {/* Team support requests — the mentor → ops signal */}
+            <SectionCard
+              icon={LifeBuoy}
+              title="팀 지원 필요"
+              countBadge={data.teamSupport.openCount}
+              href="/admin/projects"
+              empty={data.teamSupport.openCount === 0}
+            >
+              {data.teamSupport.openCount === 0 ? (
+                "처리 대기 중인 지원 요청이 없습니다."
+              ) : (
+                <ul className="divide-y">
+                  {data.teamSupport.items.map((t) => (
+                    <li key={t.checkId} className="py-2 first:pt-0 last:pb-0">
+                      <Link href={`/admin/projects/${t.projectId}`}>
+                        <a className="block hover:underline">
+                          <p className="truncate font-medium">{t.projectTitle}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {t.note ?? t.blocker ?? "지원 요청"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {t.authorName ? `${t.authorName} · ` : ""}
+                            {formatDate(t.checkedAt)}
+                          </p>
+                        </a>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </SectionCard>
+
+            {/* Teams whose last status check is stale */}
+            <SectionCard
+              icon={FolderKanban}
+              title="상태체크 필요 팀"
+              countBadge={data.staleStatusChecks.length}
+              href="/admin/projects"
+              empty={data.staleStatusChecks.length === 0}
+            >
+              {data.staleStatusChecks.length === 0 ? (
+                "모든 진행 중 팀이 최근 상태체크를 받았습니다."
+              ) : (
+                <ul className="divide-y">
+                  {data.staleStatusChecks.map((t) => (
+                    <li key={t.projectId} className="py-2 first:pt-0 last:pb-0">
+                      <Link href={`/admin/projects/${t.projectId}`}>
+                        <a className="flex items-center justify-between gap-3 hover:underline">
+                          <span className="min-w-0 flex-1 truncate font-medium">
+                            {t.projectTitle}
+                          </span>
+                          <span className="shrink-0 text-xs text-muted-foreground">
+                            {t.lastCheckedAt ? formatDate(t.lastCheckedAt) : "기록 없음"}
+                          </span>
+                        </a>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </SectionCard>
+
             {/* Recent documents */}
             <SectionCard
               icon={FileText}
@@ -500,6 +581,6 @@ export default function AdminOpsDashboard() {
           </div>
         )}
       </div>
-    </AdminLayout>
+    </>
   );
 }

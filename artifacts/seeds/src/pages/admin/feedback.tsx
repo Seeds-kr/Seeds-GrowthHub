@@ -1,4 +1,3 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   api, FEEDBACK_TARGETS, FEEDBACK_TARGET_LABEL,
@@ -19,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
+import { EmptyState } from "@/components/EmptyState";
 
 export default function AdminFeedback() {
   const qc = useQueryClient();
@@ -51,13 +51,13 @@ export default function AdminFeedback() {
   });
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-serif font-bold">피드백</h1>
         <Button onClick={() => { setForm({ targetType: "student", targetId: "", studentId: "", feedbackType: "general", content: "", visibility: "admin_only" }); setOpen(true); }}>+ 새 피드백</Button>
       </div>
 
-      <div className="bg-card border border-border p-4 mb-4 grid grid-cols-2 gap-3">
+      <div className="rounded-lg bg-card border border-border p-4 mb-4 grid grid-cols-2 gap-3">
         <Select value={filters.targetType || "all"} onValueChange={(v) => setFilters({ ...filters, targetType: v === "all" ? "" : v })}>
           <SelectTrigger><SelectValue placeholder="대상 유형" /></SelectTrigger>
           <SelectContent><SelectItem value="all">대상 전체</SelectItem>{FEEDBACK_TARGETS.map((t) => <SelectItem key={t} value={t}>{FEEDBACK_TARGET_LABEL[t]}</SelectItem>)}</SelectContent>
@@ -68,12 +68,14 @@ export default function AdminFeedback() {
         </Select>
       </div>
 
-      <div className="bg-card border border-border">
+      <div className="rounded-lg bg-card border border-border elev-1">
         <Table>
           <TableHeader><TableRow><TableHead>날짜</TableHead><TableHead>대상</TableHead><TableHead>학생</TableHead><TableHead>유형</TableHead><TableHead>공개</TableHead><TableHead>내용</TableHead><TableHead></TableHead></TableRow></TableHeader>
           <TableBody>
             {isLoading ? <TableRow><TableCell colSpan={7} className="h-24 text-center"><Loader2 className="animate-spin mx-auto" /></TableCell></TableRow>
-            : data?.items.length === 0 ? <TableRow><TableCell colSpan={7} className="h-24 text-center text-muted-foreground">피드백이 없습니다.</TableCell></TableRow>
+            : data?.items.length === 0 ? <TableRow><TableCell colSpan={7} className="p-0">
+                <EmptyState title="피드백이 없습니다." />
+              </TableCell></TableRow>
             : data?.items.map((f) => (
               <TableRow key={f.id}>
                 <TableCell className="text-sm">{formatKoreanDate(f.createdAt)}</TableCell>
@@ -140,6 +142,6 @@ export default function AdminFeedback() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 }

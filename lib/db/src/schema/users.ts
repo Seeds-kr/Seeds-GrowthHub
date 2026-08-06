@@ -12,6 +12,40 @@ export const USER_ROLES = ["admin", "mentor", "student"] as const;
 export type UserRole = (typeof USER_ROLES)[number];
 
 /**
+ * Functional ops roles — Seeds 운영진 세부 역할.
+ *
+ * ORTHOGONAL to USER_ROLES. `role`/`extraRoles` answer "which workspace can
+ * this account enter"; `opsRoles` answers "what may they do inside the admin
+ * workspace". Deliberately a separate column so USER_ROLES stays exactly
+ * admin|mentor|student — widening it would pollute the primary `role` column
+ * and the role-switcher UI.
+ *
+ * `program_lead` is a superuser: it satisfies every hasOpsRole() check.
+ *
+ * See docs/design/01-role-permissions.md (ADR-002).
+ */
+export const OPS_ROLES = [
+  "program_lead",
+  "ops",
+  "recruiting",
+  "finance",
+  "growth",
+  "community",
+  "system",
+] as const;
+export type OpsRole = (typeof OPS_ROLES)[number];
+
+export const OPS_ROLE_LABELS: Record<OpsRole, string> = {
+  program_lead: "총괄 (Program Lead)",
+  ops: "운영 (Ops Manager)",
+  recruiting: "모집/선발",
+  finance: "회계/행정",
+  growth: "성장경험",
+  community: "커뮤니티/커뮤니케이션",
+  system: "시스템/데이터",
+};
+
+/**
  * Effective roles → can the user view other members' contact info
  * (phone/email) on the /people directory page?
  * Currently: any logged-in member (admin, mentor, student).
@@ -41,6 +75,12 @@ export const usersTable = pgTable(
       .array()
       .notNull()
       .$type<UserRole[]>()
+      .default(sql`'{}'::text[]`),
+    /** Functional ops roles. Only meaningful when effective roles include "admin". */
+    opsRoles: text("ops_roles")
+      .array()
+      .notNull()
+      .$type<OpsRole[]>()
       .default(sql`'{}'::text[]`),
     isActive: boolean("is_active").notNull().default(true),
     createdAt: timestamp("created_at", { withTimezone: true })
@@ -72,4 +112,31 @@ export function getEffectiveRoles(u: {
     if ((USER_ROLES as readonly string[]).includes(r)) set.add(r);
   }
   return Array.from(set);
+}
+
+export type OpsRoleCarrier = {
+  role: UserRole;
+  extraRoles?: UserRole[] | null;
+  opsRoles?: OpsRole[] | null;
+};
+
+/**
+ * Functional ops roles, whitelist-filtered.
+ * Returns [] for anyone whose effective roles do not include "admin" — ops
+ * roles are meaningless outside the admin workspace, so a mentor/student can
+ * never gain capability by having values in this column.
+ */
+export function getOpsRoles(u: OpsRoleCarrier): OpsRole[] {
+  if (!getEffectiveRoles(u).includes("admin")) return [];
+  const set = new Set<OpsRole>();
+  for (const r of u.opsRoles ?? []) {
+    if ((OPS_ROLES as readonly string[]).includes(r)) set.add(r);
+  }
+  return Array.from(set);
+}
+
+/** True if the user may act in `code`. `program_lead` satisfies every check. */
+export function hasOpsRole(u: OpsRoleCarrier, code: OpsRole): boolean {
+  const roles = getOpsRoles(u);
+  return roles.includes("program_lead") || roles.includes(code);
 }

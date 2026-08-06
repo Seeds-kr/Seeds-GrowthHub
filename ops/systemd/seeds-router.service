@@ -1,0 +1,16 @@
+[Unit]
+Description=Seeds GrowthHub static router
+After=network-online.target seeds-api.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/harvester/seeds-preview
+ExecStart=/bin/bash -c 'set -a; . /home/harvester/.secrets/seeds-preview.env; set +a; exec /home/harvester/.nvm/versions/node/v22.23.1/bin/node /home/harvester/seeds-preview/router.mjs'
+Restart=always
+RestartSec=5
+StandardOutput=append:/home/harvester/seeds-preview/router.log
+StandardError=append:/home/harvester/seeds-preview/router.log
+
+[Install]
+WantedBy=default.target

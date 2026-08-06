@@ -1,5 +1,5 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
-import { useAdminDashboard } from "@workspace/api-client-react";
+import { useAdminDashboard, useAdminMe, getAdminMeQueryKey } from "@workspace/api-client-react";
+import { OnboardingCard } from "@/components/OnboardingCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,7 @@ import {
   MessageSquare,
   Package,
 } from "lucide-react";
+import { CountUp } from "@/lib/motion";
 
 const APPLICATION_STATUS_LABEL: Record<string, string> = {
   submitted: "제출 완료",
@@ -31,14 +32,31 @@ const APPLICATION_STATUS_LABEL: Record<string, string> = {
   withdrawn: "지원 취소",
 };
 
+/**
+ * 지원 상태의 색.
+ *
+ * 원래는 파랑·호박·보라·초록·장미·슬레이트 여섯 색이었다. 색끼리 아무 관계가
+ * 없어서 무지개처럼 흩어져 보이고, 어느 상태가 더 진행된 것인지도 색으로는
+ * 알 수 없었다.
+ *
+ * 지원은 실제로 **진행**한다: 제출 → 검토 → 면접 → 합격. 그러면 색도 같이
+ * 진행해야 한다. 브랜드 그린 하나를 농도로 계단 지어 쓴다 — 옅을수록 초기,
+ * 진할수록 끝에 가깝다. 한눈에 "어디까지 왔는지" 가 읽힌다.
+ *
+ * 파이프라인에서 벗어난 셋만 다른 색을 쓴다. 이건 진행의 어느 단계가 아니라
+ * 흐름 밖으로 나간 상태라 같은 계단에 올리면 오히려 헷갈린다.
+ */
 const APPLICATION_STATUS_TONE: Record<string, string> = {
-  submitted: "bg-blue-50 text-blue-700",
-  reviewing: "bg-amber-50 text-amber-700",
-  interview: "bg-purple-50 text-purple-700",
-  accepted: "bg-primary/10 text-primary",
-  rejected: "bg-rose-50 text-rose-700",
-  waitlisted: "bg-slate-100 text-slate-700",
-  withdrawn: "bg-muted text-muted-foreground",
+  // 농도가 올라가면 글자색도 같이 넘어가야 한다. 45% 초록 위에 흰 글자를
+  // 얹었더니 1.00:1 이 나왔다(실측). 옅은 단계는 브랜드색 글자, 짙은 단계는
+  // 잉크색 글자, 마지막 solid 만 흰 글자다.
+  submitted: "bg-primary/10 text-primary ring-1 ring-inset ring-primary/20",
+  reviewing: "bg-primary/20 text-primary ring-1 ring-inset ring-primary/30",
+  interview: "bg-primary/30 text-foreground ring-1 ring-inset ring-primary/40",
+  accepted: "bg-primary text-primary-foreground elev-1",
+  rejected: "bg-destructive/10 text-destructive ring-1 ring-inset ring-destructive/20",
+  waitlisted: "bg-muted text-muted-foreground ring-1 ring-inset ring-border",
+  withdrawn: "bg-transparent text-muted-foreground/70 ring-1 ring-inset ring-border",
 };
 
 const SESSION_TYPE_LABEL: Record<string, string> = {
@@ -107,15 +125,23 @@ function KpiCard({
   href?: string;
 }) {
   const inner = (
-    <Card className="border-border shadow-none transition-colors hover:border-primary/30 hover:bg-primary/[0.02]">
+    <Card
+      className={`group border-border elev-1 ${
+        href ? "elev-hover hover:border-primary/40" : "hover:border-primary/25"
+      }`}
+    >
       <CardContent className="p-5">
         <div className="flex items-start justify-between mb-3">
           <span className="text-sm text-muted-foreground">{label}</span>
-          <div className="w-9 h-9 rounded-md bg-primary/10 text-primary flex items-center justify-center">
+          {/* 아이콘 판이 카드에 반응한다. 누를 수 있는 카드에서만 색이 차오른다. */}
+          <div className="w-9 h-9 rounded-md bg-primary/10 text-primary flex items-center justify-center transition-colors duration-200 group-hover:bg-primary group-hover:text-primary-foreground">
             <Icon className="w-4 h-4" />
           </div>
         </div>
-        <div className="text-3xl font-bold tracking-tight tabular-nums">{value}</div>
+        {/* 숫자는 쌓인 결과다. 화면에 들어올 때 한 번 세어 올린다. */}
+        <div className="text-3xl font-bold tracking-tight tabular-nums">
+          <CountUp value={String(value)} />
+        </div>
         {hint ? (
           <div className="text-xs text-muted-foreground mt-1.5">{hint}</div>
         ) : null}
@@ -179,9 +205,15 @@ function EmptyRow({ message }: { message: string }) {
 
 export default function AdminDashboard() {
   const { data, isLoading } = useAdminDashboard();
+  // Reuses the cached /admin/me the layout already fetched — no extra request.
+  const { data: me } = useAdminMe({
+    query: { retry: false, queryKey: getAdminMeQueryKey() },
+  });
 
   return (
-    <AdminLayout>
+    <>
+      <OnboardingCard opsRoles={me?.opsRoles ?? []} />
+
       <div className="mb-8 flex items-end justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-3xl font-bold tracking-[-0.03em] mb-1">대시보드</h1>
@@ -251,7 +283,7 @@ export default function AdminDashboard() {
 
           {/* Activation alert */}
           {data.members.pendingActivation > 0 ? (
-            <Card className="border-primary/30 bg-primary/[0.04] shadow-none mb-6">
+            <Card className="border-primary/30 bg-primary/[0.04] elev-1 mb-6">
               <CardContent className="p-4 flex items-center gap-3">
                 <div className="w-9 h-9 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
                   <KeyRound className="w-4 h-4" />
@@ -277,7 +309,7 @@ export default function AdminDashboard() {
                 href="/admin/applications"
                 hrefLabel="지원서로"
               />
-              <Card className="border-border shadow-none">
+              <Card className="border-border elev-1">
                 <CardContent className="p-5">
                   <div className="flex items-baseline justify-between mb-5">
                     <div>
@@ -296,7 +328,7 @@ export default function AdminDashboard() {
                     {data.applications.byStatus.map((s) => (
                       <div
                         key={s.status}
-                        className={`rounded-md px-3 py-2.5 ${
+                        className={`rounded-md px-3 py-2.5 transition-transform duration-150 hover:-translate-y-0.5 ${
                           APPLICATION_STATUS_TONE[s.status] ?? "bg-muted"
                         }`}
                       >
@@ -316,7 +348,7 @@ export default function AdminDashboard() {
             {/* Activity summary */}
             <div>
               <SectionHeader title={`최근 ${data.windowDays.recent}일 활동`} />
-              <Card className="border-border shadow-none">
+              <Card className="border-border elev-1">
                 <CardContent className="p-4 space-y-2">
                   <MiniStat
                     label="진행 중인 프로젝트"
@@ -345,7 +377,7 @@ export default function AdminDashboard() {
             {/* Upcoming sessions */}
             <div className="lg:col-span-2">
               <SectionHeader title="다가오는 모임" href="/admin/sessions" />
-              <Card className="border-border shadow-none">
+              <Card className="border-border elev-1">
                 <CardContent className="p-0">
                   {data.sessions.upcoming.length === 0 ? (
                     <EmptyRow message="예정된 모임이 없습니다." />
@@ -383,7 +415,7 @@ export default function AdminDashboard() {
             {/* Active cohorts */}
             <div>
               <SectionHeader title="진행 중인 기수" href="/admin/cohorts" />
-              <Card className="border-border shadow-none">
+              <Card className="border-border elev-1">
                 <CardContent className="p-0">
                   {data.cohorts.active.length === 0 ? (
                     <EmptyRow message="진행 중인 기수가 없습니다." />
@@ -416,7 +448,7 @@ export default function AdminDashboard() {
             {/* Due soon assignments */}
             <div className="lg:col-span-2">
               <SectionHeader title="마감 임박 과제" href="/admin/assignments" />
-              <Card className="border-border shadow-none">
+              <Card className="border-border elev-1">
                 <CardContent className="p-0">
                   {data.assignments.dueSoon.length === 0 ? (
                     <EmptyRow message="마감 임박 과제가 없습니다." />
@@ -473,7 +505,7 @@ export default function AdminDashboard() {
             {/* Recent announcements */}
             <div>
               <SectionHeader title="최근 공지" href="/admin/announcements" />
-              <Card className="border-border shadow-none">
+              <Card className="border-border elev-1">
                 <CardContent className="p-0">
                   {data.announcements.recent.length === 0 ? (
                     <EmptyRow message="최근 공지가 없습니다." />
@@ -505,6 +537,6 @@ export default function AdminDashboard() {
           </div>
         </>
       )}
-    </AdminLayout>
+    </>
   );
 }

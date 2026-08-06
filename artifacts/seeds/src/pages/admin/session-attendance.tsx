@@ -1,4 +1,4 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
+import { DesktopOnly } from "@/components/DesktopOnly";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/mvp3-api";
 import { ATTENDANCE_STATUSES, ATTENDANCE_STATUS_LABEL, formatKoreanDateTime } from "@/lib/admin-labels";
@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
+import { ResourceMissing } from "@/components/ResourceMissing";
 
 type Roster = { studentId: number; name: string; email: string; status: string | null; note: string | null; recordId: number | null };
 type Resp = { session: { id: number; title: string; scheduledAt: string; locationOrLink: string | null }; roster: Roster[] };
@@ -41,19 +42,38 @@ export default function AdminSessionAttendance() {
     onError: (e: any) => toast({ title: "실패", description: e?.data?.error ?? e.message, variant: "destructive" }),
   });
 
-  if (isLoading || !data) return <AdminLayout><div className="flex justify-center py-12"><Loader2 className="animate-spin" /></div></AdminLayout>;
+  // 로딩과 "없음"을 갈라야 한다. 하나로 묶으면 없는 자료를 열었을 때
 
+  // 스피너가 영원히 돈다(느린 건지 없는 건지 알 수 없다).
+
+  if (isLoading) return <><div className="flex justify-center py-12"><Loader2 className="animate-spin" /></div></>;
+
+  if (!data)
+
+    return (
+
+      <>
+
+        <ResourceMissing label="모임" backHref="/admin/sessions" />
+
+      </>
+
+    );
   return (
-    <AdminLayout>
+    <>
       <div className="mb-4"><Link href="/admin/sessions" className="text-sm text-muted-foreground hover:text-primary">← 모임 목록</Link></div>
       <h1 className="text-3xl font-serif font-bold mb-2">{data.session.title}</h1>
       <div className="text-muted-foreground text-sm mb-6">
         {formatKoreanDateTime(data.session.scheduledAt)}
         {data.session.locationOrLink ? ` · ${data.session.locationOrLink}` : ""}
       </div>
+      {/* W11 (design/05 §6.2) — C tier: a roster-wide status+memo grid cannot be
+          entered on a phone. The session heading above stays readable so the
+          notice arrives with context about which session it refers to. */}
+      <DesktopOnly feature="일괄 출석 입력">
       {data.roster.length === 0 ? <div className="text-muted-foreground">이 모임의 기수에 학생이 없습니다.</div> : (
         <>
-          <div className="bg-card border border-border mb-6">
+          <div className="rounded-lg bg-card border border-border mb-6">
             <Table>
               <TableHeader><TableRow><TableHead>학생</TableHead><TableHead>이메일</TableHead><TableHead>출석 상태</TableHead><TableHead>메모</TableHead></TableRow></TableHeader>
               <TableBody>
@@ -78,6 +98,7 @@ export default function AdminSessionAttendance() {
           <Button disabled={save.isPending} onClick={() => save.mutate()}>{save.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}출석 저장</Button>
         </>
       )}
-    </AdminLayout>
+      </DesktopOnly>
+    </>
   );
 }

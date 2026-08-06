@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import {
   useListUsers,
   useCreateUser,
@@ -29,6 +28,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { EmptyState } from "@/components/EmptyState";
 
 export default function AdminEvaluators() {
   const queryClient = useQueryClient();
@@ -94,17 +94,17 @@ export default function AdminEvaluators() {
   };
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <h1 className="text-3xl font-serif font-bold">평가자 관리</h1>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="rounded-none" data-testid="button-new-evaluator">
+            <Button className="" data-testid="button-new-evaluator">
               <Plus className="w-4 h-4 mr-2" />
               평가자 추가
             </Button>
           </DialogTrigger>
-          <DialogContent className="rounded-none">
+          <DialogContent className="">
             <DialogHeader>
               <DialogTitle>새 평가자 추가</DialogTitle>
             </DialogHeader>
@@ -114,7 +114,7 @@ export default function AdminEvaluators() {
                 <Input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="rounded-none"
+                  className=""
                   data-testid="input-evaluator-name"
                 />
               </div>
@@ -124,7 +124,7 @@ export default function AdminEvaluators() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="rounded-none"
+                  className=""
                   data-testid="input-evaluator-email"
                 />
               </div>
@@ -134,7 +134,7 @@ export default function AdminEvaluators() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="rounded-none"
+                  className=""
                   data-testid="input-evaluator-password"
                 />
               </div>
@@ -144,7 +144,7 @@ export default function AdminEvaluators() {
               <Button
                 onClick={handleCreate}
                 disabled={createUser.isPending}
-                className="rounded-none"
+                className=""
                 data-testid="button-create-evaluator"
               >
                 {createUser.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
@@ -155,7 +155,7 @@ export default function AdminEvaluators() {
         </Dialog>
       </div>
 
-      <div className="bg-card border border-border">
+      <div className="rounded-lg bg-card border border-border elev-1">
         <Table>
           <TableHeader>
             <TableRow>
@@ -175,9 +175,9 @@ export default function AdminEvaluators() {
               </TableRow>
             ) : (data?.items ?? []).length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                  등록된 평가자가 없습니다.
-                </TableCell>
+                <TableCell colSpan={5} className="p-0">
+                <EmptyState title="등록된 평가자가 없습니다." />
+              </TableCell>
               </TableRow>
             ) : (
               data?.items.map((u) => (
@@ -187,7 +187,7 @@ export default function AdminEvaluators() {
                   <TableCell>
                     <Badge
                       variant={u.isActive ? "default" : "outline"}
-                      className="rounded-none font-normal"
+                      className="font-normal"
                     >
                       {u.isActive ? "활성" : "비활성"}
                     </Badge>
@@ -199,7 +199,7 @@ export default function AdminEvaluators() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="rounded-none"
+                      className=""
                       onClick={() => toggleActive(u.id, u.isActive)}
                       data-testid={`button-toggle-${u.id}`}
                     >
@@ -212,6 +212,6 @@ export default function AdminEvaluators() {
           </TableBody>
         </Table>
       </div>
-    </AdminLayout>
+    </>
   );
 }

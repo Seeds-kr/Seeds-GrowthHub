@@ -76,6 +76,17 @@ export const AdminLoginResponse = zod.object({
   name: zod.string(),
   role: zod.enum(["admin", "mentor", "student"]),
   roles: zod.array(zod.enum(["admin", "mentor", "student"])),
+  opsRoles: zod.array(
+    zod.enum([
+      "program_lead",
+      "ops",
+      "recruiting",
+      "finance",
+      "growth",
+      "community",
+      "system",
+    ]),
+  ),
 });
 
 /**
@@ -94,6 +105,17 @@ export const AdminMeResponse = zod.object({
   name: zod.string(),
   role: zod.enum(["admin", "mentor", "student"]),
   roles: zod.array(zod.enum(["admin", "mentor", "student"])),
+  opsRoles: zod.array(
+    zod.enum([
+      "program_lead",
+      "ops",
+      "recruiting",
+      "finance",
+      "growth",
+      "community",
+      "system",
+    ]),
+  ),
 });
 
 /**
@@ -535,6 +557,17 @@ export const ListUsersResponse = zod.object({
       email: zod.string(),
       role: zod.enum(["admin", "mentor", "student"]),
       extraRoles: zod.array(zod.enum(["admin", "mentor", "student"])),
+      opsRoles: zod.array(
+        zod.enum([
+          "program_lead",
+          "ops",
+          "recruiting",
+          "finance",
+          "growth",
+          "community",
+          "system",
+        ]),
+      ),
       isActive: zod.boolean(),
       createdAt: zod.coerce.date(),
       updatedAt: zod.coerce.date(),
@@ -564,6 +597,19 @@ export const CreateUserBody = zod.object({
     .max(createUserBodyPasswordMax),
   role: zod.enum(["admin", "mentor", "student"]),
   extraRoles: zod.array(zod.enum(["admin", "mentor", "student"])).optional(),
+  opsRoles: zod
+    .array(
+      zod.enum([
+        "program_lead",
+        "ops",
+        "recruiting",
+        "finance",
+        "growth",
+        "community",
+        "system",
+      ]),
+    )
+    .optional(),
 });
 
 /**
@@ -590,6 +636,19 @@ export const UpdateUserBody = zod.object({
     .optional(),
   isActive: zod.boolean().optional(),
   extraRoles: zod.array(zod.enum(["admin", "mentor", "student"])).optional(),
+  opsRoles: zod
+    .array(
+      zod.enum([
+        "program_lead",
+        "ops",
+        "recruiting",
+        "finance",
+        "growth",
+        "community",
+        "system",
+      ]),
+    )
+    .optional(),
 });
 
 export const UpdateUserResponse = zod.object({
@@ -598,6 +657,17 @@ export const UpdateUserResponse = zod.object({
   email: zod.string(),
   role: zod.enum(["admin", "mentor", "student"]),
   extraRoles: zod.array(zod.enum(["admin", "mentor", "student"])),
+  opsRoles: zod.array(
+    zod.enum([
+      "program_lead",
+      "ops",
+      "recruiting",
+      "finance",
+      "growth",
+      "community",
+      "system",
+    ]),
+  ),
   isActive: zod.boolean(),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),

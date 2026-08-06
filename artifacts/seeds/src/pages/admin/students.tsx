@@ -1,4 +1,3 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, type Student, type Cohort } from "@/lib/mvp3-api";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,6 +11,7 @@ import { Link } from "wouter";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { Copy, Check } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 
 type AcceptedApp = {
   id: number;
@@ -90,19 +90,19 @@ export default function AdminStudents() {
   };
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-8 flex items-center justify-between">
         <h1 className="text-3xl font-serif font-bold">학생 관리</h1>
-        <Button className="rounded-none" onClick={() => setConvertOpen(true)}>합격자 → 학생 전환</Button>
+        <Button className="" onClick={() => setConvertOpen(true)}>합격자 → 학생 전환</Button>
       </div>
-      <div className="bg-card border border-border p-6 mb-8 flex flex-col md:flex-row gap-4">
+      <div className="rounded-lg bg-card border border-border p-6 mb-8 flex flex-col md:flex-row gap-4">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-          <Input className="pl-9 rounded-none" placeholder="이름, 이메일, 학교 검색…" value={q} onChange={(e) => setQ(e.target.value)} />
+          <Input className="pl-9" placeholder="이름, 이메일, 학교 검색…" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
         <div className="w-full md:w-64">
           <Select value={cohortId} onValueChange={setCohortId}>
-            <SelectTrigger className="rounded-none"><SelectValue /></SelectTrigger>
+            <SelectTrigger className=""><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">전체 기수</SelectItem>
               {cohorts?.items.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
@@ -110,23 +110,30 @@ export default function AdminStudents() {
           </Select>
         </div>
       </div>
-      <div className="bg-card border border-border">
+      <div className="rounded-lg bg-card border border-border elev-1">
         <Table>
           <TableHeader><TableRow>
             <TableHead>이름</TableHead><TableHead>이메일</TableHead><TableHead>학교</TableHead><TableHead>활성화</TableHead>
           </TableRow></TableHeader>
           <TableBody>
             {isLoading ? <TableRow><TableCell colSpan={4} className="h-24 text-center"><Loader2 className="animate-spin mx-auto" /></TableCell></TableRow>
-            : data?.items.length === 0 ? <TableRow><TableCell colSpan={4} className="h-24 text-center text-muted-foreground">학생이 없습니다.</TableCell></TableRow>
+            : data?.items.length === 0 ? <TableRow><TableCell colSpan={4} className="p-0">
+                <EmptyState title="학생이 없습니다."
+                  hint="지원서를 최종 합격 처리하면 학생으로 전환됩니다." />
+              </TableCell></TableRow>
             : data?.items.map((s) => (
-              <TableRow key={s.id} className="cursor-pointer relative">
+              <TableRow key={s.id} className="cursor-pointer relative focus-within:bg-muted/60 focus-within:outline focus-within:outline-2 focus-within:outline-offset-[-2px] focus-within:outline-[hsl(var(--ring))]">
                 <TableCell className="font-medium">
-                  <Link href={`/admin/students/${s.id}`} className="absolute inset-0 z-10" />
+                  <Link
+                    href={`/admin/students/${s.id}`}
+                    aria-label={`${s.name} 학생 상세 보기`}
+                    className="absolute inset-0 z-10 focus-visible:outline-none"
+                  />
                   {s.name}
                 </TableCell>
                 <TableCell>{s.email}</TableCell>
                 <TableCell>{s.school ?? "-"}</TableCell>
-                <TableCell><Badge variant={s.isActive ? "default" : "outline"} className="rounded-none">{s.isActive ? "활성" : "비활성"}</Badge></TableCell>
+                <TableCell><Badge variant={s.isActive ? "default" : "outline"} className="">{s.isActive ? "활성" : "비활성"}</Badge></TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -134,7 +141,7 @@ export default function AdminStudents() {
       </div>
 
       <Dialog open={convertOpen} onOpenChange={setConvertOpen}>
-        <DialogContent className="rounded-none">
+        <DialogContent className="">
           <DialogHeader>
             <DialogTitle>합격자를 학생으로 전환</DialogTitle>
             <DialogDescription>
@@ -143,7 +150,7 @@ export default function AdminStudents() {
           </DialogHeader>
           <div className="space-y-4">
             <Select value={selectedAppId ? String(selectedAppId) : ""} onValueChange={(v) => setSelectedAppId(Number(v))}>
-              <SelectTrigger className="rounded-none"><SelectValue placeholder="합격자 선택…" /></SelectTrigger>
+              <SelectTrigger className=""><SelectValue placeholder="합격자 선택…" /></SelectTrigger>
               <SelectContent>
                 {pending?.items.length === 0 ? <SelectItem value="-" disabled>전환 가능한 합격자가 없습니다.</SelectItem>
                   : pending?.items.map((a) => <SelectItem key={a.id} value={String(a.id)}>{a.name} ({a.email})</SelectItem>)}
@@ -151,8 +158,8 @@ export default function AdminStudents() {
             </Select>
           </div>
           <DialogFooter>
-            <Button variant="outline" className="rounded-none" onClick={() => setConvertOpen(false)}>취소</Button>
-            <Button className="rounded-none" disabled={!selectedAppId || convert.isPending} onClick={() => selectedAppId && convert.mutate({ appId: selectedAppId })}>
+            <Button variant="outline" className="" onClick={() => setConvertOpen(false)}>취소</Button>
+            <Button className="" disabled={!selectedAppId || convert.isPending} onClick={() => selectedAppId && convert.mutate({ appId: selectedAppId })}>
               {convert.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}계정 생성 + 활성화 링크 발급
             </Button>
           </DialogFooter>
@@ -160,7 +167,7 @@ export default function AdminStudents() {
       </Dialog>
 
       <Dialog open={!!activationResult} onOpenChange={(open) => !open && setActivationResult(null)}>
-        <DialogContent className="rounded-none max-w-lg">
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>활성화 링크 발급 완료</DialogTitle>
             <DialogDescription>
@@ -169,7 +176,7 @@ export default function AdminStudents() {
           </DialogHeader>
           <div className="space-y-3">
             <div className="border border-border bg-muted p-3 text-xs break-all font-mono">{activationUrl}</div>
-            <Button className="rounded-none w-full" onClick={copyActivationUrl}>
+            <Button className="w-full" onClick={copyActivationUrl}>
               {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
               {copied ? "복사됨" : "링크 복사"}
             </Button>
@@ -181,10 +188,10 @@ export default function AdminStudents() {
             </p>
           </div>
           <DialogFooter>
-            <Button variant="outline" className="rounded-none" onClick={() => setActivationResult(null)}>닫기</Button>
+            <Button variant="outline" className="" onClick={() => setActivationResult(null)}>닫기</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 }

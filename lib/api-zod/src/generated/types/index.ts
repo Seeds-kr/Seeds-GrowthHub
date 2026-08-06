@@ -49,6 +49,7 @@ export * from "./listApplicationsEvaluationCompletion";
 export * from "./listApplicationsParams";
 export * from "./listUsersParams";
 export * from "./okResponse";
+export * from "./opsRole";
 export * from "./recommendation";
 export * from "./sessionUser";
 export * from "./setFinalDecisionBody";

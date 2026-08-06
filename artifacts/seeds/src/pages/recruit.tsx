@@ -2,13 +2,14 @@ import { PublicLayout } from "@/components/layout/PublicLayout";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useSiteContent, RECRUIT_DEFAULT } from "@/lib/site-content";
+import { Reveal } from "@/lib/motion";
 
 export default function Recruit() {
   const { value: c } = useSiteContent("page.recruit", RECRUIT_DEFAULT);
   return (
     <PublicLayout>
       {/* Hero */}
-      <section className="py-24 md:py-32 flex flex-col items-center justify-center text-center px-4 bg-gradient-to-b from-muted/50 to-background">
+      <Reveal as="section" className="py-24 md:py-32 flex flex-col items-center justify-center text-center px-4 bg-gradient-to-b from-muted/50 to-background">
         <div className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-6 font-medium">
           {c.hero.eyebrow}
         </div>
@@ -19,14 +20,14 @@ export default function Recruit() {
           {c.hero.body}
         </p>
         <Link href="/apply">
-          <Button size="lg" className="text-lg px-8 h-14 rounded-none">
+          <Button size="lg" className="text-lg px-8 h-14">
             {c.hero.ctaLabel}
           </Button>
         </Link>
-      </section>
+      </Reveal>
 
       {/* What is Seeds? */}
-      <section className="py-24 px-4 border-t border-border">
+      <Reveal as="section" className="py-24 px-4 border-t border-border">
         <div className="container mx-auto max-w-4xl">
           <div className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-3 font-medium">
             {c.intro.eyebrow}
@@ -45,10 +46,10 @@ export default function Recruit() {
             ))}
           </div>
         </div>
-      </section>
+      </Reveal>
 
       {/* Who should apply? */}
-      <section className="py-24 px-4 bg-muted/30 border-t border-border">
+      <Reveal as="section" className="py-24 px-4 bg-muted/30 border-t border-border">
         <div className="container mx-auto max-w-4xl">
           <div className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-3 font-medium">
             {c.applicants.eyebrow}
@@ -65,10 +66,10 @@ export default function Recruit() {
             ))}
           </div>
         </div>
-      </section>
+      </Reveal>
 
       {/* Program flow */}
-      <section className="py-24 px-4 border-t border-border">
+      <Reveal as="section" className="py-24 px-4 border-t border-border">
         <div className="container mx-auto max-w-5xl">
           <div className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-3 font-medium">
             {c.flow.eyebrow}
@@ -84,10 +85,10 @@ export default function Recruit() {
             ))}
           </div>
         </div>
-      </section>
+      </Reveal>
 
       {/* Recruitment schedule */}
-      <section className="py-24 px-4 bg-muted/30 border-t border-border">
+      <Reveal as="section" className="py-24 px-4 bg-muted/30 border-t border-border">
         <div className="container mx-auto max-w-4xl">
           <div className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-3 font-medium">
             {c.schedule.eyebrow}
@@ -106,10 +107,10 @@ export default function Recruit() {
             ))}
           </div>
         </div>
-      </section>
+      </Reveal>
 
       {/* FAQ teaser */}
-      <section className="py-24 px-4 border-t border-border">
+      <Reveal as="section" className="py-24 px-4 border-t border-border">
         <div className="container mx-auto max-w-4xl">
           <div className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-3 font-medium">
             {c.faqTeaser.eyebrow}
@@ -124,27 +125,27 @@ export default function Recruit() {
             ))}
           </div>
           <Link href="/faq">
-            <Button variant="outline" className="rounded-none">
+            <Button variant="outline" className="">
               {c.faqTeaser.ctaLabel}
             </Button>
           </Link>
         </div>
-      </section>
+      </Reveal>
 
       {/* Apply CTA */}
-      <section className="py-24 px-4 bg-primary text-primary-foreground">
+      <Reveal as="section" className="py-24 px-4 bg-primary text-primary-foreground">
         <div className="container mx-auto max-w-3xl text-center">
           <h2 className="text-3xl md:text-4xl font-serif font-bold mb-6">{c.cta.title}</h2>
-          <p className="text-primary-foreground/80 text-lg mb-10 leading-relaxed whitespace-pre-line">
+          <p className="text-primary-foreground text-lg mb-10 leading-relaxed whitespace-pre-line">
             {c.cta.body}
           </p>
           <Link href="/apply">
-            <Button size="lg" variant="secondary" className="text-lg px-8 h-14 rounded-none">
+            <Button size="lg" variant="secondary" className="text-lg px-8 h-14">
               {c.cta.ctaLabel}
             </Button>
           </Link>
         </div>
-      </section>
+      </Reveal>
     </PublicLayout>
   );
 }

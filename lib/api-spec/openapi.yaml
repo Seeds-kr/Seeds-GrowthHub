@@ -564,6 +564,13 @@ components:
       type: string
       enum: [admin, mentor, student]
 
+    # Functional ops roles (ADR-002). Orthogonal to UserRole: UserRole says which
+    # workspace an account may enter, OpsRole says what it may do inside /admin.
+    # program_lead is a superuser.
+    OpsRole:
+      type: string
+      enum: [program_lead, ops, recruiting, finance, growth, community, system]
+
     ApplicationStatus:
       type: string
       enum:
@@ -917,7 +924,11 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/UserRole"
-      required: [id, email, name, role, roles]
+        opsRoles:
+          type: array
+          items:
+            $ref: "#/components/schemas/OpsRole"
+      required: [id, email, name, role, roles, opsRoles]
 
     User:
       type: object
@@ -931,12 +942,16 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/UserRole"
+        opsRoles:
+          type: array
+          items:
+            $ref: "#/components/schemas/OpsRole"
         isActive: { type: boolean }
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
         assignedCount: { type: integer }
         completedCount: { type: integer }
-      required: [id, name, email, role, extraRoles, isActive, createdAt, updatedAt, assignedCount, completedCount]
+      required: [id, name, email, role, extraRoles, opsRoles, isActive, createdAt, updatedAt, assignedCount, completedCount]
 
     UserList:
       type: object
@@ -960,6 +975,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/UserRole"
+        opsRoles:
+          type: array
+          items:
+            $ref: "#/components/schemas/OpsRole"
       required: [name, email, password, role]
 
     UpdateUserBody:
@@ -973,6 +992,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/UserRole"
+        opsRoles:
+          type: array
+          items:
+            $ref: "#/components/schemas/OpsRole"
 
     EvaluationAssignment:
       type: object

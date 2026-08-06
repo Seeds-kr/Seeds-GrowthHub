@@ -8,13 +8,16 @@ import {
   applicationsTable,
 } from "@workspace/db";
 import { getEffectiveRoles } from "@workspace/db";
-import { requireAdmin } from "../lib/auth";
+import { requireOpsRole } from "../lib/auth";
+
+// ADR-002: recruiting 담당 운영진 + program_lead 만 접근.
+const requireRecruiting = requireOpsRole("recruiting");
 
 const router: IRouter = Router();
 
 router.post(
   "/admin/applications/:id/assignments",
-  requireAdmin,
+  requireRecruiting,
   async (req, res) => {
     const appId = Number(req.params.id);
     if (!Number.isFinite(appId)) {
@@ -93,7 +96,7 @@ router.post(
 
 router.delete(
   "/admin/applications/:appId/assignments/:assignmentId",
-  requireAdmin,
+  requireRecruiting,
   async (req, res) => {
     const appId = Number(req.params.appId);
     const id = Number(req.params.assignmentId);

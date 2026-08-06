@@ -1,4 +1,3 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import {
@@ -17,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
+import { EmptyState } from "@/components/EmptyState";
 
 export default function AdminProjects() {
   const qc = useQueryClient();
@@ -42,17 +42,20 @@ export default function AdminProjects() {
   });
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-serif font-bold">프로젝트</h1>
         <Button onClick={() => { setForm({ cohortId: "", programId: "", title: "", description: "", status: "ideation" }); setOpen(true); }}>+ 새 프로젝트</Button>
       </div>
-      <div className="bg-card border border-border">
+      <div className="rounded-lg bg-card border border-border elev-1">
         <Table>
           <TableHeader><TableRow><TableHead>제목</TableHead><TableHead>기수</TableHead><TableHead>프로그램</TableHead><TableHead>상태</TableHead><TableHead>생성일</TableHead><TableHead></TableHead></TableRow></TableHeader>
           <TableBody>
             {isLoading ? <TableRow><TableCell colSpan={6} className="h-24 text-center"><Loader2 className="animate-spin mx-auto" /></TableCell></TableRow>
-            : data?.items.length === 0 ? <TableRow><TableCell colSpan={6} className="h-24 text-center text-muted-foreground">프로젝트가 없습니다.</TableCell></TableRow>
+            : data?.items.length === 0 ? <TableRow><TableCell colSpan={6} className="p-0">
+                <EmptyState title="프로젝트가 없습니다."
+                  hint="기수를 만들고 팀을 편성하면 여기에 나타납니다." />
+              </TableCell></TableRow>
             : data?.items.map((p) => (
               <TableRow key={p.id}>
                 <TableCell className="font-medium">{p.title}</TableCell>
@@ -109,6 +112,6 @@ export default function AdminProjects() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 }

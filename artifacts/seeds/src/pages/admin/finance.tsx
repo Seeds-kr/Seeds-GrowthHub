@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { api } from "@/lib/mvp3-api";
 import {
   type FinanceRecord,
@@ -163,7 +162,7 @@ export default function AdminFinancePage() {
   });
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-3xl font-serif font-bold flex items-center gap-2">
@@ -317,7 +316,7 @@ export default function AdminFinancePage() {
                         href={r.receiptUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-primary inline-flex items-center gap-1 text-xs hover-elevate active-elevate-2 rounded px-1"
+                        className="text-primary inline-flex items-center gap-1 rounded px-1 text-xs underline-offset-4 transition-colors hover:bg-muted hover:underline"
                         data-testid={`finance-receipt-${r.id}`}
                       >
                         보기 <ExternalLink className="w-3 h-3" />
@@ -576,6 +575,6 @@ export default function AdminFinancePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 }

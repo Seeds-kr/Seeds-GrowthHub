@@ -1,9 +1,43 @@
 # Seeds GrowthHub — Gap Register
 
 > 본 문서는 현재 Replit 구현을 GrowthHub Baseline 문서(v3 기준)와 대조하여 **유지/변경/추가/보류** 항목을 식별한 감사 문서입니다.
-> 본 단계에서는 코드 변경을 하지 않으며, 향후 작업 우선순위와 wave를 결정하기 위한 근거 자료입니다.
 >
-> Baseline: Overview v3, 문서체계/용어표준, Core v2, Ops v3, Growth v3, IA v2, ERD v3, 외부 도구 연계, 로드맵 v3.
+> **2026-08-05 갱신.** 아래 "미구현" 표기 중 상당수가 사실과 달랐습니다. 코드·DB·화면을
+> 직접 확인해 바로잡았습니다. 문서가 코드를 못 따라오면 다음 사람이 이미 있는 것을
+> 다시 만들거나, 없는 줄 알고 계획에서 빼게 됩니다.
+>
+> 확인 방법과 결과:
+>
+> | 항목 | 문서 표기 | 실제 |
+> |---|---|---|
+> | `reflections` | 미구현 | 16행 · 라우트 3파일 · 학생 화면 1 · 공개범위 4단계 동작(유저 스토리 S4 통과) |
+> | `studies` / `study_members` | 미구현 | 라우트·화면 있음(데이터만 0행) |
+> | `project_milestones` | 미구현 | CRUD 전부 있음(`admin-projects.ts` insert/update/delete) · 어드민·멘토 화면 |
+> | `project_status_checks` | 미구현 | 15행 · 멘토가 실제로 쓴다(유저 스토리 M2 통과) |
+> | `audit_logs` | P2 미구현 | 23행 · 라우트 2 · 화면 2 |
+> | `external_links` | 추가 예정 | 6행 · 라우트 2 · 화면 1 |
+>
+> 검증에 쓴 것: `docs/user-stories.md`(29개 주행), `e2e/routes.mjs`(55개 라우트 훑기).
+> Baseline 원본: [`baseline/`](baseline/)
+
+## ⚠️ 갱신 상태
+
+**이 문서의 일부는 구현에 추월당했습니다.** 아래 항목은 작성 이후 구현되었습니다.
+
+| 항목 | 문서상 | 실제 |
+|---|---|---|
+| OM1, OM2 (Meetings) | 전무 | ✅ `meetings` 스키마 + `/admin/meetings` |
+| OT1, OT2 (Ops Tasks) | 전무 | ✅ `ops_tasks` 스키마 + `/admin/tasks` |
+| OD1, OD2 (Documents) | 전무 | ✅ `documents` + `document_versions` + 템플릿 |
+| OF1 (Finance) | 전무 | ✅ `finance_records` + `/admin/finance` |
+| DA1 (Ops Dashboard) | 5영역 미구현 | ✅ `/admin/ops-dashboard` 8섹션 |
+| V1 (Visibility 정책) | 미작성 | ✅ [`visibility-policy.md`](visibility-policy.md) |
+
+**§3 Wave 계획과 §5 첫 구현 작업 제안은 폐기**되었습니다. 현행 계획은 [`design/README.md` §4](design/README.md)를 따릅니다.
+
+여전히 유효한 부분: §1.1 구현 자산, §2.1~2.3, §2.11~2.13(A·M·S·G·C 항목), §4 High-Risk Areas.
+
+세부 설계는 [`design/`](design/)에서 다룹니다 — 권한 분리(01), Mentor Workspace(02), 성장증거(03), Core 인프라(04).
 
 ---
 
@@ -17,24 +51,39 @@
 | **역할 모델** | `users.role` (admin/mentor/student) + `extra_roles[]`, `getEffectiveRoles`, `canViewMemberContacts` | Core v2와 정렬됨 (scope-based는 보류) |
 | **역할 스위처** | `/admin · /mentor · /student` 헤더 버튼, 세션 재발급 없이 라우팅 | IA v2와 정렬됨 |
 | **Evaluation Surface** | `/evaluator/*`, 미들웨어 `requireAdminOrMentor` + assignment 소유권 재확인 | IA v2 / Core v2와 정렬됨 (별도 role 아님) |
-| **Visibility 정책** | artifact 4단계 / feedback 2단계 / activity_record 3단계 (앱 레벨 강제) | ERD v3와 정렬됨, reflections는 미구현 |
+| **Visibility 정책** | artifact 4단계 / feedback 2단계 / activity_record 3단계 / reflection 4단계 (앱 레벨 강제) | ERD v3와 정렬됨 |
 | **People Profiles** | phone 게이팅, lazy-create (student만), kind=mentor 사전 생성 강제 | Core v2와 정렬됨 |
 | **MVP1/2** 지원/평가 | applications 이중 상태머신, evaluation_assignments/evaluations (3-튜플 UNIQUE), interviews, decision_logs append-only | Ops v3과 정렬됨 |
 | **MVP3** 운영 활동 | cohorts/programs/students(+멤버십), sessions/attendance, assignments/submissions, announcements | Ops v3 부분 정렬 (checklists 없음) |
-| **MVP4** 성장증거 | activity_records, projects+members, mvp4ArtifactsTable, feedback, skill_tags+tag_mappings | Growth v3 부분 정렬 (studies/reflections/milestones/status_checks 미구현) |
+| **MVP4** 성장증거 | activity_records, projects(+members·mentors·milestones·status_checks), artifacts, feedback, studies(+members), reflections, skill_tags+tag_mappings | Growth v3 정렬됨 |
 | **사이트 콘텐츠** | site_contents (key whitelist 5), 부트스트랩, 레거시 마이그레이션 | Content 영역 정렬됨 |
 | **API 계약** | OpenAPI 3.1 → orval(React Query) + Zod codegen | 아키텍처 자산으로 유지 |
 | **Object Storage** | ACL 기반 (`visibility=public` 게이팅), 아바타 AI 생성(Gemini) | Core v2 파일 저장 전략과 정렬 |
 
 ### 1.2 구조적 누락 (Baseline 대비)
 
-- **Core**: `role_assignments` (scope), `documents`/`document_versions`, `audit_logs`, `teams`(검토), `attachments`(범용), `external_links`
-- **Ops**: `meetings`, `tasks`, `event_checklists`, `finance_records`, `communication_logs`, `calendar_events`, Markdown 문서 편집기, 운영 대시보드
-- **Growth**: `studies`/`study_members`, `reflections`, `project_milestones`, `project_status_checks`, mentor↔project 명시 연결, blocker/next_focus 필드
+> 아래는 **현재 시점 기준**으로 갱신된 목록입니다. 취소선 항목은 이후 구현되었습니다.
+
+- **Core**: `role_assignments`(scope, 계속 보류), `audit_logs`, `teams`(검토), `attachments`(범용), `external_links`, 기능 역할 분리(`ops_roles`) — ~~`documents`/`document_versions`~~
+- **Ops**: `communication_logs`, `calendar_events`(범위 제외 결정) — ~~`meetings`~~, ~~`tasks`~~, ~~`finance_records`~~, ~~Markdown 문서 편집기~~, ~~운영 대시보드~~, ~~`event_checklists`~~(documents로 흡수)
+- **Growth**: `studies`/`study_members`, `reflections`, `project_milestones`, `project_status_checks`, mentor↔project 명시 연결, blocker/next_focus
 - **IA**: Admin 메뉴의 Core/Ops/Growth/Content/System 그룹화 미적용
-- **Mentor Workspace**: My Teams, Project Status, Feedback 화면 부재
+- **Mentor Workspace**: My Teams, Project Status, Feedback 화면 부재 — **담당 팀 개념 자체가 데이터에 없음**이 근본 원인
 - **Student Workspace**: My Studies, My Reflections, My Feedback 화면 부재
 - **System**: Integrations, Audit Logs, Settings 메뉴 부재
+
+### 1.3 신규 발견 — visibility enum 4종 병존
+
+Ops 객체 구현 과정에서 `admin_only | mentor_visible` 2단계가 새로 도입되어, 현재 4개 enum이 병존합니다.
+
+| 객체 | enum |
+|---|---|
+| `artifacts` | private / student_visible / cohort_visible / admin_only |
+| `activity_records` | private / student_visible / admin_only |
+| `feedback` | student_visible / admin_only |
+| `meetings` · `documents` | admin_only / **mentor_visible** |
+
+`mentor_visible`이 Ops에는 있고 Growth(`feedback`)에는 없는 비대칭 상태입니다. 해소 방침은 [`visibility-policy.md`](visibility-policy.md) §4.3 — **enum 확장이 아니라 scope 기반 접근**으로 처리합니다.
 
 ---
 
@@ -133,52 +182,27 @@
 | # | 현재 | Baseline 요구 | Gap | P | 구현 접근 | Risk | 관련 파일 |
 |---|---|---|---|---|---|---|---|
 | C1 | `role + extra_roles` 평면 | `role_assignments(user_id, role_code, scope_type, scope_id, start/end)` 검토 | 미구현 | **P3** (보류) | 운영진 세부 역할(Recruiting Lead 등)이 실제 권한 분리 요구 발생 시 도입. 그 전엔 `extra_roles`로 표현. | 높음 (auth 핵심 변경) | `lib/db/src/schema/users.ts` |
-| C2 | `decision_logs` 외 감사로그 없음 | `audit_logs` (민감정보 변경) | 미구현 | **P2** | finance/role 변경/visibility 변경 등 도입 시 한 번에 추가 | 중간 | 신규 |
+| C2 | `decision_logs` 외 감사로그 없음 | `audit_logs` (민감정보 변경) | ~~미구현~~ **완료** | ~~P2~~ | `audit_logs` 23행 · `/admin/audit-logs` 화면 있음 | 중간 | 완료 |
 
 ---
 
 ## 3. Recommended Implementation Waves
 
-순서는 **로드맵 v3의 Phase 1 (Core) → Phase 2 (Ops) → Phase 3 (Growth 보완)**을 따르되, 현재 구현이 이미 MVP1~4를 커버하므로 **누락 위주**로 재배열합니다.
-
-### Wave 0 — 정책·문서 (코드 변경 X, 1~2 sprint)
-- **V1**: Visibility 정책 표준 문서화 (`docs/visibility-policy.md`)
-- **A3**: Students 화면의 Core/Growth 위치 결정 (문서 합의)
-- IA 그룹 라벨 한국어 컨벤션 확정
-
-### Wave 1 — Admin IA 재정렬 + Ops 핵심 1차 (UI + 신규 테이블 2개)
-- **A1, A2**: Admin 사이드바 그룹화 (UI-only, 라우트 무변경)
-- **OM1, OM2**: Meetings 테이블 + `/admin/meetings`
-- **OT1, OT2**: Tasks(운영) 테이블 + `/admin/tasks` (학생 assignments와 명명 충돌 방지)
-- **DA1 부분**: 대시보드에 "지연 작업" 위젯만 추가
-
-### Wave 2 — Documents + Events 보완 + Growth 1차 보완
-- **OD1, OD2**: Documents/Templates + Markdown editor
-- **OE1, OE2**: 세션 ↔ 체크리스트(=document) + 세션 후속 액션(=tasks)
-- **G3**: project_milestones + project_status_checks
-- **M2**: project_mentors 테이블 + 멘토-팀 매핑
-
-### Wave 3 — Mentor/Student Workspace 보완
-- **M1**: Mentor 화면 4종 (My Teams, Project Status, Feedback, Needs Ops Support)
-- **S1 부분**: Student My Feedback (즉시 가능)
-
-### Wave 4 — Finance + Attachments + 대시보드 완성
-- **OF1, OF2**: finance_records + attachments
-- **DA1 완성**: 6영역 대시보드 위젯
-- **C2**: audit_logs (finance 변경 추적부터 시작)
-
-### Wave 5 — Growth 2차 + External (검토 후 진행)
-- **G1**: studies + study_members
-- **G2**: reflections (단, V1 정책 합의 후)
-- **EX1, EX2**: external_links + communication_logs
-- **S1 완성**: My Studies, My Reflections
-
-### 보류 (Wave 미배정)
-- **C1** (role_assignments): 실제 권한 분리 요구가 발생할 때까지 보류
-- **EX3** (API 연동): 링크 기반 운영이 안정화된 후 검토
-- **A4** (System 메뉴): EX/C2/Settings가 어느 정도 모일 때 추가
-
----
+> **폐기됨.** 작성 당시 미구현으로 본 Wave 1·2·4의 상당 부분이 이미 완료되었습니다(상단 갱신 상태 표 참조).
+>
+> 현행 Wave 계획은 [`design/README.md` §4](design/README.md)에 있습니다. 요약하면:
+>
+> | Wave | 범위 |
+> |---|---|
+> | W1 | 권한 분리 Phase A (`ops_roles`) |
+> | W2 | 멘토 담당 팀 (`project_mentors`) |
+> | W3 | 상태체크·마일스톤 |
+> | W4 | Mentor Workspace 화면 |
+> | W5 | 감사로그·첨부 |
+> | W6 | Growth 2차 (스터디·회고) |
+> | W7 | 외부링크·발송이력 |
+>
+> 여전히 보류 중: **C1**(role_assignments), **EX3**(API 연동), **A4**(System 메뉴).
 
 ## 4. High-Risk Areas (회귀 절대 금지)
 
@@ -197,48 +221,11 @@
 
 ## 5. 제안: 첫 구현 작업
 
-**작업명: Wave 0 — Visibility 정책 표준화 + Wave 1 시작 (Admin IA 재정렬 — UI only)**
-
-### 5.1 Acceptance Criteria
-
-#### Part A: `docs/visibility-policy.md` 작성 (코드 X)
-- [ ] 현재 모든 visibility enum 인벤토리 (artifacts 4 / feedback 2 / activity_records 3 / people_profiles is_public boolean) 표로 정리
-- [ ] 표준 후보 5단계 (`private`, `team_visible`, `cohort_visible`, `student_visible`, `admin_only`) 정의
-- [ ] 신규 객체(meetings, tasks, documents, reflections, finance_records, external_links) 각각의 권장 visibility 매트릭스
-- [ ] 비-회원/회원/멘토/학생/운영진 5축 × 객체별 접근 매트릭스
-- [ ] "객체별 enum 독립 유지, 전역 enum 통합 금지" 원칙 명시
-- [ ] 학생 측 회귀 방지 체크리스트 (기존 `replit.md` 매트릭스 그대로 인용)
-
-#### Part B: Admin Sidebar 그룹화 (UI only, 라우트 무변경)
-- [ ] `AdminLayout` 사이드바를 다음 5그룹으로 재구성:
-  - **Core**: Users, People Profiles, Cohorts, Programs, Members(=Students 위치 결정에 따라)
-  - **Ops**: Recruitment(Applications), Evaluations, Interviews, Sessions, Attendance, Assignments, Announcements
-  - **Growth**: Students(또는 Core), Projects, Activity Records, Artifacts, Feedback, Tags, Reports
-  - **Content**: Site Content
-  - **System**: (이번엔 빈 그룹 또는 미노출)
-- [ ] 그룹 헤더는 한국어 라벨 (예: "코어", "운영", "성장", "콘텐츠")
-- [ ] **모든 기존 경로는 그대로**: `/admin/applications`, `/admin/people` 등 변경 없음 — 메뉴 재배치만
-- [ ] 모바일/접힘 상태 보존
-- [ ] 활성 그룹 자동 펼침 (현재 라우트 기준)
-
-### 5.2 비목표 (이번 작업에서 하지 않음)
-- 신규 테이블/라우트 추가 (Wave 1 후반)
-- Mentor/Student 화면 변경
-- Visibility enum 코드 변경
-- Tasks/Meetings/Documents 구현
-- 라우트 경로 변경 또는 리다이렉트
-
-### 5.3 검증
-- [ ] `pnpm --filter @workspace/seeds run typecheck` 통과
-- [ ] 모든 admin 경로 수동 클릭 — 라우팅 회귀 없음
-- [ ] 학생/멘토/평가 surface 로그인 → 회귀 없음 (UI 변경 admin-only)
-- [ ] `replit.md`의 Database schema/visibility 섹션 변경 없음
-
-### 5.4 예상 소요
-- Part A: 1 sprint (문서 작업)
-- Part B: 1~2 sprint (사이드바 컴포넌트 1개 수정 + nav 데이터 구조)
-
----
+> **폐기됨.** 이 절이 제안한 Wave 0(Visibility 정책 + Admin 사이드바 그룹화) 중
+> Part A는 [`visibility-policy.md`](visibility-policy.md)로 완료되었고,
+> Part B(사이드바 그룹화)는 여전히 유효한 미착수 항목입니다(§2.1 A1·A2).
+>
+> 현행 착수 계획은 [`design/README.md` §4](design/README.md)를 따릅니다.
 
 ## 6. 부록 — 작업 시 참조 문서 매핑
 

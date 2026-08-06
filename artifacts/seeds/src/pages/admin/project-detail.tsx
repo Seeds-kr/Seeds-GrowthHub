@@ -1,5 +1,4 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
-import { useRoute } from "wouter";
+import { useRoute, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   api, PROJECT_STATUSES, PROJECT_STATUS_LABEL,
@@ -21,6 +20,50 @@ import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
+import { RemovableTag } from "@/components/RemovableTag";
+import { ResourceMissing } from "@/components/ResourceMissing";
+
+type MentorAssignment = {
+  id: number; mentorUserId: number; mentorName: string; mentorEmail: string;
+  roleLabel: string | null; status: "active" | "ended";
+  assignedAt: string; endedAt: string | null;
+};
+type Milestone = {
+  id: number; title: string; description: string | null; dueAt: string | null;
+  status: "planned" | "in_progress" | "done" | "dropped"; sortOrder: number;
+  completedAt: string | null;
+};
+type StatusCheck = {
+  id: number; checkedAt: string; teamStatus: "good" | "watch" | "risk" | "blocked";
+  blocker: string | null; nextFocus: string | null; needsOpsSupport: boolean;
+  opsSupportNote: string | null; opsResolvedAt: string | null;
+  comment: string | null; authorName: string | null;
+};
+type ProjectDetail = {
+  project: Project; members: ProjectMember[]; artifacts: Mvp4Artifact[];
+  feedback: FeedbackItem[]; tags: { id: number; name: string }[];
+  mentors: MentorAssignment[]; milestones: Milestone[]; statusChecks: StatusCheck[];
+};
+
+const MILESTONE_STATUS_LABEL: Record<Milestone["status"], string> = {
+  planned: "예정", in_progress: "진행 중", done: "완료", dropped: "계획 변경",
+};
+// `dropped` is a plan change, not a failure — keep it neutral, never destructive.
+const MILESTONE_STATUS_STYLE: Record<Milestone["status"], string> = {
+  planned: "text-muted-foreground",
+  in_progress: "border-blue-500 text-blue-700 dark:text-blue-400",
+  done: "border-emerald-500 text-emerald-700 dark:text-emerald-400",
+  dropped: "text-muted-foreground",
+};
+const TEAM_STATUS_LABEL: Record<StatusCheck["teamStatus"], string> = {
+  good: "양호", watch: "관찰 필요", risk: "위험", blocked: "막힘",
+};
+const TEAM_STATUS_STYLE: Record<StatusCheck["teamStatus"], string> = {
+  good: "border-emerald-500 text-emerald-700 dark:text-emerald-400",
+  watch: "border-amber-500 text-amber-700 dark:text-amber-400",
+  risk: "border-orange-500 text-orange-700 dark:text-orange-400",
+  blocked: "border-red-500 text-red-700 dark:text-red-400",
+};
 
 export default function AdminProjectDetail() {
   const [, params] = useRoute("/admin/projects/:id");
@@ -29,7 +72,7 @@ export default function AdminProjectDetail() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-project", id],
-    queryFn: () => api<{ project: Project; members: ProjectMember[]; artifacts: Mvp4Artifact[]; feedback: FeedbackItem[]; tags: { id: number; name: string }[] }>(`/admin/projects/${id}`),
+    queryFn: () => api<ProjectDetail>(`/admin/projects/${id}`),
     enabled: Number.isFinite(id),
   });
   const { data: students } = useQuery({ queryKey: ["admin-students"], queryFn: () => api<{ items: Student[] }>("/admin/students") });
@@ -40,6 +83,14 @@ export default function AdminProjectDetail() {
     enabled: Number.isFinite(id),
   });
 
+  // Only accounts with the mentor role can be assigned (server enforces too).
+  const { data: mentorUsers } = useQuery({
+    queryKey: ["admin-users", "mentor"],
+    queryFn: () => api<{ items: { id: number; name: string; email: string }[] }>("/admin/users?role=mentor"),
+  });
+
+  const [mentorForm, setMentorForm] = useState({ mentorUserId: "", roleLabel: "" });
+  const [msForm, setMsForm] = useState({ title: "", dueAt: "" });
   const [memberForm, setMemberForm] = useState({ studentId: "", role: "" });
   const [statusVal, setStatusVal] = useState<ProjectStatus | "">("");
   const [artForm, setArtForm] = useState({ title: "", url: "", artifactType: "link" as ArtifactType, visibility: "student_visible" as ArtifactVisibility });
@@ -59,6 +110,29 @@ export default function AdminProjectDetail() {
     mutationFn: (mid: number) => api(`/admin/projects/${id}/members/${mid}`, { method: "DELETE" }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-project", id] }),
   });
+  const addMentor = useMutation({
+    mutationFn: () => api(`/admin/projects/${id}/mentors`, { method: "POST", body: { mentorUserId: Number(mentorForm.mentorUserId), roleLabel: mentorForm.roleLabel || null } }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-project", id] }); setMentorForm({ mentorUserId: "", roleLabel: "" }); toast({ title: "멘토 배정됨" }); },
+    onError: (e: any) => toast({ title: "실패", description: e?.data?.error ?? e.message, variant: "destructive" }),
+  });
+  const endMentor = useMutation({
+    mutationFn: (aid: number) => api(`/admin/projects/${id}/mentors/${aid}`, { method: "DELETE" }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-project", id] }); toast({ title: "담당 종료됨" }); },
+  });
+  const addMilestone = useMutation({
+    mutationFn: () => api(`/admin/projects/${id}/milestones`, { method: "POST", body: { title: msForm.title, dueAt: msForm.dueAt ? new Date(msForm.dueAt).toISOString() : null } }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-project", id] }); setMsForm({ title: "", dueAt: "" }); toast({ title: "추가됨" }); },
+    onError: (e: any) => toast({ title: "실패", description: e?.data?.error ?? e.message, variant: "destructive" }),
+  });
+  const setMilestoneStatus = useMutation({
+    mutationFn: (v: { mid: number; status: Milestone["status"] }) => api(`/admin/projects/${id}/milestones/${v.mid}`, { method: "PATCH", body: { status: v.status } }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-project", id] }),
+  });
+  const resolveSupport = useMutation({
+    mutationFn: (checkId: number) => api(`/admin/status-checks/${checkId}/resolve`, { method: "POST" }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-project", id] }); toast({ title: "지원 요청 처리됨" }); },
+  });
+
   const addArt = useMutation({
     mutationFn: () => api(`/admin/artifacts`, { method: "POST", body: { ...artForm, projectId: id } }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-project", id] }); setArtForm({ title: "", url: "", artifactType: "link", visibility: "student_visible" }); toast({ title: "추가됨" }); },
@@ -83,11 +157,27 @@ export default function AdminProjectDetail() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-tag-mappings", "project", id] }),
   });
 
-  if (isLoading || !data) return <AdminLayout><Loader2 className="animate-spin mx-auto" /></AdminLayout>;
+  // 로딩과 "없음"을 갈라야 한다. 하나로 묶으면 없는 자료를 열었을 때
+
+  // 스피너가 영원히 돈다(느린 건지 없는 건지 알 수 없다).
+
+  if (isLoading) return <><Loader2 className="animate-spin mx-auto" /></>;
+
+  if (!data)
+
+    return (
+
+      <>
+
+        <ResourceMissing label="프로젝트" backHref="/admin/projects" />
+
+      </>
+
+    );
   const p = data.project;
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-6">
         <h1 className="text-3xl font-serif font-bold">{p.title}</h1>
         <div className="text-sm text-muted-foreground">{p.cohortName ?? ""} · {PROJECT_STATUS_LABEL[p.status]}</div>
@@ -129,6 +219,136 @@ export default function AdminProjectDetail() {
               <Input placeholder="역할 (선택)" value={memberForm.role} onChange={(e) => setMemberForm({ ...memberForm, role: e.target.value })} />
               <Button disabled={!memberForm.studentId || addMember.isPending} onClick={() => addMember.mutate()}>추가</Button>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle>담당 멘토</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            {data.mentors.length === 0 ? (
+              <div className="text-sm text-muted-foreground">배정된 멘토가 없습니다.</div>
+            ) : data.mentors.map((m) => (
+              <div key={m.id} className="flex items-center justify-between gap-2 border-b border-border pb-1 text-sm">
+                <span className={m.status === "ended" ? "text-muted-foreground" : ""}>
+                  <strong>{m.mentorName}</strong>
+                  {m.roleLabel ? ` · ${m.roleLabel}` : ""}
+                  {m.status === "ended" && (
+                    <Badge variant="outline" className="ml-2 text-xs text-muted-foreground">
+                      담당 종료 {m.endedAt ? format(new Date(m.endedAt), "yy.MM.dd") : ""}
+                    </Badge>
+                  )}
+                </span>
+                {m.status === "active" && (
+                  <Button variant="outline" size="sm" onClick={() => endMentor.mutate(m.id)}>담당 종료</Button>
+                )}
+              </div>
+            ))}
+            {/* 배정 후보는 people_profiles가 아니라 `role=mentor` 계정이다.
+                mentor-seed.ts가 넣는 멘토 프로필은 user_id가 비어 있어서,
+                새로 설치한 직후에는 /admin/people에 멘토가 9명 보이는데
+                이 목록은 0명인 상태가 된다. 빈 드롭다운만 두면 원인을 알 수 없어
+                멘토 축 전체(상태체크·피드백·Mentor Workspace)가 조용히 막힌다. */}
+            {mentorUsers && mentorUsers.items.length === 0 ? (
+              <div className="rounded-md border border-dashed border-border p-3 text-xs text-muted-foreground">
+                <p className="mb-1 font-medium text-foreground">
+                  배정할 수 있는 멘토 계정이 없습니다.
+                </p>
+                <p>
+                  멘토 <strong>프로필</strong>(<Link href="/admin/people" className="text-primary hover:underline">사람들 프로필</Link>)과
+                  로그인할 수 있는 <strong>계정</strong>은 별개입니다. 배정은 계정 기준이라 두 단계가 필요합니다.
+                </p>
+                <ol className="mt-1.5 list-decimal space-y-0.5 pl-4">
+                  <li>
+                    <Link href="/admin/users" className="text-primary hover:underline">사용자</Link>에서
+                    역할 <code className="font-mono">mentor</code>로 계정을 만든다
+                  </li>
+                  <li>
+                    <Link href="/admin/people" className="text-primary hover:underline">사람들 프로필</Link>에서
+                    해당 멘토 프로필에 그 계정을 연결한다
+                  </li>
+                </ol>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Select value={mentorForm.mentorUserId} onValueChange={(v) => setMentorForm({ ...mentorForm, mentorUserId: v })}>
+                  <SelectTrigger><SelectValue placeholder="멘토 선택…" /></SelectTrigger>
+                  <SelectContent>{mentorUsers?.items.map((u) => <SelectItem key={u.id} value={String(u.id)}>{u.name}</SelectItem>)}</SelectContent>
+                </Select>
+                <Input placeholder="역할 (예: 기술 멘토)" value={mentorForm.roleLabel} onChange={(e) => setMentorForm({ ...mentorForm, roleLabel: e.target.value })} />
+                <Button disabled={!mentorForm.mentorUserId || addMentor.isPending} onClick={() => addMentor.mutate()}>배정</Button>
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground">
+              담당 종료는 삭제가 아닙니다 — 기록은 남고 접근만 즉시 끊깁니다.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle>마일스톤</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            {data.milestones.length === 0 ? (
+              <div className="text-sm text-muted-foreground">마일스톤이 없습니다.</div>
+            ) : data.milestones.map((m) => (
+              <div key={m.id} className="flex items-center justify-between gap-2 border-b border-border pb-1 text-sm">
+                <span className="min-w-0">
+                  <strong className="truncate">{m.title}</strong>
+                  {m.dueAt && <span className="ml-2 text-xs text-muted-foreground">~{format(new Date(m.dueAt), "yy.MM.dd")}</span>}
+                </span>
+                <Select value={m.status} onValueChange={(v) => setMilestoneStatus.mutate({ mid: m.id, status: v as Milestone["status"] })}>
+                  <SelectTrigger className="h-7 w-28 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {(["planned", "in_progress", "done", "dropped"] as const).map((v) => (
+                      <SelectItem key={v} value={v}>{MILESTONE_STATUS_LABEL[v]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ))}
+            <div className="flex gap-2">
+              <Input placeholder="마일스톤 제목" value={msForm.title} onChange={(e) => setMsForm({ ...msForm, title: e.target.value })} />
+              <Input type="date" className="w-40" value={msForm.dueAt} onChange={(e) => setMsForm({ ...msForm, dueAt: e.target.value })} />
+              <Button disabled={!msForm.title || addMilestone.isPending} onClick={() => addMilestone.mutate()}>추가</Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-2">
+          <CardHeader><CardTitle>팀 상태체크 이력</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              담당 멘토가 작성합니다. 수정·삭제되지 않으며(append-only), <strong>학생에게 노출되지 않습니다.</strong>
+            </p>
+            {data.statusChecks.length === 0 ? (
+              <div className="text-sm text-muted-foreground">아직 상태체크가 없습니다.</div>
+            ) : data.statusChecks.map((c) => (
+              <div key={c.id} className="space-y-1 rounded border border-border p-2.5 text-sm">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="outline" className={TEAM_STATUS_STYLE[c.teamStatus]}>
+                    {TEAM_STATUS_LABEL[c.teamStatus]}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">
+                    {format(new Date(c.checkedAt), "yyyy.MM.dd")}
+                    {c.authorName ? ` · ${c.authorName}` : ""}
+                  </span>
+                  {c.needsOpsSupport && !c.opsResolvedAt && (
+                    <>
+                      <Badge className="bg-primary text-primary-foreground text-xs">운영진 지원 요청</Badge>
+                      <Button size="sm" variant="outline" className="h-6 text-xs" onClick={() => resolveSupport.mutate(c.id)}>
+                        처리 완료
+                      </Button>
+                    </>
+                  )}
+                  {c.needsOpsSupport && c.opsResolvedAt && (
+                    <Badge variant="outline" className="text-xs text-muted-foreground">지원 처리됨</Badge>
+                  )}
+                </div>
+                {c.blocker && <div><span className="text-muted-foreground">블로커: </span>{c.blocker}</div>}
+                {c.nextFocus && <div><span className="text-muted-foreground">다음 초점: </span>{c.nextFocus}</div>}
+                {c.opsSupportNote && <div><span className="text-muted-foreground">지원 요청: </span>{c.opsSupportNote}</div>}
+                {c.comment && <div className="text-muted-foreground">{c.comment}</div>}
+              </div>
+            ))}
           </CardContent>
         </Card>
 
@@ -201,7 +421,7 @@ export default function AdminProjectDetail() {
           <CardContent>
             <div className="flex flex-wrap gap-2 mb-3">
               {(tagMappings?.items ?? []).map((m) => (
-                <Badge key={m.mappingId} variant="outline" className="cursor-pointer" onClick={() => detachTag.mutate(m.mappingId)}>{m.name} ✕</Badge>
+                <RemovableTag key={m.mappingId} name={m.name} onRemove={() => detachTag.mutate(m.mappingId)} disabled={detachTag.isPending} />
               ))}
               {(tagMappings?.items ?? []).length === 0 && <span className="text-sm text-muted-foreground">태그가 없습니다.</span>}
             </div>
@@ -215,6 +435,6 @@ export default function AdminProjectDetail() {
           </CardContent>
         </Card>
       </div>
-    </AdminLayout>
+    </>
   );
 }

@@ -33,8 +33,12 @@ export type Meeting = {
   meetingType: MeetingType;
   meetingDate: string;
   participants: string[];
-  agendaMd: string;
+  /** Template-seeded free-form body (ADR-006). */
+  bodyMd: string;
+  /** Kept structured across every template so decisions stay extractable. */
   decisionsMd: string;
+  /** Legacy fixed sections, pre-ADR-006. Backfilled into bodyMd; read-only. */
+  agendaMd: string;
   notesMd: string;
   pendingMd: string;
   visibility: MeetingVisibility;

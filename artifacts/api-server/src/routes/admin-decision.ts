@@ -6,13 +6,16 @@ import {
   applicationsTable,
   decisionLogsTable,
 } from "@workspace/db";
-import { requireAdmin } from "../lib/auth";
+import { requireOpsRole } from "../lib/auth";
+
+// ADR-002: recruiting 담당 운영진 + program_lead 만 접근.
+const requireRecruiting = requireOpsRole("recruiting");
 
 const router: IRouter = Router();
 
 router.patch(
   "/admin/applications/:id/final-decision",
-  requireAdmin,
+  requireRecruiting,
   async (req, res) => {
     const appId = Number(req.params.id);
     if (!Number.isFinite(appId)) {

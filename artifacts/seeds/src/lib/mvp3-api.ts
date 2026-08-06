@@ -144,6 +144,17 @@ export type AssignmentItem = {
   dueAt: string | null;
   status: "draft" | "published" | "closed";
   createdAt: string;
+  /**
+   * 내 제출물. 서버는 이미 과제마다 붙여서 내려주는데(`/student/assignments`)
+   * 타입에 없어서 화면이 못 쓰고 있었다. 학생에게 가장 중요한 정보가
+   * "이거 냈나 안 냈나" 인데 대시보드에 그게 안 보였다.
+   */
+  mySubmission?: {
+    id: number;
+    status: string;
+    submittedAt: string | null;
+    feedback: string | null;
+  } | null;
 };
 
 export type Submission = {

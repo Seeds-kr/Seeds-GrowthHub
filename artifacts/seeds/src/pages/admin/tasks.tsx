@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { api } from "@/lib/mvp3-api";
 import {
   type OpsTask,
@@ -32,7 +31,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Plus, AlertTriangle, CheckSquare } from "lucide-react";
+import { DesktopOnly } from "@/components/DesktopOnly";
+import { Loader2, Plus, AlertTriangle, CheckSquare, GripVertical } from "lucide-react";
 
 type AdminUserListItem = {
   id: number;
@@ -76,6 +76,15 @@ export default function AdminTasksPage() {
   const [filterAssignee, setFilterAssignee] = useState<string>("");
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(blankForm());
+
+  // W11 — drag and drop state. Native HTML5 DnD rather than a library: the
+  // board is C tier (design/05 §6.2), so pointer-only dragging is the whole
+  // requirement and §7 notes touch support is explicitly not needed. Adding a
+  // DnD dependency for one desktop-only screen is not worth the weight.
+  const [draggingId, setDraggingId] = useState<number | null>(null);
+  const [dropTarget, setDropTarget] = useState<
+    (typeof OPS_TASK_STATUSES)[number] | null
+  >(null);
 
   const queryKey = useMemo(
     () => ["admin-ops-tasks", filterStatus, filterAssignee] as const,
@@ -150,6 +159,22 @@ export default function AdminTasksPage() {
       }),
   });
 
+  function endDrag() {
+    setDraggingId(null);
+    setDropTarget(null);
+  }
+
+  function handleDrop(status: (typeof OPS_TASK_STATUSES)[number]) {
+    const id = draggingId;
+    endDrag();
+    if (id === null) return;
+    // Dropping a card back into the column it came from is a no-op, not a
+    // PATCH — otherwise every stray drag writes an audit entry.
+    const current = data?.items.find((t) => t.id === id);
+    if (!current || current.status === status) return;
+    updateStatus.mutate({ id, status });
+  }
+
   const byStatus = useMemo(() => {
     const map = new Map<(typeof OPS_TASK_STATUSES)[number], OpsTask[]>();
     for (const s of OPS_TASK_STATUSES) map.set(s, []);
@@ -160,7 +185,7 @@ export default function AdminTasksPage() {
   }, [data]);
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-3xl font-serif font-bold flex items-center gap-2">
@@ -220,20 +245,47 @@ export default function AdminTasksPage() {
         </div>
       </div>
 
+      {/* W11 (design/05 §6.2) — C tier: six columns of cards do not fit a phone,
+          and §7 chose drag and drop over the status dropdown alone, which is a
+          pointer interaction. Below `lg` the board is replaced by a notice. */}
+      <DesktopOnly feature="작업 보드">
       {isLoading ? (
         <Loader2 className="w-6 h-6 animate-spin" />
       ) : !data || data.items.length === 0 ? (
-        <div className="border border-dashed border-border rounded p-12 text-center text-muted-foreground">
+        <div className="border border-dashed border-border rounded-lg p-12 text-center text-muted-foreground">
           작업이 없습니다. 회의록에서 액션 아이템을 만들거나 직접 추가해 보세요.
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        // Six fixed columns: the guard above already narrows this to >=1024px,
+        // so the old grid-cols-2 / md:grid-cols-3 steps were unreachable.
+        <div className="grid grid-cols-6 gap-3">
           {OPS_TASK_STATUSES.map((status) => {
             const items = byStatus.get(status) ?? [];
             return (
               <div
                 key={status}
-                className={`rounded border border-border p-2 ${STATUS_COLUMN_BG[status]} min-h-40`}
+                onDragOver={(e) => {
+                  // Without preventDefault the browser refuses the drop.
+                  e.preventDefault();
+                  if (dropTarget !== status) setDropTarget(status);
+                }}
+                onDragLeave={(e) => {
+                  // Fires when crossing onto a child too; only clear when the
+                  // pointer actually left the column.
+                  if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+                    setDropTarget((prev) => (prev === status ? null : prev));
+                  }
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  handleDrop(status);
+                }}
+                className={`rounded-lg border p-2 ${STATUS_COLUMN_BG[status]} min-h-40 transition-colors ${
+                  dropTarget === status
+                    ? "border-primary ring-2 ring-primary/40"
+                    : "border-border"
+                }`}
+                data-testid={`task-column-${status}`}
               >
                 <div className="text-xs font-semibold uppercase tracking-wider mb-2 flex items-center justify-between">
                   <span>{OPS_TASK_STATUS_LABEL[status]}</span>
@@ -243,10 +295,30 @@ export default function AdminTasksPage() {
                   {items.map((t) => (
                     <li
                       key={t.id}
-                      className="bg-card border border-border rounded p-2 text-xs space-y-1"
+                      draggable
+                      onDragStart={(e) => {
+                        // A drag begun on the status Select would otherwise
+                        // swallow the click that opens it.
+                        if ((e.target as HTMLElement).closest("[data-no-drag]")) {
+                          e.preventDefault();
+                          return;
+                        }
+                        setDraggingId(t.id);
+                        e.dataTransfer.effectAllowed = "move";
+                        // Firefox ignores drags that carry no payload.
+                        e.dataTransfer.setData("text/plain", String(t.id));
+                      }}
+                      onDragEnd={endDrag}
+                      className={`bg-card border border-border rounded-md p-2 text-xs space-y-1 cursor-grab active:cursor-grabbing ${
+                        draggingId === t.id ? "opacity-40" : ""
+                      }`}
                       data-testid={`task-card-${t.id}`}
                     >
                       <div className="font-medium text-sm leading-tight flex items-start gap-1">
+                        <GripVertical
+                          className="w-3 h-3 text-muted-foreground shrink-0 mt-1"
+                          aria-hidden="true"
+                        />
                         <span className="flex-1">{t.title}</span>
                         {isOverdue(t) ? (
                           <AlertTriangle
@@ -301,30 +373,39 @@ export default function AdminTasksPage() {
                         <Link
                           href={`/admin/meetings/${t.sourceMeetingId}`}
                           className="block text-[10px] text-primary hover:underline truncate"
+                          // Anchors are draggable by default, so a drag begun
+                          // here would carry the URL instead of the card. Off,
+                          // which lets the drag fall through to the <li>.
+                          draggable={false}
                         >
                           ← {t.sourceMeetingTitle}
                         </Link>
                       ) : null}
-                      <Select
-                        value={t.status}
-                        onValueChange={(v) =>
-                          updateStatus.mutate({
-                            id: t.id,
-                            status: v as (typeof OPS_TASK_STATUSES)[number],
-                          })
-                        }
-                      >
-                        <SelectTrigger className="h-7 text-[10px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {OPS_TASK_STATUSES.map((s) => (
-                            <SelectItem key={s} value={s} className="text-xs">
-                              {OPS_TASK_STATUS_LABEL[s]}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      {/* Kept alongside drag and drop, not replaced by it:
+                          native HTML5 dragging is pointer-only, so this stays
+                          the keyboard-reachable way to move a task. */}
+                      <div data-no-drag>
+                        <Select
+                          value={t.status}
+                          onValueChange={(v) =>
+                            updateStatus.mutate({
+                              id: t.id,
+                              status: v as (typeof OPS_TASK_STATUSES)[number],
+                            })
+                          }
+                        >
+                          <SelectTrigger className="h-7 text-[10px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {OPS_TASK_STATUSES.map((s) => (
+                              <SelectItem key={s} value={s} className="text-xs">
+                                {OPS_TASK_STATUS_LABEL[s]}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </li>
                   ))}
                   {items.length === 0 ? (
@@ -338,6 +419,7 @@ export default function AdminTasksPage() {
           })}
         </div>
       )}
+      </DesktopOnly>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
@@ -478,6 +560,6 @@ export default function AdminTasksPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 }

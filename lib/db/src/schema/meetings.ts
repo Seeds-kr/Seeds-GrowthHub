@@ -43,8 +43,24 @@ export const meetingsTable = pgTable(
     meetingDate: timestamp("meeting_date", { withTimezone: true }).notNull(),
     /** Free-form participant labels (names or emails). */
     participants: text("participants").array().notNull().default([]),
-    agendaMd: text("agenda_md").notNull().default(""),
+    /**
+     * Main body, seeded from the template chosen for `meetingType` (ADR-006).
+     * Sections vary by meeting type, so they live in one markdown field rather
+     * than fixed columns.
+     */
+    bodyMd: text("body_md").notNull().default(""),
+    /**
+     * Decisions stay a SEPARATE column even though the body is free-form:
+     * dashboards, handover and audit all need to pull decisions alone. This is
+     * the one structure ADR-006 enforces across every template.
+     */
     decisionsMd: text("decisions_md").notNull().default(""),
+    /**
+     * Legacy fixed sections, pre-ADR-006. Retained (not dropped) for one cohort
+     * so the migration is reversible; content was backfilled into `bodyMd`.
+     * The UI no longer reads or writes these.
+     */
+    agendaMd: text("agenda_md").notNull().default(""),
     notesMd: text("notes_md").notNull().default(""),
     pendingMd: text("pending_md").notNull().default(""),
     visibility: text("visibility")

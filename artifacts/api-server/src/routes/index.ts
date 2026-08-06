@@ -32,6 +32,14 @@ import adminOpsTasksRouter from "./admin-ops-tasks";
 import adminDocumentsRouter from "./admin-documents";
 import adminFinanceRouter from "./admin-finance";
 import adminOpsDashboardRouter from "./admin-ops-dashboard";
+import mentorTeamsRouter from "./mentor-teams";
+import internalCronRouter from "./internal-cron";
+import adminAuditLogsRouter from "./admin-audit-logs";
+import attachmentsRouter from "./attachments";
+import externalLinksRouter from "./external-links";
+import adminAttendanceRouter from "./admin-attendance";
+import adminStudiesRouter from "./admin-studies";
+import studentGrowthRouter from "./student-growth";
 
 const router: IRouter = Router();
 
@@ -68,5 +76,13 @@ router.use(adminOpsTasksRouter);
 router.use(adminDocumentsRouter);
 router.use(adminFinanceRouter);
 router.use(adminOpsDashboardRouter);
+router.use(mentorTeamsRouter);
+router.use(internalCronRouter);
+router.use(adminAuditLogsRouter);
+router.use(attachmentsRouter);
+router.use(externalLinksRouter);
+router.use(adminAttendanceRouter);
+router.use(adminStudiesRouter);
+router.use(studentGrowthRouter);
 
 export default router;

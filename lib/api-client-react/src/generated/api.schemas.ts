@@ -25,6 +25,18 @@ export const UserRole = {
   student: "student",
 } as const;
 
+export type OpsRole = (typeof OpsRole)[keyof typeof OpsRole];
+
+export const OpsRole = {
+  program_lead: "program_lead",
+  ops: "ops",
+  recruiting: "recruiting",
+  finance: "finance",
+  growth: "growth",
+  community: "community",
+  system: "system",
+} as const;
+
 export type ApplicationStatus =
   (typeof ApplicationStatus)[keyof typeof ApplicationStatus];
 
@@ -326,6 +338,7 @@ export interface SessionUser {
   name: string;
   role: UserRole;
   roles: UserRole[];
+  opsRoles: OpsRole[];
 }
 
 export interface User {
@@ -334,6 +347,7 @@ export interface User {
   email: string;
   role: UserRole;
   extraRoles: UserRole[];
+  opsRoles: OpsRole[];
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -361,6 +375,7 @@ export interface CreateUserBody {
   password: string;
   role: UserRole;
   extraRoles?: UserRole[];
+  opsRoles?: OpsRole[];
 }
 
 export interface UpdateUserBody {
@@ -378,6 +393,7 @@ export interface UpdateUserBody {
   password?: string;
   isActive?: boolean;
   extraRoles?: UserRole[];
+  opsRoles?: OpsRole[];
 }
 
 export interface EvaluationAssignment {

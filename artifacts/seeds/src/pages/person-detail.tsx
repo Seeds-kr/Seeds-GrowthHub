@@ -70,7 +70,7 @@ export default function PersonDetailPage() {
               </div>
             </div>
           ) : (
-            <article className="bg-card border border-border p-8 md:p-12">
+            <article className="rounded-lg bg-card border border-border p-8 md:p-12">
               <div className="flex flex-col md:flex-row gap-8 md:gap-12">
                 <div className="md:w-56 shrink-0">
                   <div className="aspect-square w-full bg-muted overflow-hidden">

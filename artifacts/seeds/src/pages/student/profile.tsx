@@ -1,4 +1,3 @@
-import { StudentLayout } from "@/components/layout/StudentLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, type PeopleProfile } from "@/lib/mvp3-api";
 import { useEffect, useState } from "react";
@@ -71,7 +70,7 @@ export default function StudentProfilePage() {
   });
 
   return (
-    <StudentLayout>
+    <>
       <div className="max-w-2xl mx-auto">
         <h1 className="text-3xl font-serif font-bold mb-2">내 공개 프로필</h1>
         <p className="text-sm text-muted-foreground mb-6">
@@ -84,7 +83,7 @@ export default function StudentProfilePage() {
             <Loader2 className="w-6 h-6 animate-spin text-primary" />
           </div>
         ) : (
-          <div className="bg-card border border-border p-6 space-y-4">
+          <div className="rounded-lg bg-card border border-border p-6 space-y-4">
             <div className="flex items-center justify-between p-3 bg-muted/30 border border-border">
               <div>
                 <div className="font-medium">공개 여부</div>
@@ -103,7 +102,7 @@ export default function StudentProfilePage() {
             <div>
               <Label className="text-xs">표시 이름</Label>
               <Input
-                className="rounded-none"
+                className=""
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
               />
@@ -112,7 +111,7 @@ export default function StudentProfilePage() {
               <div>
                 <Label className="text-xs">직함 / 기수</Label>
                 <Input
-                  className="rounded-none"
+                  className=""
                   placeholder="예: 3기 학생"
                   value={form.roleTitle}
                   onChange={(e) =>
@@ -123,7 +122,7 @@ export default function StudentProfilePage() {
               <div>
                 <Label className="text-xs">소속 (학교 등)</Label>
                 <Input
-                  className="rounded-none"
+                  className=""
                   value={form.affiliation}
                   onChange={(e) =>
                     setForm({ ...form, affiliation: e.target.value })
@@ -134,7 +133,7 @@ export default function StudentProfilePage() {
             <div>
               <Label className="text-xs">사진 URL</Label>
               <Input
-                className="rounded-none"
+                className=""
                 placeholder="https://..."
                 value={form.photoUrl}
                 onChange={(e) =>
@@ -145,7 +144,7 @@ export default function StudentProfilePage() {
             <div>
               <Label className="text-xs">한 줄 소개 / 자기소개</Label>
               <Textarea
-                className="rounded-none min-h-[140px]"
+                className="min-h-[140px]"
                 maxLength={5000}
                 value={form.bio}
                 onChange={(e) => setForm({ ...form, bio: e.target.value })}
@@ -157,7 +156,7 @@ export default function StudentProfilePage() {
             <div>
               <Label className="text-xs">태그 (쉼표로 구분)</Label>
               <Input
-                className="rounded-none"
+                className=""
                 placeholder="예: 프론트엔드, UX, 창업"
                 value={form.tagsCsv}
                 onChange={(e) =>
@@ -168,7 +167,7 @@ export default function StudentProfilePage() {
 
             <div className="pt-2 flex justify-end">
               <Button
-                className="rounded-none"
+                className=""
                 disabled={!form.name || save.isPending}
                 onClick={() => save.mutate()}
               >
@@ -181,6 +180,6 @@ export default function StudentProfilePage() {
           </div>
         )}
       </div>
-    </StudentLayout>
+    </>
   );
 }

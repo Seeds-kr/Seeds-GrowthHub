@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Link, useParams } from "wouter";
 import ReactMarkdown from "react-markdown";
+import { MarkdownEditor } from "@/components/markdown/MarkdownEditor";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AdminLayout } from "@/components/layout/AdminLayout";
+import { DesktopOnly } from "@/components/DesktopOnly";
+import { useIsDesktop } from "@/hooks/use-desktop";
 import { api, ApiError } from "@/lib/mvp3-api";
 import {
   type MeetingDetail,
@@ -45,15 +47,80 @@ type AdminUserListItem = {
   isActive: boolean;
 };
 
-function MarkdownBlock({ title, source }: { title: string; source: string }) {
+/**
+ * Editable markdown section. Meeting notes previously had no edit path at all —
+ * you could only create. Inline per-section editing (design/05 §3.4) rather
+ * than a split view, because a single section is too narrow to split.
+ */
+function MarkdownSection({
+  title,
+  source,
+  hint,
+  onSave,
+  saving,
+  meetingId,
+}: {
+  title: string;
+  source: string;
+  hint?: string;
+  onSave: (next: string) => void;
+  saving: boolean;
+  meetingId: number;
+}) {
+  const isDesktop = useIsDesktop();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(source);
   const hasContent = source.trim().length > 0;
+
+  const start = () => {
+    setDraft(source);
+    setEditing(true);
+  };
+
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-base">{title}</CardTitle>
+      <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0">
+        <div>
+          <CardTitle className="text-base">{title}</CardTitle>
+          {hint && <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>}
+        </div>
+        {editing ? (
+          <div className="flex shrink-0 gap-1">
+            <Button size="sm" variant="ghost" onClick={() => setEditing(false)} disabled={saving}>
+              취소
+            </Button>
+            <Button
+              size="sm"
+              disabled={saving}
+              onClick={() => {
+                onSave(draft);
+                setEditing(false);
+              }}
+            >
+              저장
+            </Button>
+          </div>
+        ) : isDesktop ? (
+          /* W11 (design/05 §6.2) — 편집 모드 is C tier. Reading the note stays
+             A/B, so only the entry point disappears below `lg`. */
+          <Button size="sm" variant="outline" className="shrink-0" onClick={start}>
+            편집
+          </Button>
+        ) : null}
       </CardHeader>
       <CardContent>
-        {hasContent ? (
+        {editing ? (
+          /* Still guarded even though the button is hidden below `lg`: the
+             window can be narrowed while a section is already open. */
+          <DesktopOnly feature="회의록 편집">
+            <MarkdownEditor
+              rows={14}
+              value={draft}
+              onChange={setDraft}
+              uploadTarget={{ linkedObjectType: "meeting", linkedObjectId: meetingId }}
+            />
+          </DesktopOnly>
+        ) : hasContent ? (
           <div className="prose prose-sm max-w-none dark:prose-invert">
             <ReactMarkdown>{source}</ReactMarkdown>
           </div>
@@ -123,6 +190,17 @@ export default function AdminMeetingDetailPage() {
       }),
   });
 
+  const updateMeeting = useMutation({
+    mutationFn: (body: Record<string, string>) =>
+      api(`/admin/meetings/${id}`, { method: "PATCH", body }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-meeting", id] });
+      toast({ title: "저장되었습니다." });
+    },
+    onError: (e: any) =>
+      toast({ title: "실패", description: e?.data?.error ?? e.message, variant: "destructive" }),
+  });
+
   const removeMeeting = useMutation({
     mutationFn: () =>
       api(`/admin/meetings/${id}`, { method: "DELETE" }),
@@ -140,24 +218,24 @@ export default function AdminMeetingDetailPage() {
 
   if (isLoading) {
     return (
-      <AdminLayout>
+      <>
         <Loader2 className="w-6 h-6 animate-spin" />
-      </AdminLayout>
+      </>
     );
   }
   if (error || !data) {
     return (
-      <AdminLayout>
+      <>
         <div className="text-muted-foreground">회의록을 찾을 수 없습니다.</div>
         <Link href="/admin/meetings" className="text-primary text-sm mt-4 inline-block">
           ← 목록으로
         </Link>
-      </AdminLayout>
+      </>
     );
   }
 
   return (
-    <AdminLayout>
+    <>
       <Link
         href="/admin/meetings"
         className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1 mb-4"
@@ -203,10 +281,39 @@ export default function AdminMeetingDetailPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <MarkdownBlock title="안건" source={data.agendaMd} />
-        <MarkdownBlock title="결정사항" source={data.decisionsMd} />
-        <MarkdownBlock title="보류 / 후속 논의" source={data.pendingMd} />
-        <MarkdownBlock title="메모" source={data.notesMd} />
+        <MarkdownSection
+          title="회의 내용"
+          source={data.bodyMd}
+          onSave={(bodyMd) => updateMeeting.mutate({ bodyMd })}
+          saving={updateMeeting.isPending}
+          meetingId={id}
+        />
+        <MarkdownSection
+          title="결정사항"
+          source={data.decisionsMd}
+          hint="모든 회의 유형에서 별도로 관리됩니다 — 인수인계와 감사의 기준입니다."
+          onSave={(decisionsMd) => updateMeeting.mutate({ decisionsMd })}
+          saving={updateMeeting.isPending}
+          meetingId={id}
+        />
+
+        {(data.agendaMd.trim() || data.pendingMd.trim() || data.notesMd.trim()) && (
+          <Card className="border-dashed">
+            <CardHeader>
+              <CardTitle className="text-base text-muted-foreground">
+                이전 형식 기록
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                구 고정 섹션입니다. 내용은 위 &ldquo;회의 내용&rdquo;으로 옮겨졌으며 여기서는 읽기 전용입니다.
+              </p>
+            </CardHeader>
+            <CardContent className="prose prose-sm max-w-none dark:prose-invert opacity-70">
+              {data.agendaMd.trim() && <><h3>안건</h3><ReactMarkdown>{data.agendaMd}</ReactMarkdown></>}
+              {data.pendingMd.trim() && <><h3>보류</h3><ReactMarkdown>{data.pendingMd}</ReactMarkdown></>}
+              {data.notesMd.trim() && <><h3>메모</h3><ReactMarkdown>{data.notesMd}</ReactMarkdown></>}
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <Card className="mt-6">
@@ -288,7 +395,8 @@ export default function AdminMeetingDetailPage() {
                 }
               />
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            {/* W11 — B tier, same reasoning as the meeting create dialog. */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div>
                 <Label>담당자</Label>
                 <Select
@@ -359,6 +467,6 @@ export default function AdminMeetingDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 }

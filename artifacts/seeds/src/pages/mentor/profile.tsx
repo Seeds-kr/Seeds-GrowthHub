@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { MentorLayout } from "@/components/layout/MentorLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -80,19 +79,19 @@ export default function MentorProfile() {
 
   if (isLoading) {
     return (
-      <MentorLayout>
+      <>
         <div className="py-24 flex justify-center">
           <Loader2 className="w-6 h-6 animate-spin text-primary" />
         </div>
-      </MentorLayout>
+      </>
     );
   }
 
   if (isError) {
     const msg = (error as any)?.data?.error ?? "프로필을 불러올 수 없습니다.";
     return (
-      <MentorLayout>
-        <Card className="rounded-none max-w-2xl mx-auto">
+      <>
+        <Card className="max-w-2xl mx-auto">
           <CardHeader>
             <CardTitle>프로필 없음</CardTitle>
           </CardHeader>
@@ -100,17 +99,17 @@ export default function MentorProfile() {
             {msg}
           </CardContent>
         </Card>
-      </MentorLayout>
+      </>
     );
   }
 
   if (!form) return null;
 
   return (
-    <MentorLayout>
+    <>
       <div className="max-w-2xl mx-auto">
         <h1 className="text-3xl font-bold tracking-[-0.02em] mb-6">내 프로필</h1>
-        <Card className="rounded-none">
+        <Card className="">
           <CardHeader>
             <CardTitle>공개 정보</CardTitle>
           </CardHeader>
@@ -118,7 +117,7 @@ export default function MentorProfile() {
             <div>
               <Label className="text-xs">이름</Label>
               <Input
-                className="rounded-none"
+                className=""
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
               />
@@ -127,7 +126,7 @@ export default function MentorProfile() {
               <div>
                 <Label className="text-xs">직함</Label>
                 <Input
-                  className="rounded-none"
+                  className=""
                   placeholder="예: 시니어 엔지니어"
                   value={form.roleTitle}
                   onChange={(e) => setForm({ ...form, roleTitle: e.target.value })}
@@ -136,7 +135,7 @@ export default function MentorProfile() {
               <div>
                 <Label className="text-xs">소속</Label>
                 <Input
-                  className="rounded-none"
+                  className=""
                   placeholder="예: ABC회사"
                   value={form.affiliation}
                   onChange={(e) =>
@@ -148,7 +147,7 @@ export default function MentorProfile() {
             <div>
               <Label className="text-xs">전화번호 (로그인 회원에게만 표시)</Label>
               <Input
-                className="rounded-none"
+                className=""
                 placeholder="010-0000-0000"
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
@@ -157,7 +156,7 @@ export default function MentorProfile() {
             <div>
               <Label className="text-xs">사진 URL</Label>
               <Input
-                className="rounded-none"
+                className=""
                 placeholder="https://..."
                 value={form.photoUrl}
                 onChange={(e) => setForm({ ...form, photoUrl: e.target.value })}
@@ -166,7 +165,7 @@ export default function MentorProfile() {
             <div>
               <Label className="text-xs">소개</Label>
               <Textarea
-                className="rounded-none min-h-[120px]"
+                className="min-h-[120px]"
                 value={form.bio}
                 onChange={(e) => setForm({ ...form, bio: e.target.value })}
               />
@@ -174,7 +173,7 @@ export default function MentorProfile() {
             <div>
               <Label className="text-xs">태그 (쉼표로 구분)</Label>
               <Input
-                className="rounded-none"
+                className=""
                 placeholder="예: 백엔드, 창업"
                 value={form.tagsCsv}
                 onChange={(e) => setForm({ ...form, tagsCsv: e.target.value })}
@@ -189,7 +188,7 @@ export default function MentorProfile() {
             </div>
             <div className="pt-2">
               <Button
-                className="rounded-none"
+                className=""
                 disabled={save.isPending || !form.name.trim()}
                 onClick={() => save.mutate()}
               >
@@ -200,6 +199,6 @@ export default function MentorProfile() {
           </CardContent>
         </Card>
       </div>
-    </MentorLayout>
+    </>
   );
 }

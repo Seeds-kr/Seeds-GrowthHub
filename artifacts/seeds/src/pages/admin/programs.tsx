@@ -1,4 +1,3 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, type Cohort, type Program } from "@/lib/mvp3-api";
 import { PROGRAM_STATUSES, PROGRAM_STATUS_LABEL, PROGRAM_STATUS_TONE, type ProgramStatus } from "@/lib/admin-labels";
@@ -13,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
+import { EmptyState } from "@/components/EmptyState";
 
 export default function AdminPrograms() {
   const qc = useQueryClient();
@@ -46,17 +46,19 @@ export default function AdminPrograms() {
   const openEdit = (p: Program) => { setEditing(p); setForm({ cohortId: String(p.cohortId), name: p.name, description: p.description ?? "", status: p.status as ProgramStatus }); setOpen(true); };
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-8 flex items-center justify-between">
         <h1 className="text-3xl font-serif font-bold">프로그램 / 트랙</h1>
         <Button onClick={openNew}>+ 새 프로그램</Button>
       </div>
-      <div className="bg-card border border-border">
+      <div className="rounded-lg bg-card border border-border elev-1">
         <Table>
           <TableHeader><TableRow><TableHead>이름</TableHead><TableHead>기수</TableHead><TableHead>상태</TableHead><TableHead></TableHead></TableRow></TableHeader>
           <TableBody>
             {isLoading ? <TableRow><TableCell colSpan={4} className="h-24 text-center"><Loader2 className="animate-spin mx-auto" /></TableCell></TableRow>
-            : data?.items.length === 0 ? <TableRow><TableCell colSpan={4} className="h-24 text-center text-muted-foreground">프로그램이 없습니다.</TableCell></TableRow>
+            : data?.items.length === 0 ? <TableRow><TableCell colSpan={4} className="p-0">
+                <EmptyState title="프로그램이 없습니다." />
+              </TableCell></TableRow>
             : data?.items.map((p) => (
               <TableRow key={p.id}>
                 <TableCell className="font-medium">{p.name}</TableCell>
@@ -106,6 +108,6 @@ export default function AdminPrograms() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 }

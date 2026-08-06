@@ -4,6 +4,7 @@ import { z } from "zod";
 import {
   db,
   peopleProfilesTable,
+  usersTable,
   PEOPLE_KINDS,
   studentsTable,
   canViewMemberContacts,
@@ -13,8 +14,12 @@ import {
   requireAdmin,
   requireStudent,
   requireMentor,
+  requireOpsRole,
   optionalAuth,
+  hashPassword,
 } from "../lib/auth";
+import { issueActivationToken } from "../lib/activation";
+import { audit } from "../lib/audit";
 
 const router: IRouter = Router();
 
@@ -381,5 +386,124 @@ router.patch("/mentor/profile", requireMentor, async (req, res) => {
     .returning();
   res.json(toIso(row));
 });
+
+/**
+ * Create a login account for a profile and link the two, in one step.
+ *
+ * A profile and an account are separate things: `mentor-seed.ts` inserts the
+ * mentor roster with `user_id` empty, so a fresh install shows nine mentors
+ * while `/admin/users?role=mentor` returns zero — and mentor assignment,
+ * status checks and ADR-004 feedback are all keyed on the ACCOUNT. The whole
+ * mentor axis sat blocked behind two manual steps on two different screens.
+ *
+ * The account is created **inactive with an unguessable random hash** and an
+ * activation link, exactly like `convert-to-student`. An admin must never pick
+ * a password on behalf of a real person; the mentor sets their own on first
+ * use. `system` ops role required — this is account creation, same gate as
+ * `POST /admin/users`.
+ */
+const CreateAccountBody = z.object({
+  email: z.string().email().max(320),
+  role: z.enum(["mentor", "admin", "student"]).optional(),
+});
+
+router.post(
+  "/admin/people/:id/create-account",
+  requireOpsRole("system"),
+  async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+    const parsed = CreateAccountBody.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: "이메일 형식이 올바르지 않습니다." });
+      return;
+    }
+    const email = parsed.data.email.trim().toLowerCase();
+
+    const [profile] = await db
+      .select()
+      .from(peopleProfilesTable)
+      .where(eq(peopleProfilesTable.id, id))
+      .limit(1);
+    if (!profile) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+    if (profile.userId) {
+      res.status(409).json({ error: "이미 계정이 연결된 프로필입니다." });
+      return;
+    }
+
+    const [taken] = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(eq(usersTable.email, email))
+      .limit(1);
+    if (taken) {
+      // Linking an existing account instead is a different, deliberate action —
+      // do it from the profile edit form rather than silently adopting it here.
+      res.status(409).json({
+        error:
+          "이 이메일을 쓰는 계정이 이미 있습니다. 프로필 편집에서 그 계정을 연결하세요.",
+      });
+      return;
+    }
+
+    // `member` profiles belong to students, who get accounts through the
+    // application → convert-to-student path instead.
+    const role =
+      parsed.data.role ?? (profile.kind === "member" ? "student" : "mentor");
+
+    const placeholder = (await import("node:crypto"))
+      .randomBytes(48)
+      .toString("base64url");
+
+    const result = await db.transaction(async (tx) => {
+      const [user] = await tx
+        .insert(usersTable)
+        .values({
+          name: profile.name,
+          email,
+          passwordHash: await hashPassword(placeholder),
+          role,
+          isActive: false,
+        })
+        .returning();
+      const [linked] = await tx
+        .update(peopleProfilesTable)
+        .set({ userId: user.id, updatedAt: new Date() })
+        .where(eq(peopleProfilesTable.id, profile.id))
+        .returning();
+      return { user, linked };
+    });
+
+    const { token, expiresAt } = await issueActivationToken({
+      userId: result.user.id,
+      createdBy: req.sessionUser!.id,
+    });
+
+    audit({
+      action: "role_change",
+      req,
+      targetType: "user",
+      targetId: result.user.id,
+      after: { role, linkedProfileId: profile.id },
+      note: `people_profile ${profile.id} 에 계정 생성·연결`,
+    });
+
+    res.status(201).json({
+      userId: result.user.id,
+      email,
+      role,
+      profile: toIso(result.linked),
+      activationToken: token,
+      activationPath: `/activate/${token}`,
+      expiresAt: expiresAt.toISOString(),
+    });
+  },
+);
 
 export default router;

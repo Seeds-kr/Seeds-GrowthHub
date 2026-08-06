@@ -1,4 +1,3 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, type Cohort, type Program, type SessionItem } from "@/lib/mvp3-api";
 import { Loader2 } from "lucide-react";
@@ -14,6 +13,7 @@ import { Link } from "wouter";
 import { useState } from "react";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
+import { EmptyState } from "@/components/EmptyState";
 
 const TYPES = ["orientation", "workshop", "mentoring", "project_work", "presentation", "review", "other"] as const;
 const STATUSES = ["scheduled", "completed", "cancelled"] as const;
@@ -143,12 +143,12 @@ export default function AdminSessions() {
   };
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-8 flex items-center justify-between">
         <h1 className="text-3xl font-serif font-bold">모임 관리</h1>
         <Button onClick={openNew}>+ 새 모임</Button>
       </div>
-      <div className="bg-card border border-border p-4 mb-6 flex gap-4">
+      <div className="rounded-lg bg-card border border-border p-4 mb-6 flex gap-4">
         <Select value={filterCohort} onValueChange={setFilterCohort}>
           <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -164,12 +164,15 @@ export default function AdminSessions() {
           </SelectContent>
         </Select>
       </div>
-      <div className="bg-card border border-border">
+      <div className="rounded-lg bg-card border border-border elev-1">
         <Table>
           <TableHeader><TableRow><TableHead>제목</TableHead><TableHead>기수/프로그램</TableHead><TableHead>일시</TableHead><TableHead>담당자</TableHead><TableHead>준비</TableHead><TableHead>상태</TableHead><TableHead></TableHead></TableRow></TableHeader>
           <TableBody>
             {isLoading ? <TableRow><TableCell colSpan={7} className="h-24 text-center"><Loader2 className="animate-spin mx-auto" /></TableCell></TableRow>
-            : data?.items.length === 0 ? <TableRow><TableCell colSpan={7} className="h-24 text-center text-muted-foreground">모임이 없습니다.</TableCell></TableRow>
+            : data?.items.length === 0 ? <TableRow><TableCell colSpan={7} className="p-0">
+                <EmptyState title="모임이 없습니다."
+                  hint="모임을 만들면 출석 체크를 할 수 있습니다." />
+              </TableCell></TableRow>
             : data?.items.map((s) => (
               <TableRow key={s.id}>
                 <TableCell className="font-medium">
@@ -303,6 +306,6 @@ export default function AdminSessions() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 }

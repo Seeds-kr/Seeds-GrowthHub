@@ -7,6 +7,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { studentsTable } from "./students";
 import { projectsTable } from "./projects";
+import { studiesTable } from "./studies";
 import { assignmentSubmissionsTable } from "./assignments";
 import { usersTable } from "./users";
 
@@ -38,6 +39,10 @@ export const mvp4ArtifactsTable = pgTable("artifacts", {
     onDelete: "set null",
   }),
   projectId: integer("project_id").references(() => projectsTable.id, {
+    onDelete: "set null",
+  }),
+  /** Study outputs reuse this table and its 4-level visibility (design/03 §4.1). */
+  studyId: integer("study_id").references(() => studiesTable.id, {
     onDelete: "set null",
   }),
   assignmentSubmissionId: integer("assignment_submission_id").references(

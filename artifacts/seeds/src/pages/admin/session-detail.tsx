@@ -1,4 +1,3 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, type SessionDetail, type SessionMaterial, type SessionActionItem } from "@/lib/mvp3-api";
 import { Loader2, ArrowLeft, ExternalLink, Trash2, Plus } from "lucide-react";
@@ -100,11 +99,11 @@ export default function AdminSessionDetail() {
     onError: (e: any) => toast({ title: "생성 실패", description: e?.data?.error ?? e.message, variant: "destructive" }),
   });
 
-  if (isLoading) return <AdminLayout><div className="flex justify-center py-20"><Loader2 className="animate-spin" /></div></AdminLayout>;
-  if (!data) return <AdminLayout><p className="text-muted-foreground">모임을 찾을 수 없습니다.</p></AdminLayout>;
+  if (isLoading) return <><div className="flex justify-center py-20"><Loader2 className="animate-spin" /></div></>;
+  if (!data) return <><p className="text-muted-foreground">모임을 찾을 수 없습니다.</p></>;
 
   return (
-    <AdminLayout>
+    <>
       <Link href="/admin/sessions"><a className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"><ArrowLeft className="h-4 w-4" />모임 목록</a></Link>
 
       <div className="mb-8">
@@ -120,7 +119,7 @@ export default function AdminSessionDetail() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           {/* 개요 */}
-          <section className="bg-card border border-border p-6">
+          <section className="rounded-lg bg-card border border-border p-6">
             <h2 className="font-semibold mb-4">개요</h2>
             <div className="grid grid-cols-2 gap-4 text-sm mb-4">
               <div><div className="text-muted-foreground">담당자</div><div>{data.ownerName ?? "—"}{data.ownerEmail ? ` (${data.ownerEmail})` : ""}</div></div>
@@ -137,7 +136,7 @@ export default function AdminSessionDetail() {
           </section>
 
           {/* 체크리스트 */}
-          <section className="bg-card border border-border p-6">
+          <section className="rounded-lg bg-card border border-border p-6">
             <h2 className="font-semibold mb-4">준비 체크리스트</h2>
             {data.checklist ? (
               <div className="flex items-center justify-between p-3 bg-muted/30 border border-border">
@@ -166,7 +165,7 @@ export default function AdminSessionDetail() {
           </section>
 
           {/* 후속 작업 */}
-          <section className="bg-card border border-border p-6">
+          <section className="rounded-lg bg-card border border-border p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold">후속 작업</h2>
               <Button size="sm" onClick={() => setActionOpen(true)}><Plus className="h-4 w-4 mr-1" />추가</Button>
@@ -195,7 +194,7 @@ export default function AdminSessionDetail() {
           </section>
 
           {/* 자료 */}
-          <section className="bg-card border border-border p-6">
+          <section className="rounded-lg bg-card border border-border p-6">
             <h2 className="font-semibold mb-4">자료 / 외부 링크</h2>
             <p className="text-xs text-muted-foreground mb-3">Google Drive / Notion 등의 외부 자료는 링크만 저장합니다 (내용 복제 안 함).</p>
             {(data.materials ?? []).length === 0 ? (
@@ -222,7 +221,7 @@ export default function AdminSessionDetail() {
 
         <div className="space-y-6">
           {/* 출석 요약 */}
-          <section className="bg-card border border-border p-6">
+          <section className="rounded-lg bg-card border border-border p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold">출석</h2>
               <Link href={`/admin/sessions/${id}/attendance`}><Button size="sm">출석 관리 →</Button></Link>
@@ -241,7 +240,7 @@ export default function AdminSessionDetail() {
           </section>
 
           {/* 빠른 액션 */}
-          <section className="bg-card border border-border p-6">
+          <section className="rounded-lg bg-card border border-border p-6">
             <h2 className="font-semibold mb-3">빠른 작업</h2>
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm">
@@ -287,6 +286,6 @@ export default function AdminSessionDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 }

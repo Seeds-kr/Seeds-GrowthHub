@@ -1,0 +1,11 @@
+[Unit]
+Description=Seeds GrowthHub DB backup
+After=docker.service
+
+[Service]
+Type=oneshot
+User=harvester
+Group=harvester
+ExecStart=/home/harvester/seeds-preview/backup.sh
+StandardOutput=append:/home/harvester/seeds-preview/backup.log
+StandardError=append:/home/harvester/seeds-preview/backup.log

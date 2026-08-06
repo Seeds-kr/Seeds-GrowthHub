@@ -1,4 +1,3 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, type Cohort, type Program } from "@/lib/mvp3-api";
 import { useRoute, Link } from "wouter";
@@ -11,6 +10,7 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 import { Copy, Check, KeyRound } from "lucide-react";
+import { ResourceMissing } from "@/components/ResourceMissing";
 
 type Detail = {
   student: {
@@ -55,27 +55,45 @@ export default function AdminStudentDetail() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-student", id] }),
   });
 
-  if (isLoading || !data) return <AdminLayout><div className="flex justify-center py-12"><Loader2 className="animate-spin" /></div></AdminLayout>;
+  // 로딩과 "없음"을 갈라야 한다. 하나로 묶으면 없는 자료를 열었을 때
+
+  // 스피너가 영원히 돈다(느린 건지 없는 건지 알 수 없다).
+
+  if (isLoading) return <><div className="flex justify-center py-12"><Loader2 className="animate-spin" /></div></>;
+
+  if (!data)
+
+    return (
+
+      <>
+
+        <ResourceMissing label="학생" backHref="/admin/students" />
+
+      </>
+
+    );
   const s = data.student;
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-6">
         <Link href="/admin/students" className="text-sm text-muted-foreground hover:text-primary">← 학생 목록</Link>
       </div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-serif font-bold">{s.name}</h1>
-        <Button variant="outline" className="rounded-none" onClick={() => setActive.mutate(!s.isActive)}>
+        <Button variant="outline" className="" onClick={() => setActive.mutate(!s.isActive)}>
           {s.isActive ? "비활성화" : "활성화"}
         </Button>
       </div>
       <div className="grid md:grid-cols-2 gap-6 mb-6">
-        <Card className="rounded-none"><CardHeader><CardTitle>프로필</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">
+        <Card className=""><CardHeader><CardTitle>프로필</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">
           <div>이메일: {s.email}</div><div>전화: {s.phone ?? "-"}</div><div>학교: {s.school ?? "-"}</div>
-          <div>활성화: <Badge className="rounded-none">{s.isActive ? "활성" : "비활성"}</Badge></div>
+          <div>활성화: <Badge className="">{s.isActive ? "활성" : "비활성"}</Badge></div>
           {s.applicationId && <div>지원서: <Link href={`/admin/applications/${s.applicationId}`} className="text-primary underline">#{s.applicationId}</Link></div>}
         </CardContent></Card>
-        <Card className="rounded-none"><CardHeader><CardTitle>출석 요약</CardTitle></CardHeader><CardContent className="grid grid-cols-4 gap-2 text-sm">
+        {/* W11 (design/05 §6.4) — B tier still forbids page-level horizontal
+            scroll; four fixed columns overflowed this card at 375px. */}
+        <Card className=""><CardHeader><CardTitle>출석 요약</CardTitle></CardHeader><CardContent className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
           <div>출석: <strong>{data.attendanceSummary.present}</strong></div>
           <div>지각: <strong>{data.attendanceSummary.late}</strong></div>
           <div>결석: <strong>{data.attendanceSummary.absent}</strong></div>
@@ -86,45 +104,45 @@ export default function AdminStudentDetail() {
       <ActivationLinkCard userId={s.userId} />
       <ExtraRolesCard userId={s.userId} />
 
-      <Card className="rounded-none mb-6"><CardHeader><CardTitle>기수 / 프로그램</CardTitle></CardHeader><CardContent className="space-y-4">
+      <Card className="mb-6"><CardHeader><CardTitle>기수 / 프로그램</CardTitle></CardHeader><CardContent className="space-y-4">
         <div>
           <div className="text-sm font-medium mb-2">기수</div>
-          <div className="flex gap-2 flex-wrap mb-3">{data.cohorts.map((c) => <Badge key={c.id} className="rounded-none">{c.name}</Badge>)}</div>
+          <div className="flex gap-2 flex-wrap mb-3">{data.cohorts.map((c) => <Badge key={c.id} className="">{c.name}</Badge>)}</div>
           <div className="flex gap-2">
             <Select value={cohortId} onValueChange={setCohortId}>
-              <SelectTrigger className="rounded-none"><SelectValue placeholder="기수 선택…" /></SelectTrigger>
+              <SelectTrigger className=""><SelectValue placeholder="기수 선택…" /></SelectTrigger>
               <SelectContent>{cohorts?.items.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}</SelectContent>
             </Select>
-            <Button className="rounded-none" disabled={!cohortId || addCohort.isPending} onClick={() => addCohort.mutate(Number(cohortId))}>배정</Button>
+            <Button className="" disabled={!cohortId || addCohort.isPending} onClick={() => addCohort.mutate(Number(cohortId))}>배정</Button>
           </div>
         </div>
         <div>
           <div className="text-sm font-medium mb-2">프로그램</div>
-          <div className="flex gap-2 flex-wrap mb-3">{data.programs.map((p) => <Badge key={p.id} variant="outline" className="rounded-none">{p.name}</Badge>)}</div>
+          <div className="flex gap-2 flex-wrap mb-3">{data.programs.map((p) => <Badge key={p.id} variant="outline" className="">{p.name}</Badge>)}</div>
           <div className="flex gap-2">
             <Select value={programId} onValueChange={setProgramId}>
-              <SelectTrigger className="rounded-none"><SelectValue placeholder="프로그램 선택…" /></SelectTrigger>
+              <SelectTrigger className=""><SelectValue placeholder="프로그램 선택…" /></SelectTrigger>
               <SelectContent>{programs?.items.map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}</SelectContent>
             </Select>
-            <Button className="rounded-none" disabled={!programId || addProgram.isPending} onClick={() => addProgram.mutate(Number(programId))}>배정</Button>
+            <Button className="" disabled={!programId || addProgram.isPending} onClick={() => addProgram.mutate(Number(programId))}>배정</Button>
           </div>
         </div>
       </CardContent></Card>
 
-      <Card className="rounded-none mb-6"><CardHeader><CardTitle>출석 내역</CardTitle></CardHeader><CardContent>
+      <Card className="mb-6"><CardHeader><CardTitle>출석 내역</CardTitle></CardHeader><CardContent>
         {data.attendance.length === 0 ? <div className="text-sm text-muted-foreground">출석 기록이 없습니다.</div>
         : <ul className="text-sm space-y-2">{data.attendance.map((a) => (
-            <li key={a.id} className="flex justify-between border-b pb-2"><span>{a.sessionTitle}</span><span><Badge className="rounded-none mr-2">{a.status}</Badge>{format(new Date(a.scheduledAt), "yyyy-MM-dd HH:mm")}</span></li>
+            <li key={a.id} className="flex justify-between border-b pb-2"><span>{a.sessionTitle}</span><span><Badge className="mr-2">{a.status}</Badge>{format(new Date(a.scheduledAt), "yyyy-MM-dd HH:mm")}</span></li>
           ))}</ul>}
       </CardContent></Card>
 
-      <Card className="rounded-none"><CardHeader><CardTitle>과제 제출 내역</CardTitle></CardHeader><CardContent>
+      <Card className=""><CardHeader><CardTitle>과제 제출 내역</CardTitle></CardHeader><CardContent>
         {data.submissions.length === 0 ? <div className="text-sm text-muted-foreground">제출 내역이 없습니다.</div>
         : <ul className="text-sm space-y-2">{data.submissions.map((s2) => (
-            <li key={s2.id} className="flex justify-between border-b pb-2"><span>{s2.assignmentTitle}</span><span><Badge className="rounded-none mr-2">{s2.status}</Badge>{s2.submittedAt ? format(new Date(s2.submittedAt), "yyyy-MM-dd HH:mm") : "-"}</span></li>
+            <li key={s2.id} className="flex justify-between border-b pb-2"><span>{s2.assignmentTitle}</span><span><Badge className="mr-2">{s2.status}</Badge>{s2.submittedAt ? format(new Date(s2.submittedAt), "yyyy-MM-dd HH:mm") : "-"}</span></li>
           ))}</ul>}
       </CardContent></Card>
-    </AdminLayout>
+    </>
   );
 }
 
@@ -156,13 +174,13 @@ function ActivationLinkCard({ userId }: { userId: number }) {
     }
   };
   return (
-    <Card className="rounded-none mb-6">
+    <Card className="mb-6">
       <CardHeader><CardTitle className="flex items-center gap-2"><KeyRound className="w-4 h-4" />계정 활성화 링크</CardTitle></CardHeader>
       <CardContent className="space-y-3 text-sm">
         <p className="text-muted-foreground">
           학생이 비밀번호를 분실했거나 활성화 링크가 만료된 경우, 새 1회용 링크를 발급해 학생에게 직접 전달할 수 있습니다. 발급 시 이전의 미사용 링크는 즉시 무효화됩니다.
         </p>
-        <Button className="rounded-none" disabled={issue.isPending} onClick={() => issue.mutate()}>
+        <Button className="" disabled={issue.isPending} onClick={() => issue.mutate()}>
           {issue.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
           새 활성화 링크 발급
         </Button>
@@ -170,7 +188,7 @@ function ActivationLinkCard({ userId }: { userId: number }) {
           <div className="space-y-2 pt-2">
             <div className="border border-border bg-muted p-3 text-xs break-all font-mono">{url}</div>
             <div className="flex gap-2">
-              <Button variant="outline" className="rounded-none" onClick={copy}>
+              <Button variant="outline" className="" onClick={copy}>
                 {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
                 {copied ? "복사됨" : "복사"}
               </Button>
@@ -210,7 +228,7 @@ function ExtraRolesCard({ userId }: { userId: number }) {
     update.mutate(next);
   };
   return (
-    <Card className="rounded-none mb-6">
+    <Card className="mb-6">
       <CardHeader><CardTitle>겸직 권한 (추가 역할)</CardTitle></CardHeader>
       <CardContent className="space-y-3 text-sm">
         <p className="text-muted-foreground">
@@ -219,7 +237,7 @@ function ExtraRolesCard({ userId }: { userId: number }) {
         <div className="flex gap-2 flex-wrap">
           <Button
             variant={has("admin") ? "default" : "outline"}
-            className="rounded-none"
+            className=""
             disabled={update.isPending}
             onClick={() => toggle("admin")}
           >
@@ -227,7 +245,7 @@ function ExtraRolesCard({ userId }: { userId: number }) {
           </Button>
           <Button
             variant={has("mentor") ? "default" : "outline"}
-            className="rounded-none"
+            className=""
             disabled={update.isPending}
             onClick={() => toggle("mentor")}
           >

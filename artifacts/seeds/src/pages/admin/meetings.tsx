@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "wouter";
+import { MarkdownEditor } from "@/components/markdown/MarkdownEditor";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { api } from "@/lib/mvp3-api";
 import {
   type Meeting,
@@ -66,10 +66,7 @@ function blankForm() {
     meetingDate: toLocalInput(now.toISOString()),
     participantsText: "",
     visibility: "admin_only" as (typeof MEETING_VISIBILITIES)[number],
-    agendaMd: "",
     decisionsMd: "",
-    notesMd: "",
-    pendingMd: "",
     pendingActions: [] as PendingAction[],
   };
 }
@@ -109,10 +106,9 @@ export default function AdminMeetingsPage() {
             .map((s) => s.trim())
             .filter(Boolean),
           visibility: form.visibility,
-          agendaMd: form.agendaMd,
+          // bodyMd omitted on purpose: the server seeds it from the meeting
+          // type's template (ADR-006), so ops edits to the template apply.
           decisionsMd: form.decisionsMd,
-          notesMd: form.notesMd,
-          pendingMd: form.pendingMd,
         },
       });
       const validActions = form.pendingActions.filter((a) => a.title.trim());
@@ -184,7 +180,7 @@ export default function AdminMeetingsPage() {
     }));
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-8 flex items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-serif font-bold flex items-center gap-2">
@@ -200,7 +196,7 @@ export default function AdminMeetingsPage() {
         </Button>
       </div>
 
-      <div className="bg-card border border-border">
+      <div className="rounded-lg bg-card border border-border elev-1">
         <Table>
           <TableHeader>
             <TableRow>
@@ -272,7 +268,10 @@ export default function AdminMeetingsPage() {
                 placeholder="예: 2026년 2월 운영진 정기회의"
               />
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            {/* W11 — B tier. Three selects share ~113px each inside a dialog at
+                375px, which shrinks rather than overflows but is not operable.
+                Stacked below `sm`. */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div>
                 <Label>유형</Label>
                 <Select
@@ -336,47 +335,23 @@ export default function AdminMeetingsPage() {
                 placeholder="홍길동, 김철수, 이영희"
               />
             </div>
-            <div>
-              <Label htmlFor="agenda">안건 (Markdown)</Label>
-              <Textarea
-                id="agenda"
-                rows={4}
-                value={form.agendaMd}
-                onChange={(e) => setForm({ ...form, agendaMd: e.target.value })}
-                placeholder="- 2월 행사 회고&#10;- 신입 모집 일정"
-                className="font-mono text-sm"
-              />
+            <div className="rounded border border-dashed border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+              회의 본문은 선택한 <strong>회의 유형의 템플릿</strong>으로 자동 채워집니다.
+              생성 후 상세 화면에서 이어서 작성하세요. 템플릿 자체는{" "}
+              <Link href="/admin/documents">
+                <a className="underline underline-offset-2">문서 &amp; 템플릿</a>
+              </Link>
+              에서 수정할 수 있습니다.
             </div>
             <div>
-              <Label htmlFor="decisions">결정사항 (Markdown)</Label>
-              <Textarea
-                id="decisions"
-                rows={4}
+              <Label htmlFor="decisions">결정사항 (선택)</Label>
+              <p className="mb-1 text-xs text-muted-foreground">
+                모든 회의 유형에서 별도로 관리됩니다. 지금 비워두고 나중에 채워도 됩니다.
+              </p>
+              <MarkdownEditor
+                rows={5}
                 value={form.decisionsMd}
-                onChange={(e) =>
-                  setForm({ ...form, decisionsMd: e.target.value })
-                }
-                className="font-mono text-sm"
-              />
-            </div>
-            <div>
-              <Label htmlFor="pending">보류 / 후속 논의 (Markdown)</Label>
-              <Textarea
-                id="pending"
-                rows={3}
-                value={form.pendingMd}
-                onChange={(e) => setForm({ ...form, pendingMd: e.target.value })}
-                className="font-mono text-sm"
-              />
-            </div>
-            <div>
-              <Label htmlFor="notes">메모 (Markdown)</Label>
-              <Textarea
-                id="notes"
-                rows={3}
-                value={form.notesMd}
-                onChange={(e) => setForm({ ...form, notesMd: e.target.value })}
-                className="font-mono text-sm"
+                onChange={(decisionsMd) => setForm({ ...form, decisionsMd })}
               />
             </div>
             <div className="border-t pt-4">
@@ -481,6 +456,6 @@ export default function AdminMeetingsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 }

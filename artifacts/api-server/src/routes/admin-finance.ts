@@ -10,7 +10,11 @@ import {
   type FinanceRecordStatus,
 } from "@workspace/db";
 import { alias } from "drizzle-orm/pg-core";
-import { requireAdmin } from "../lib/auth";
+import { requireOpsRole } from "../lib/auth";
+import { audit } from "../lib/audit";
+
+// ADR-002: finance 담당 운영진 + program_lead 만 접근.
+const requireFinance = requireOpsRole("finance");
 
 const router: IRouter = Router();
 
@@ -90,7 +94,7 @@ async function assertUserExists(
   return true;
 }
 
-router.get("/admin/finance-records", requireAdmin, async (req, res) => {
+router.get("/admin/finance-records", requireFinance, async (req, res) => {
   const statusQ =
     typeof req.query.status === "string" ? req.query.status : undefined;
   const typeQ =
@@ -170,7 +174,7 @@ router.get("/admin/finance-records", requireAdmin, async (req, res) => {
  * Dashboard summary for Ops Dashboard hookup.
  * Returns counts + sums per status bucket; admin-only.
  */
-router.get("/admin/finance-records/summary", requireAdmin, async (_req, res) => {
+router.get("/admin/finance-records/summary", requireFinance, async (_req, res) => {
   const rows = await db
     .select({
       status: financeRecordsTable.status,
@@ -206,7 +210,7 @@ router.get("/admin/finance-records/summary", requireAdmin, async (_req, res) => 
   });
 });
 
-router.get("/admin/finance-records/:id", requireAdmin, async (req, res) => {
+router.get("/admin/finance-records/:id", requireFinance, async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) {
     res.status(404).json({ error: "Not found" });
@@ -239,7 +243,7 @@ router.get("/admin/finance-records/:id", requireAdmin, async (req, res) => {
   });
 });
 
-router.post("/admin/finance-records", requireAdmin, async (req, res) => {
+router.post("/admin/finance-records", requireFinance, async (req, res) => {
   const parsed = CreateFinance.safeParse(req.body);
   if (!parsed.success) {
     res
@@ -273,7 +277,7 @@ router.post("/admin/finance-records", requireAdmin, async (req, res) => {
   res.status(201).json(serialize(row));
 });
 
-router.patch("/admin/finance-records/:id", requireAdmin, async (req, res) => {
+router.patch("/admin/finance-records/:id", requireFinance, async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) {
     res.status(404).json({ error: "Not found" });
@@ -320,6 +324,20 @@ router.patch("/admin/finance-records/:id", requireAdmin, async (req, res) => {
     .set(updates)
     .where(eq(financeRecordsTable.id, id))
     .returning();
+
+  // Status transitions only — amount/description edits are not audit-worthy
+  // and `receiptUrl` is on the audit denylist anyway.
+  if (d.status && d.status !== existing.status) {
+    audit({
+      action: "finance_status",
+      req,
+      targetType: "finance_record",
+      targetId: id,
+      before: { status: existing.status },
+      after: { status: row.status },
+    });
+  }
+
   res.json(serialize(row));
 });
 
@@ -330,7 +348,7 @@ router.patch("/admin/finance-records/:id", requireAdmin, async (req, res) => {
  */
 router.post(
   "/admin/finance-records/:id/cancel",
-  requireAdmin,
+  requireFinance,
   async (req, res) => {
     const id = Number(req.params.id);
     if (!Number.isFinite(id)) {

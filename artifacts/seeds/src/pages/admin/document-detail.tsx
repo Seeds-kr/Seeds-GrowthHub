@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "wouter";
 import ReactMarkdown from "react-markdown";
+import { MarkdownEditor } from "@/components/markdown/MarkdownEditor";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AdminLayout } from "@/components/layout/AdminLayout";
+import { DesktopOnly } from "@/components/DesktopOnly";
+import { useIsDesktop } from "@/hooks/use-desktop";
 import { api, ApiError } from "@/lib/mvp3-api";
 import {
   type DocumentDetail,
@@ -57,6 +59,7 @@ export default function AdminDocumentDetailPage() {
     enabled: Number.isFinite(id),
   });
 
+  const isDesktop = useIsDesktop();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState({
     title: "",
@@ -152,14 +155,14 @@ export default function AdminDocumentDetailPage() {
 
   if (isLoading) {
     return (
-      <AdminLayout>
+      <>
         <Loader2 className="w-6 h-6 animate-spin" />
-      </AdminLayout>
+      </>
     );
   }
   if (error || !data) {
     return (
-      <AdminLayout>
+      <>
         <div className="text-muted-foreground">문서를 찾을 수 없습니다.</div>
         <Link
           href="/admin/documents"
@@ -167,14 +170,14 @@ export default function AdminDocumentDetailPage() {
         >
           ← 목록으로
         </Link>
-      </AdminLayout>
+      </>
     );
   }
 
   const isArchived = data.archivedAt !== null;
 
   return (
-    <AdminLayout>
+    <>
       <Link
         href="/admin/documents"
         className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1 mb-4"
@@ -243,9 +246,15 @@ export default function AdminDocumentDetailPage() {
             </>
           ) : (
             <>
-              <Button onClick={() => setEditing(true)} data-testid="btn-edit-doc">
-                편집
-              </Button>
+              {/* W11 — the editor below is C tier, so on a narrow screen this
+                  button would open a surface that only renders a notice.
+                  Hidden rather than disabled: a disabled 편집 button invites
+                  the reader to hunt for the permission they are missing. */}
+              {isDesktop ? (
+                <Button onClick={() => setEditing(true)} data-testid="btn-edit-doc">
+                  편집
+                </Button>
+              ) : null}
               <Button variant="outline" onClick={() => clone.mutate()}>
                 <Copy className="w-4 h-4 mr-1" /> 복제
               </Button>
@@ -282,7 +291,12 @@ export default function AdminDocumentDetailPage() {
         </div>
       </div>
 
+      {/* W11 (design/05 §6.2) — C tier is the split editor, not the whole route:
+          the rendered document below stays readable on a phone. The guard is
+          still needed even though the 편집 button is hidden below `lg`, for the
+          case where the window is narrowed while already editing. */}
       {editing ? (
+        <DesktopOnly feature="문서 분할 편집기">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between gap-2">
@@ -338,13 +352,13 @@ export default function AdminDocumentDetailPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <Textarea
+              <MarkdownEditor
                 rows={28}
                 value={draft.contentMd}
-                onChange={(e) =>
-                  setDraft({ ...draft, contentMd: e.target.value })
-                }
-                className="font-mono text-sm"
+                onChange={(contentMd) => setDraft({ ...draft, contentMd })}
+                showPreviewToggle={false}
+                uploadTarget={{ linkedObjectType: "document", linkedObjectId: Number(id) }}
+                data-testid="doc-editor"
               />
             </CardContent>
           </Card>
@@ -363,6 +377,7 @@ export default function AdminDocumentDetailPage() {
             </CardContent>
           </Card>
         </div>
+        </DesktopOnly>
       ) : (
         <Card className="mb-6">
           <CardContent className="pt-6">
@@ -460,6 +475,6 @@ export default function AdminDocumentDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 }

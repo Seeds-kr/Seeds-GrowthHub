@@ -1,4 +1,3 @@
-import { EvaluatorLayout } from "@/components/layout/EvaluatorLayout";
 import { useListMyAssignments } from "@workspace/api-client-react";
 import {
   Table,
@@ -19,7 +18,7 @@ export default function EvaluatorDashboard() {
   const { data, isLoading } = useListMyAssignments();
 
   return (
-    <EvaluatorLayout>
+    <>
       <div className="mb-8">
         <h1 className="text-3xl font-serif font-bold">내 평가 배정</h1>
         <p className="text-sm text-muted-foreground mt-2">
@@ -27,7 +26,7 @@ export default function EvaluatorDashboard() {
         </p>
       </div>
 
-      <div className="bg-card border border-border">
+      <div className="rounded-lg bg-card border border-border">
         <Table>
           <TableHeader>
             <TableRow>
@@ -60,15 +59,15 @@ export default function EvaluatorDashboard() {
                   <TableCell>{a.applicantSchool}</TableCell>
                   <TableCell>{stageLabels[a.stage] ?? a.stage}</TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="rounded-none font-normal">
+                    <Badge variant="outline" className="font-normal">
                       {assignmentStatusLabels[a.assignmentStatus] ?? a.assignmentStatus}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     {a.hasEvaluation ? (
-                      <Badge className="rounded-none font-normal">제출됨</Badge>
+                      <Badge className="font-normal">제출됨</Badge>
                     ) : (
-                      <Badge variant="secondary" className="rounded-none font-normal">
+                      <Badge variant="secondary" className="font-normal">
                         미제출
                       </Badge>
                     )}
@@ -79,7 +78,7 @@ export default function EvaluatorDashboard() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="rounded-none"
+                        className=""
                         data-testid={`button-open-${a.applicationId}`}
                       >
                         열기
@@ -92,6 +91,6 @@ export default function EvaluatorDashboard() {
           </TableBody>
         </Table>
       </div>
-    </EvaluatorLayout>
+    </>
   );
 }
