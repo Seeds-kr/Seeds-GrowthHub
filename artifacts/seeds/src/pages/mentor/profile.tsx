@@ -6,8 +6,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Loader2 } from "lucide-react";
-import { api, type PeopleProfile } from "@/lib/mvp3-api";
+import { Loader2, UserRoundX } from "lucide-react";
+import { api, ApiError, type PeopleProfile } from "@/lib/mvp3-api";
+import { EmptyState } from "@/components/EmptyState";
+import { opsMailto } from "@/lib/contact";
 import { toast } from "@/hooks/use-toast";
 
 type Form = {
@@ -23,7 +25,7 @@ type Form = {
 
 export default function MentorProfile() {
   const qc = useQueryClient();
-  const { data, isLoading, isError, error } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["mentor-profile"],
     queryFn: () => api<PeopleProfile>("/mentor/profile"),
     retry: false,
@@ -88,18 +90,41 @@ export default function MentorProfile() {
   }
 
   if (isError) {
-    const msg = (error as any)?.data?.error ?? "프로필을 불러올 수 없습니다.";
+    // 서버가 돌려주는 문구는 영어다("Mentor profile not set up. Please ask an
+    // admin…"). 그대로 띄우면 한국어 화면에 영어 한 줄이 박히고, 그 안의
+    // `/admin/people` 은 멘토가 열 수도 없는 경로다. 상태 코드로 갈라 우리 말로
+    // 적는다 — 아직 안 만들어진 것과 진짜 고장 난 것은 다른 사건이다.
+    const notSetUp = (error as ApiError | null)?.status === 404;
     return (
-      <>
-        <Card className="max-w-2xl mx-auto">
-          <CardHeader>
-            <CardTitle>프로필 없음</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            {msg}
+      <div className="mx-auto max-w-2xl">
+        <h1 className="mb-6 text-3xl font-bold tracking-[-0.02em]">내 프로필</h1>
+        <Card>
+          <CardContent className="p-0">
+            <EmptyState
+              icon={UserRoundX}
+              title={notSetUp ? "아직 프로필이 없습니다" : "프로필을 불러오지 못했습니다"}
+              hint={
+                notSetUp
+                  ? "운영진이 프로필을 만들어 드리면 여기서 직접 고칠 수 있습니다. 아래로 요청을 보내세요."
+                  : "잠시 후 다시 시도해 주세요. 계속 같으면 운영진에게 알려주세요."
+              }
+              action={
+                notSetUp ? (
+                  <Button asChild variant="outline" size="sm">
+                    <a href={opsMailto("멘토 프로필 생성 요청")}>
+                      운영진에게 요청하기
+                    </a>
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="sm" onClick={() => refetch()}>
+                    다시 시도
+                  </Button>
+                )
+              }
+            />
           </CardContent>
         </Card>
-      </>
+      </div>
     );
   }
 

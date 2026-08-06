@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { Stagger, StaggerItem } from "@/lib/motion";
 import { SurfaceCard } from "@/components/SurfaceCard";
-import { ArrowRight, Loader2, Phone } from "lucide-react";
+import { ArrowRight, Loader2, Phone, Users } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import {
   api,
   PEOPLE_KIND_LABEL,
@@ -28,62 +29,100 @@ import {
  *    아예 없으므로 폰에서는 신호가 0이었다. "프로필 보기 →" 를 항상 띄워
  *    입력 방식과 무관하게 보이게 한다.
  */
+/** 태그를 몇 개까지 보여줄지. 넘치면 "+N" 으로 접는다. */
+const TAG_LIMIT = 6;
+
+/** 이름 첫 글자를 딴 대체 아바타. 이름이 같은 사람끼리도 색이 갈리도록 글자로 색을 정한다. */
+function initialTint(name: string): string {
+  // 브랜드 초록 계열 안에서만 색상을 흔든다. 무지개로 만들면 페이지가 시끄러워진다.
+  const h = 152 + ((name.charCodeAt(0) % 5) - 2) * 9;
+  return `linear-gradient(140deg, hsl(${h} 45% 92%), hsl(${h} 38% 84%))`;
+}
+
 function Card({ p }: { p: PublicPeopleProfile }) {
+  const tags = p.tags.slice(0, TAG_LIMIT);
+  const overflow = p.tags.length - tags.length;
+
   return (
     <SurfaceCard href={`/people/${p.kind}/${p.id}`} className="h-full">
-      <div className="aspect-square w-full mb-4 bg-muted overflow-hidden">
-        {p.photoUrl ? (
-          <img
-            src={p.photoUrl}
-            alt=""
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-            loading="lazy"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-3xl font-serif text-muted-foreground">
-            {p.name.slice(0, 1)}
-          </div>
-        )}
-      </div>
-      <div className="flex-1 flex flex-col">
-        <div className="font-serif text-xl font-bold mb-1 decoration-2 underline-offset-4 group-hover:underline">
-          {p.name}
-        </div>
-        {p.roleTitle ? (
-          <div className="text-sm text-primary font-medium mb-1">{p.roleTitle}</div>
-        ) : null}
-        {p.affiliation ? (
-          <div className="text-sm text-muted-foreground mb-3">{p.affiliation}</div>
-        ) : null}
-        {p.bio ? (
-          <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-line">
-            {p.bio}
-          </p>
-        ) : null}
-        {p.tags.length > 0 ? (
-          <div className="flex flex-wrap gap-1.5 mt-4">
-            {p.tags.map((t, i) => (
-              <span key={i} className="text-xs px-2 py-1 bg-muted text-muted-foreground">
-                {t}
-              </span>
-            ))}
-          </div>
-        ) : null}
+      <div className="flex items-start gap-4">
+        {/* 아바타. 사진이 없을 때 정사각 회색 판을 통째로 비워두면 카드의 절반이
+            빈 덩어리가 된다(멘토 아홉 명이면 페이지 대부분이 회색이었다).
+            원형으로 줄이고 이름 첫 글자를 앉히면 자리는 지키되 비어 보이지 않는다.
+            큰 사진은 프로필 상세에서 제대로 보여준다. */}
+        <span
+          className="relative grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-full ring-1 ring-border"
+          style={p.photoUrl ? undefined : { backgroundImage: initialTint(p.name) }}
+          aria-hidden="true"
+        >
+          {p.photoUrl ? (
+            <img
+              src={p.photoUrl}
+              alt=""
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              loading="lazy"
+            />
+          ) : (
+            <span className="font-serif text-2xl font-bold text-primary/70">
+              {p.name.slice(0, 1)}
+            </span>
+          )}
+        </span>
 
-        {/* 아래 두 줄은 카드 바닥에 고정된다(mt-auto). 카드마다 내용 길이가 달라도
-            "프로필 보기"의 세로 위치가 맞아 격자가 흔들리지 않는다. */}
-        {p.phone ? (
-          /* 링크 안에 링크를 중첩할 수 없다(HTML 위반이고 클릭 대상이 겹친다).
-             전화는 카드 링크 밖 형제로 두고, 카드 링크는 이 줄을 덮지 않는다. */
-          <div className="mt-4 text-sm text-muted-foreground inline-flex items-center gap-1.5">
-            <Phone className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            <span className="tabular-nums">{p.phone}</span>
-          </div>
-        ) : null}
-        <div className="mt-auto pt-5 text-sm font-medium text-primary inline-flex items-center gap-1">
-          프로필 보기
-          <ArrowRight className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-1" />
+        <span className="min-w-0 flex-1">
+          <span className="block font-serif text-xl font-bold decoration-2 underline-offset-4 group-hover:underline">
+            {p.name}
+          </span>
+          {p.roleTitle ? (
+            <span className="mt-1 block text-sm font-medium leading-snug text-primary">
+              {p.roleTitle}
+            </span>
+          ) : null}
+          {p.affiliation ? (
+            <span className="mt-1 block text-sm text-muted-foreground">{p.affiliation}</span>
+          ) : null}
+        </span>
+      </div>
+
+      {p.bio ? (
+        <p className="mt-4 line-clamp-3 whitespace-pre-line text-sm leading-relaxed text-foreground/80">
+          {p.bio}
+        </p>
+      ) : null}
+
+      {tags.length > 0 ? (
+        /* 태그가 열넷씩 달린 사람이 있어서 그 카드만 두 배로 길어졌다. 격자가
+           들쭉날쭉해지므로 여섯 개에서 끊고 나머지는 개수로 알린다. */
+        <div className="mt-4 flex flex-wrap gap-1.5">
+          {tags.map((t, i) => (
+            <span
+              key={i}
+              className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+            >
+              {t}
+            </span>
+          ))}
+          {overflow > 0 ? (
+            <span className="rounded-full px-2 py-0.5 text-xs text-muted-foreground/80">
+              +{overflow}
+            </span>
+          ) : null}
         </div>
+      ) : null}
+
+      {/* 아래 두 줄은 카드 바닥에 고정된다(mt-auto). 카드마다 내용 길이가 달라도
+          "프로필 보기"의 세로 위치가 맞아 격자가 흔들리지 않는다. */}
+      {p.phone ? (
+        /* 링크 안에 링크를 중첩할 수 없다(HTML 위반이고 클릭 대상이 겹친다).
+           전화는 카드 링크 밖 형제로 두고, 카드 링크는 이 줄을 덮지 않는다. */
+        <div className="mt-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+          <Phone className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          <span className="tabular-nums">{p.phone}</span>
+        </div>
+      ) : null}
+      <div className="mt-auto inline-flex items-center gap-1 pt-5 text-sm font-medium text-primary">
+        프로필 보기
+        <ArrowRight className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-1" />
       </div>
     </SurfaceCard>
   );
@@ -114,13 +153,13 @@ export function PeopleGrid({
   });
 
   return (
-    <section className="py-24 md:py-32 px-4">
+    <section className="px-4 pb-20 pt-16">
       <div className="container mx-auto max-w-6xl">
-        <div className="text-center mb-10">
+        <div className="mb-8 text-center">
           <div className="text-[11px] uppercase tracking-[0.22em] text-primary mb-3 font-semibold">
             Seeds People
           </div>
-          <h1 className="text-5xl md:text-6xl mb-5">사람들</h1>
+          <h1 className="mb-4 text-4xl font-bold md:text-5xl">사람들</h1>
           <p className="text-[17px] text-muted-foreground max-w-2xl mx-auto">
             Seeds를 함께 만드는 멘토·운영진·학생을 소개합니다.
           </p>
@@ -144,7 +183,7 @@ export function PeopleGrid({
           ))}
         </div>
 
-        <p className="text-center text-sm text-muted-foreground mb-10">
+        <p className="mb-8 text-center text-sm text-muted-foreground">
           {KIND_SUBTITLE[kind]}
         </p>
 
@@ -153,13 +192,17 @@ export function PeopleGrid({
             <Loader2 className="w-6 h-6 animate-spin text-primary" />
           </div>
         ) : !data || data.items.length === 0 ? (
-          <div className="py-24 text-center text-muted-foreground">
-            {KIND_EMPTY[kind]}
-          </div>
+          /* 회색 한 줄만 있으면 고장 난 건지 아직 안 채운 건지 알 수 없다.
+             다른 탭에는 사람이 있다는 것까지 같이 말해준다. */
+          <EmptyState
+            icon={Users}
+            title={KIND_EMPTY[kind]}
+            hint="위 탭에서 다른 분류를 볼 수 있습니다."
+          />
         ) : (
-          <Stagger className="grid grid-cols-1 gap-px border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
+          <Stagger className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {data.items.map((p) => (
-              <StaggerItem key={p.id}>
+              <StaggerItem key={p.id} className="h-full">
                 <Card p={p} />
               </StaggerItem>
             ))}
