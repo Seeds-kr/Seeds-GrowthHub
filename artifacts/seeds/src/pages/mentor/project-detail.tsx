@@ -49,6 +49,15 @@ const FEEDBACK_TYPE_LABEL: Record<string, string> = {
  * The status-check form is the only recurring input we ask of a mentor.
  * Target: 30 seconds. Only teamStatus is required — one click then 제출.
  */
+/**
+ * 이력에서 기본으로 펼치는 건수.
+ *
+ * 기수 하나가 끝날 즈음이면 상태체크가 수십 건 쌓인다. 전부 펼치면 이력 카드가
+ * 화면 대부분을 먹는다. 멘토가 실제로 보는 것은 "최근에 어땠나" 이고, 그 이상은
+ * 필요할 때 펼친다.
+ */
+const RECENT_CHECKS = 5;
+
 function StatusCheckForm({ projectId }: { projectId: number }) {
   const qc = useQueryClient();
   const [status, setStatus] = useState<TeamStatus | null>(null);
@@ -104,8 +113,11 @@ function StatusCheckForm({ projectId }: { projectId: number }) {
             <button
               key={s}
               type="button"
+              // 넷 중 하나를 고르는 묶음이다. 색으로만 선택을 표시하면 화면을
+              // 못 보는 멘토는 무엇이 골라졌는지 알 수 없다.
+              aria-pressed={status === s}
               onClick={() => setStatus(s)}
-              className={`rounded border p-2.5 text-left transition ${
+              className={`rounded-md border p-2.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 ${
                 status === s
                   ? TEAM_STATUS_SELECTED[s]
                   : "border-border hover:bg-muted/50"
@@ -264,6 +276,7 @@ function FeedbackForm({
 }
 
 export default function MentorProjectDetailPage() {
+  const [showAllChecks, setShowAllChecks] = useState(false);
   const [, params] = useRoute("/mentor/projects/:id");
   const id = Number(params?.id);
 
@@ -303,6 +316,12 @@ export default function MentorProjectDetailPage() {
   }
 
   const p = data.project;
+
+  const visibleChecks = showAllChecks
+
+    ? data.statusChecks
+
+    : data.statusChecks.slice(0, RECENT_CHECKS);
   const links = [
     { label: "GitHub", url: p.githubUrl },
     { label: "데모", url: p.demoUrl },
@@ -355,18 +374,34 @@ export default function MentorProjectDetailPage() {
               <CardTitle className="text-base">프로젝트</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
-              <div>
-                <span className="text-muted-foreground">목표: </span>
-                {p.solutionSummary ?? "-"}
-              </div>
-              <div>
-                <span className="text-muted-foreground">문제정의: </span>
-                {p.problemStatement ?? "-"}
-              </div>
-              <div>
-                <span className="text-muted-foreground">대상 사용자: </span>
-                {p.targetUsers ?? "-"}
-              </div>
+              {/* 값이 없을 때 "-" 를 찍으면 대시가 내용인지 빈 것인지 알 수
+                  없다. 셋 다 비었으면 줄을 늘어놓는 대신 한 줄로 말한다. */}
+              {!p.solutionSummary && !p.problemStatement && !p.targetUsers ? (
+                <p className="text-muted-foreground">
+                  팀이 아직 프로젝트 개요를 적지 않았습니다.
+                </p>
+              ) : (
+                <>
+                  {p.solutionSummary ? (
+                    <div>
+                      <span className="text-muted-foreground">목표: </span>
+                      {p.solutionSummary}
+                    </div>
+                  ) : null}
+                  {p.problemStatement ? (
+                    <div>
+                      <span className="text-muted-foreground">문제정의: </span>
+                      {p.problemStatement}
+                    </div>
+                  ) : null}
+                  {p.targetUsers ? (
+                    <div>
+                      <span className="text-muted-foreground">대상 사용자: </span>
+                      {p.targetUsers}
+                    </div>
+                  ) : null}
+                </>
+              )}
               <div className="pt-2">
                 <div className="mb-1 text-xs font-semibold uppercase text-muted-foreground">
                   팀원
@@ -459,7 +494,7 @@ export default function MentorProjectDetailPage() {
           <CardHeader className="pb-3">
             <CardTitle className="text-base">피드백</CardTitle>
             <p className="text-xs text-muted-foreground">
-              이 팀에 남겨진 모든 피드백입니다 — 이전 담당 멘토와 운영진이 남긴 것도 포함됩니다.
+              이 팀에 남겨진 모든 피드백입니다. 이전 담당 멘토와 운영진이 남긴 것도 포함됩니다.
             </p>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -500,7 +535,14 @@ export default function MentorProjectDetailPage() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">상태체크 이력</CardTitle>
+            <CardTitle className="flex items-center justify-between text-base">
+              <span>상태체크 이력</span>
+              {data.statusChecks.length > 0 ? (
+                <span className="text-sm font-normal text-muted-foreground">
+                  {data.statusChecks.length}건
+                </span>
+              ) : null}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {data.statusChecks.length === 0 ? (
@@ -508,7 +550,7 @@ export default function MentorProjectDetailPage() {
                 아직 상태체크가 없습니다.
               </span>
             ) : (
-              data.statusChecks.map((c) => (
+              visibleChecks.map((c) => (
                 <div
                   key={c.id}
                   className="space-y-1 rounded border border-border p-2.5 text-sm"
@@ -555,6 +597,17 @@ export default function MentorProjectDetailPage() {
                 </div>
               ))
             )}
+            {data.statusChecks.length > RECENT_CHECKS ? (
+              <button
+                type="button"
+                onClick={() => setShowAllChecks((v) => !v)}
+                className="w-full rounded-md border border-border py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                {showAllChecks
+                  ? `최근 ${RECENT_CHECKS}건만 보기`
+                  : `이전 ${data.statusChecks.length - RECENT_CHECKS}건 더 보기`}
+              </button>
+            ) : null}
           </CardContent>
         </Card>
       </div>
