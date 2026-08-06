@@ -1,0 +1,11 @@
+[Unit]
+Description=Seeds GrowthHub verification suite
+After=seeds-tunnel.service
+
+[Service]
+Type=oneshot
+User=harvester
+Group=harvester
+# 브라우저 세 벌을 띄우므로 넉넉히 준다. 넘으면 실패로 본다.
+TimeoutStartSec=3600
+ExecStart=/home/harvester/Seeds-GrowthHub/ops/verify.sh

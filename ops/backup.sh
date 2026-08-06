@@ -29,8 +29,32 @@ mv "$OUT.part" "$OUT"
 chmod 600 "$OUT"
 echo "백업 완료: $OUT ($SIZE B)"
 
+# 외부로 보낼 사본은 암호화해 둔다. 지금은 같은 디스크에 남지만, 이 디스크가
+# 통째로 죽으면 백업도 같이 죽는다 — 밖으로 내보내는 것이 다음 단계이고,
+# 그때 평문을 올리지 않으려면 여기서 미리 잠가 두어야 한다.
+# 대칭키를 쓴다. 이 서버 혼자 만들고 혼자 푸는 용도라 공개키 쌍이 필요 없다.
+PASS_FILE="$HOME/.secrets/seeds-backup-passphrase"
+if [ -f "$PASS_FILE" ]; then
+  gpg --batch --yes --symmetric --cipher-algo AES256 \
+      --passphrase-file "$PASS_FILE" -o "$OUT.gpg.part" "$OUT"
+  # 복호화가 실제로 되는지 확인하고 나서만 정식 이름을 준다.
+  # 풀 수 없는 암호문은 백업이 아니라 그냥 쓰레기다.
+  if gpg --batch --yes --decrypt --passphrase-file "$PASS_FILE" \
+         -o /dev/null "$OUT.gpg.part" 2>/dev/null; then
+    mv "$OUT.gpg.part" "$OUT.gpg"
+    chmod 600 "$OUT.gpg"
+    echo "암호화본: $OUT.gpg"
+  else
+    rm -f "$OUT.gpg.part"
+    echo "암호화본 복호화 검증 실패 — 암호화본은 만들지 않았다." >&2
+  fi
+else
+  echo "경고: $PASS_FILE 이 없어 암호화본을 만들지 않았다." >&2
+fi
+
 # 오래된 것 정리. 최소 3개는 항상 남긴다 — 보관 기간이 지나도 전부 사라지면 안 된다.
 COUNT=$(ls -1 "$DIR"/growthhub-*.sql.gz 2>/dev/null | wc -l)
 if [ "$COUNT" -gt 3 ]; then
   find "$DIR" -name 'growthhub-*.sql.gz' -mtime "+$KEEP_DAYS" -print -delete
+  find "$DIR" -name 'growthhub-*.sql.gz.gpg' -mtime "+$KEEP_DAYS" -print -delete
 fi
