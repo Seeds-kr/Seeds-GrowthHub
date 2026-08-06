@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { MobileNav } from "./MobileNav";
 import { Magnetic } from "@/lib/motion";
 import { BrandMark } from "@/components/BrandMark";
+import { CursorGlow } from "@/components/CursorGlow";
 
 export function PublicLayout({ children }: { children: ReactNode }) {
   const [location] = useLocation();
@@ -31,15 +32,31 @@ export function PublicLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background text-foreground">
+      {/* 공개 표면에만 깐다. 어드민·학생 화면은 표를 읽고 값을 넣는 자리라
+          커서를 따라다니는 빛이 방해가 된다. */}
+      <CursorGlow />
       <header
-        className={`sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md transition-[border-color,box-shadow,background-color] duration-300 ${
+        className={`sticky top-0 z-50 w-full overflow-hidden border-b bg-background/80 backdrop-blur-md transition-[border-color,box-shadow,background-color] duration-300 ${
           scrolled
             ? "border-border shadow-[0_1px_20px_-8px_hsl(var(--foreground)/0.28)]"
             : "border-transparent"
         }`}
       >
+        {/* 유리 위를 초록 빛이 좌우로 지나간다. 헤더가 56~64px 로 얇아서 히어로용
+            큰 원을 쓰면 그라디언트 한 조각만 보이므로, 가로로 눕힌 덩어리를
+            좌우로만 흘린다(index.css 의 liquid-blob-head-*).
+
+            `-z-10` 을 쓰면 안 된다. 헤더 배경이 `bg-background/80` 이라 음수 z
+            는 그 흰 면 **뒤로** 가고, 80% 에 가려 빛이 거의 남지 않는다. 대신
+            그리는 순서로 해결한다 — 덩어리를 먼저 두고 내용에 `relative` 를
+            줘서 글자가 위에 온다. 글자 위로 올라가면 대비를 갉아먹는데 메뉴
+            글자는 흰 종이 위 5.61:1 이라 여유가 1.11 뿐이다. */}
+        <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+          <div className="liquid-blob liquid-blob-head-1" />
+          <div className="liquid-blob liquid-blob-head-2" />
+        </div>
         <div
-          className={`container mx-auto flex items-center justify-between px-4 transition-[height] duration-300 ${
+          className={`container relative mx-auto flex items-center justify-between px-4 transition-[height] duration-300 ${
             scrolled ? "h-14" : "h-16"
           }`}
         >
