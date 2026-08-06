@@ -30,6 +30,22 @@ snap으로 격리된 환경(이 저장소를 검증한 머신이 그랬다)에�
 | `E2E_STUDENT_EMAIL` · `E2E_STUDENT_PASSWORD` | 학생 구간 건너뜀 |
 | `E2E_ADMIN_EMAIL` · `E2E_ADMIN_PASSWORD` | C 등급 가드·드래그 구간 건너뜀 |
 
+프리뷰(seeds.harvester.kr)에서 쓰는 실제 값은 `~/.secrets/seeds-preview.env` 에 있다
+(600, git 미추적). `ops/verify.sh` 가 그 파일을 source 해서 위 변수로 넘긴다.
+
+손으로 둘러볼 때 쓰는 계정도 같은 파일에 있다.
+
+| 이름 | 변수 | 무엇 |
+|---|---|---|
+| 운영진 | `ADMIN_EMAIL` · `ADMIN_PASSWORD` | 부트스트랩 어드민 |
+| 일반 사용자 | `TEST_STUDENT_EMAIL` · `TEST_STUDENT_PASSWORD` | 학생 시점. `/student/login` 으로 들어간다 |
+
+일반 사용자 계정은 **직접 INSERT 하지 않고** 제품의 실제 경로로 만들었다 —
+공개 지원서 제출 → `PATCH /admin/applications/:id/final-decision` 로 합격 →
+`POST /admin/applications/:id/convert-to-student`. 그래야 `users` 와 `students`
+두 행이 짝으로 생긴다(`POST /admin/users` 는 `users` 만 만들어서, 그걸로 만든
+학생은 모든 화면이 빈다). 만든 뒤 코호트와 프로젝트에 붙여야 화면에 내용이 찬다.
+
 ## 검사 항목
 
 | 구간 | 확인하는 것 |
