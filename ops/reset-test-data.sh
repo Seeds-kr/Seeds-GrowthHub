@@ -7,7 +7,7 @@
 #
 # 남기는 것:
 #   - 실존 멘토 프로필 9명 (`people_profiles.kind='mentor'`) — 공개 사이트가 쓴다
-#   - 운영 계정 `admin@seeds.local`
+#   - 아래 KEEP 목록의 계정 (운영진·멘토·학생 각 하나)
 #   - 기수·프로그램 등 구조 데이터
 #
 # 지우는 것:
@@ -19,16 +19,28 @@
 # 되돌릴 수 없다. 먼저 백업하고, 무엇이 지워지는지 보여준 뒤 확인을 받는다.
 set -euo pipefail
 
+# 손으로 둘러볼 때 쓰는 계정. 아래 삭제 규칙(`%test%`)에 그대로 걸리므로
+# 명시적으로 빼 준다. 여기서 빼지 않으면 학생·멘토 계정이 같이 날아가고,
+# 그러면 e2e 의 학생·멘토 축이 통째로 BLOCK 이 된다.
+KEEP_EMAILS=(
+  admin@seeds.local        # 부트스트랩 운영진
+  test-mentor@seeds.local  # 멘토(= 평가위원)
+  test@seeds.local         # 학생
+)
+# ('a'),('b') 꼴로 만들어 SQL 에 넣는다.
+KEEP_SQL="$(printf "('%s')," "${KEEP_EMAILS[@]}" | sed 's/,$//')"
+
 CONTAINER=seeds_growthhub_pg
 PSQL=(docker exec -i "$CONTAINER" psql -U growthhub -d growthhub)
 
 echo "── 지워질 것 ──────────────────────────────────────────────"
-"${PSQL[@]}" -tAF' | ' <<'SQL'
+"${PSQL[@]}" -tAF' | ' <<SQL
 SELECT '테스트 계정', count(*)::text FROM users
-  WHERE email ~ '^(smoke|legacy)-'          -- 스모크 테스트 픽스처
-         OR email ~ '^(mentor|student)-z@'   -- 이전 세션의 픽스처
-         OR email ~ '^mentor-(kwangsun|test)' -- 계정 생성 흐름 검증용
-         OR email LIKE '%test%';
+  WHERE (email ~ '^(smoke|legacy)-'           -- 스모크 테스트 픽스처
+          OR email ~ '^(mentor|student)-z@'   -- 이전 세션의 픽스처
+          OR email ~ '^mentor-(kwangsun|test)' -- 계정 생성 흐름 검증용
+          OR email LIKE '%test%')
+     AND email NOT IN (VALUES ${KEEP_SQL});
 SELECT '주행 지원서', count(*)::text FROM applications WHERE email LIKE 'story%@example.com';
 SELECT '주행 공지', count(*)::text FROM announcements WHERE title LIKE '주행%';
 SELECT '주행 과제', count(*)::text FROM assignments WHERE title LIKE '주행%' OR title LIKE '초안 예시%';
@@ -39,9 +51,9 @@ SQL
 
 echo
 echo "── 남을 것 ────────────────────────────────────────────────"
-"${PSQL[@]}" -tAF' | ' <<'SQL'
+"${PSQL[@]}" -tAF' | ' <<SQL
 SELECT '실존 멘토 프로필', count(*)::text FROM people_profiles WHERE kind='mentor';
-SELECT '운영 계정', email FROM users WHERE email='admin@seeds.local';
+SELECT '남길 계정', email FROM users WHERE email IN (VALUES ${KEEP_SQL}) ORDER BY email;
 SELECT '기수', count(*)::text FROM cohorts;
 SQL
 
@@ -53,7 +65,7 @@ echo "백업 먼저…"
 /home/harvester/seeds-preview/backup.sh
 
 # 자식 → 부모 순서로 지운다. FK 때문에 순서가 틀리면 중간에 멈춘다.
-"${PSQL[@]}" <<'SQL'
+"${PSQL[@]}" -v ON_ERROR_STOP=1 <<SQL
 BEGIN;
 
 DELETE FROM evaluations            WHERE comment LIKE '주행%';
@@ -73,10 +85,11 @@ DELETE FROM applications           WHERE email LIKE 'story%@example.com';
 
 -- 테스트 계정. 학생·멘토로 물려 있는 것을 먼저 끊는다.
 CREATE TEMP TABLE _junk AS
-  SELECT id FROM users WHERE email ~ '^(smoke|legacy)-'          -- 스모크 테스트 픽스처
-         OR email ~ '^(mentor|student)-z@'   -- 이전 세션의 픽스처
-         OR email ~ '^mentor-(kwangsun|test)' -- 계정 생성 흐름 검증용
-         OR email LIKE '%test%';
+  SELECT id FROM users WHERE (email ~ '^(smoke|legacy)-'           -- 스모크 테스트 픽스처
+          OR email ~ '^(mentor|student)-z@'   -- 이전 세션의 픽스처
+          OR email ~ '^mentor-(kwangsun|test)' -- 계정 생성 흐름 검증용
+          OR email LIKE '%test%')
+     AND email NOT IN (VALUES ${KEEP_SQL});
 
 DELETE FROM project_mentors        WHERE mentor_user_id IN (SELECT id FROM _junk);
 DELETE FROM evaluation_assignments WHERE evaluator_id  IN (SELECT id FROM _junk);
@@ -100,5 +113,6 @@ UNION ALL SELECT '지원서', count(*)::text FROM applications
 UNION ALL SELECT '멘토 프로필', count(*)::text FROM people_profiles WHERE kind='mentor'
 ORDER BY 1;"
 echo
-echo "주의: 테스트 계정을 지우면 e2e/stories.mjs 의 멘토·학생 축이 BLOCK 으로 떨어진다."
-echo "      실제 계정으로 다시 돌리려면 환경변수를 바꿔 주면 된다."
+echo "주의 하나: 평가 배정은 지워진 픽스처 멘토(smoke-mentor)의 것이었으므로 0이 된다."
+echo "          /evaluator 가 비지 않으려면 남긴 멘토에게 다시 배정해야 한다:"
+echo "            POST /admin/applications/:id/assignments  {\"evaluatorId\": <멘토 user id>}"

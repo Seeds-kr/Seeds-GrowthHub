@@ -96,7 +96,10 @@ async function expect404(page, path) {
   const is404 = /404|찾을 수 없|없는 페이지|not found|존재하지 않|담당하지 않는|접근 권한/i.test(body);
   // 404 문구 안에 "접근 권한이 없는 자료입니다" 가 들어 있어서, 순진한
   // "권한이 없" 매칭은 정상 404 를 403 으로 오인한다. 404 가 아닐 때만 본다.
-  const is403 = !is404 && /403|forbidden|권한이 없습니다|권한 없음/i.test(body);
+  // 숫자 403 은 **단어 경계로 묶는다.** 안 묶으면 주행이 만드는 제목의
+  // 타임스탬프에 걸린다 — `주행 공지 1786016403562` 안에 403 이 들어 있어서
+  // 학생 대시보드가 통째로 "403 노출" 로 찍혔다. 앞뒤가 숫자면 \b 가 막는다.
+  const is403 = !is404 && /\b403\b|forbidden|권한이 없습니다|권한 없음/i.test(body);
   return { is404, is403, status: res?.status(), body: body.replace(/\s+/g, " ").slice(0, 120) };
 }
 
@@ -493,10 +496,25 @@ console.log("\n── 멘토 ─────────────────
 
   await story("M4", "담당이 아닌 팀에 접근한다", async () => {
     need();
-    const r = await expect404(p, "/mentor/projects/2");
+    // 전에는 `/mentor/projects/2` 를 "내 팀 아님" 으로 박아 뒀다. 픽스처 멘토가
+    // 1번 팀 담당이던 시절의 가정이라, 담당 계정을 바꾸자마자 2번이 **자기 팀**이
+    // 되어 이 검사가 통과할 수 없게 됐다. 제품이 아니라 이 줄이 틀렸다.
+    // 내 팀 목록을 읽어 거기 없는 번호를 고른다.
+    await p.goto(BASE + "/mentor/teams", { waitUntil: "networkidle" });
+    await p.waitForTimeout(900);
+    const mine = new Set(
+      (await p.locator('a[href^="/mentor/projects/"]').evaluateAll((as) =>
+        as.map((a) => a.getAttribute("href")),
+      )).map((h) => Number(String(h).split("/").pop())),
+    );
+    let target = 1;
+    while (mine.has(target)) target += 1;
+    if (target > 50) throw new Error("담당 아닌 팀 번호를 못 찾음");
+
+    const r = await expect404(p, `/mentor/projects/${target}`);
     if (r.is403) throw new Error(`403 이 노출됨: ${r.body}`);
-    if (!r.is404) throw new Error(`차단되지 않음. 본문="${r.body}"`);
-    return "담당 아닌 팀 → 404";
+    if (!r.is404) throw new Error(`차단되지 않음(project ${target}). 본문="${r.body}"`);
+    return `담당 아닌 팀(${target}) → 404`;
   });
 
   await c.close();

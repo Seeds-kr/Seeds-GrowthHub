@@ -17,11 +17,12 @@ set -a; . "$HOME/.secrets/seeds-preview.env"; set +a
 export E2E_BASE_URL=https://seeds.harvester.kr
 export E2E_ADMIN_EMAIL="$ADMIN_EMAIL"
 export E2E_ADMIN_PASSWORD="$ADMIN_PASSWORD"
-# 픽스처 계정. ops/reset-test-data.sh 를 돌린 뒤에는 실제 계정으로 바꿔야 한다.
-export E2E_MENTOR_EMAIL="${E2E_MENTOR_EMAIL:-smoke-mentor@seeds.local}"
-export E2E_MENTOR_PASSWORD="${E2E_MENTOR_PASSWORD:-Story!2026test}"
-export E2E_STUDENT_EMAIL="${E2E_STUDENT_EMAIL:-smoke-student@seeds.local}"
-export E2E_STUDENT_PASSWORD="${E2E_STUDENT_PASSWORD:-Story!2026test}"
+# 2026-08-06: reset-test-data.sh 를 돌려 smoke-* 픽스처를 지웠다. 이제 남긴
+# 계정 셋으로 돈다(운영진·멘토·학생). 값은 같은 파일에 있다.
+export E2E_MENTOR_EMAIL="${TEST_MENTOR_EMAIL:?~/.secrets/seeds-preview.env 에 없음}"
+export E2E_MENTOR_PASSWORD="${TEST_MENTOR_PASSWORD:?}"
+export E2E_STUDENT_EMAIL="${TEST_STUDENT_EMAIL:?}"
+export E2E_STUDENT_PASSWORD="${TEST_STUDENT_PASSWORD:?}"
 
 cd "$REPO/e2e"
 fail=0
