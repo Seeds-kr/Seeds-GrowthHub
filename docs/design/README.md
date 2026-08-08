@@ -18,6 +18,7 @@
 | 03 | [03-growth-evidence.md](03-growth-evidence.md) | 상태체크·마일스톤·스터디·회고 | visibility-policy |
 | 04 | [04-core-infra.md](04-core-infra.md) | 감사로그·외부링크·첨부·발송이력 | 01 |
 | 05 | [05-product-experience.md](05-product-experience.md) | **UX 축** — 편집 경험·회의록 템플릿·알림·반응형 | 04(이미지 업로드만) |
+| 06 | [06-team-meeting-notes.md](06-team-meeting-notes.md) | **팀 회의록** · 팀 참고링크 — 학생이 쓰는 첫 협업 문서 | visibility-policy · 03 |
 
 **00은 전경, 01~05는 실행 명세다.** 00이 "무엇이 될 것인가"를, 01~05가 "어떻게 만드는가"를 담는다.
 

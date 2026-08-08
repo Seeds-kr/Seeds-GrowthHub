@@ -37,3 +37,4 @@ export * from "./attachments";
 export * from "./external-links";
 export * from "./studies";
 export * from "./reflections";
+export * from "./team-meetings";

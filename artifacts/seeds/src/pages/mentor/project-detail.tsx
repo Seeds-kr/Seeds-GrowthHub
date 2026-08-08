@@ -28,6 +28,8 @@ import {
   type MentorProjectDetail,
   type TeamStatus,
 } from "@/lib/mentor-api";
+import { TeamMeetings } from "@/components/team/TeamMeetings";
+import { TeamLinks } from "@/components/team/TeamLinks";
 
 const MILESTONE_LABEL: Record<string, string> = {
   planned: "예정",
@@ -610,6 +612,10 @@ export default function MentorProjectDetailPage() {
             ) : null}
           </CardContent>
         </Card>
+      </div>
+      <div className="mt-4 grid gap-4">
+        <TeamMeetings viewer="mentor" ownerType="project" ownerId={id} />
+        <TeamLinks viewer="mentor" ownerType="project" ownerId={id} />
       </div>
     </>
   );

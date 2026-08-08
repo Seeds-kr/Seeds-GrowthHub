@@ -720,6 +720,105 @@ console.log("\n── 학생 ─────────────────
     return `저장 확인, 공개 범위=${scope}`;
   });
 
+  await story("S7", "팀 회의록을 쓰고, 남의 팀 것은 못 본다", async () => {
+    need();
+    // 설계 06. 학생이 쓸 수 있는 세 번째 것이다(회고·과제 제출에 이어).
+    // 경계가 이 스토리의 절반이다 — 쓰는 것만 확인하면 "남의 팀 것도 보인다"를
+    // 놓친다. 팀 회의록은 종종 "이게 잘 안 된다"를 담으므로 새면 곤란하다.
+    const api = async (path, init = {}) =>
+      p.request.fetch(BASE + "/api" + path, { timeout: 15000, ...init });
+
+    const mine = await api("/student/team-meetings");
+    if (!mine.ok()) throw new Error(`내 회의록 목록 ${mine.status()}`);
+    const teams = (await mine.json()).items;
+
+    const projects = await api("/student/projects");
+    const projectId = projects.ok() ? (await projects.json()).items?.[0]?.id : null;
+    if (!projectId) throw blocked("소속 프로젝트가 없음");
+
+    const title = `주행 회의록 ${Date.now()}`;
+    const made = await api("/student/team-meetings", {
+      method: "POST",
+      data: {
+        ownerType: "project",
+        ownerId: projectId,
+        title,
+        contentMd: "## 정한 것\n- 주행 확인용",
+      },
+    });
+    if (made.status() !== 201) throw new Error(`작성 ${made.status()} ${await made.text()}`);
+    const id = (await made.json()).id;
+
+    try {
+      // 다시 읽히는가 — 저장됐다는 응답만으로는 부족하다.
+      const back = await api(`/student/team-meetings/${id}`);
+      if (!back.ok()) throw new Error(`재조회 ${back.status()}`);
+      if ((await back.json()).title !== title) throw new Error("제목이 다르게 저장됨");
+
+      // 없는 팀에 쓰려 하면 막히는가.
+      const ghost = await api("/student/team-meetings", {
+        method: "POST",
+        data: { ownerType: "project", ownerId: 999999, title: "주행 유령팀" },
+      });
+      if (ghost.status() !== 422 && ghost.status() !== 404) {
+        throw new Error(`없는 팀에 작성이 ${ghost.status()} 로 통과됨`);
+      }
+
+      // 운영진 회의록으로는 절대 넘어가지 않는다 (ADR-009).
+      const ops = await api("/admin/meetings");
+      if (ops.ok()) throw new Error(`학생이 운영진 회의록을 읽음 (${ops.status()})`);
+
+      return `작성·재조회 확인 · 기존 ${teams.length}건 → ${teams.length + 1}건 · 운영진 회의록 ${ops.status()}`;
+    } finally {
+      await api(`/student/team-meetings/${id}`, { method: "DELETE" }).catch(() => {});
+    }
+  });
+
+  await story("S8", "팀 드라이브 링크를 건다", async () => {
+    need();
+    const api = async (path, init = {}) =>
+      p.request.fetch(BASE + "/api" + path, { timeout: 15000, ...init });
+
+    const projects = await api("/student/projects");
+    const projectId = projects.ok() ? (await projects.json()).items?.[0]?.id : null;
+    if (!projectId) throw blocked("소속 프로젝트가 없음");
+
+    const made = await api("/student/external-links", {
+      method: "POST",
+      data: {
+        ownerType: "project",
+        ownerId: projectId,
+        title: "주행 팀 드라이브",
+        url: "https://drive.google.com/drive/folders/e2e",
+        linkType: "drive",
+      },
+    });
+    if (made.status() !== 201) throw new Error(`링크 추가 ${made.status()} ${await made.text()}`);
+    const id = (await made.json()).id;
+
+    try {
+      // 학생이 고를 수 없어야 하는 것들. 서버가 막지 않으면 화면만 막은 셈이다.
+      const adminOnly = await api("/student/external-links", {
+        method: "POST",
+        data: { ownerType: "project", ownerId: projectId, title: "x", url: "https://a.kr", visibility: "admin_only" },
+      });
+      if (adminOnly.ok()) throw new Error("학생이 admin_only 를 골랐는데 통과됨");
+
+      const js = await api("/student/external-links", {
+        method: "POST",
+        data: { ownerType: "project", ownerId: projectId, title: "x", url: "javascript:alert(1)" },
+      });
+      if (js.ok()) throw new Error("javascript: URL 이 통과됨");
+
+      const back = await api("/student/external-links");
+      const found = (await back.json()).items.some((l) => l.id === id);
+      if (!found) throw new Error("건 링크가 목록에 없음");
+      return `drive 링크 왕복 확인 · admin_only ${adminOnly.status()} · javascript: ${js.status()}`;
+    } finally {
+      await api(`/student/external-links/${id}`, { method: "DELETE" }).catch(() => {});
+    }
+  });
+
   await story("S5", "내 출석 현황을 본다", async () => {
     need();
     await p.goto(BASE + "/student/attendance", { waitUntil: "networkidle" });

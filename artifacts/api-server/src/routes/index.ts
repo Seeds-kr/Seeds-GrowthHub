@@ -40,6 +40,7 @@ import externalLinksRouter from "./external-links";
 import adminAttendanceRouter from "./admin-attendance";
 import adminStudiesRouter from "./admin-studies";
 import studentGrowthRouter from "./student-growth";
+import teamMeetingsRouter from "./team-meetings";
 
 const router: IRouter = Router();
 
@@ -84,5 +85,6 @@ router.use(externalLinksRouter);
 router.use(adminAttendanceRouter);
 router.use(adminStudiesRouter);
 router.use(studentGrowthRouter);
+router.use(teamMeetingsRouter);
 
 export default router;
