@@ -4,6 +4,7 @@ import { motion, useMotionValueEvent, useReducedMotion, useScroll } from "framer
 import { Button } from "@/components/ui/button";
 import { MobileNav } from "./MobileNav";
 import { Magnetic } from "@/lib/motion";
+import { BrandMark } from "@/components/BrandMark";
 
 export function PublicLayout({ children }: { children: ReactNode }) {
   const [location] = useLocation();
@@ -42,7 +43,8 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             scrolled ? "h-14" : "h-16"
           }`}
         >
-          <Link href="/" className="font-serif text-xl font-bold tracking-tight text-primary">
+          <Link href="/" className="flex items-center gap-2 font-serif text-xl font-bold tracking-tight text-primary">
+            <BrandMark size={28} />
             Seeds
           </Link>
           <nav className="hidden items-center gap-8 md:flex">

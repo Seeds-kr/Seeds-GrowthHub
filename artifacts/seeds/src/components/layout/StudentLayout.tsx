@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { RoleSwitcher, effectiveRoles, pickRedirectFor } from "./RoleSwitcher";
 import { MobileNav } from "./MobileNav";
+import { BrandMark } from "@/components/BrandMark";
 
 /** 데스크톱 헤더와 모바일 드로어가 같은 목록을 쓴다 — 갈라지면 폰에서만
  *  빠지는 메뉴가 생긴다. */
@@ -69,7 +70,7 @@ export function StudentLayout({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-50 w-full border-b border-border bg-card">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
-            <Link href="/student" className="font-serif text-lg font-bold text-primary">Seeds 학생</Link>
+            <Link href="/student" className="flex items-center gap-2 font-serif text-lg font-bold text-primary"><BrandMark size={24} />Seeds 학생</Link>
             {/* lg 기준이다. 13개를 768px에 한 줄로 넣으면 눌러지지 않을 만큼
                 좁아져서, 그 구간은 MobileNav가 맡는다. */}
             <nav className="hidden lg:flex items-center gap-6">

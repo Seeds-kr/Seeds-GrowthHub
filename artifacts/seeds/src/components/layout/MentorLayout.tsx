@@ -7,6 +7,7 @@ import { getAdminMeQueryKey } from "@workspace/api-client-react";
 import { Loader2 } from "lucide-react";
 import { RoleSwitcher, effectiveRoles, pickRedirectFor } from "./RoleSwitcher";
 import { MobileNav } from "./MobileNav";
+import { BrandMark } from "@/components/BrandMark";
 
 /** 데스크톱 헤더와 모바일 드로어가 같은 목록을 쓴다. */
 const MENTOR_NAV = [
@@ -62,7 +63,7 @@ export function MentorLayout({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-50 w-full border-b border-border bg-card">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
-            <Link href="/mentor" className="font-serif text-lg font-bold text-primary">Seeds 멘토</Link>
+            <Link href="/mentor" className="flex items-center gap-2 font-serif text-lg font-bold text-primary"><BrandMark size={24} />Seeds 멘토</Link>
             <nav className="hidden md:flex items-center gap-6">
               {MENTOR_NAV.map((item) => (
                 <Link

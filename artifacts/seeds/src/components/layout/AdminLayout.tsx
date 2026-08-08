@@ -15,6 +15,7 @@ import {
 import { RoleSwitcher, effectiveRoles, pickRedirectFor } from "./RoleSwitcher";
 import { visibleNavSections, type NavSection } from "@/lib/admin-nav";
 import { motion, useReducedMotion } from "framer-motion";
+import { BrandMark } from "@/components/BrandMark";
 
 function isActive(currentPath: string, href: string): boolean {
   if (href === "/admin") return currentPath === "/admin";
@@ -269,7 +270,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
           />
           <aside className="relative flex flex-col w-72 max-w-[85vw] bg-card border-r border-border">
             <div className="h-14 px-4 flex items-center justify-between border-b border-border">
-              <span className="text-base font-bold text-primary">Seeds Admin</span>
+              <span className="flex items-center gap-2 text-base font-bold text-primary"><BrandMark size={22} />Seeds Admin</span>
               <button
                 onClick={() => setMobileOpen(false)}
                 className="p-2 -mr-2"

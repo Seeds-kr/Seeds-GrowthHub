@@ -5,6 +5,7 @@ import {
   text,
   timestamp,
   index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { usersTable } from "./users";
 
@@ -58,6 +59,20 @@ export const teamMeetingsTable = pgTable(
     metAt: timestamp("met_at", { withTimezone: true }).notNull().defaultNow(),
     contentMd: text("content_md").notNull().default(""),
     /**
+     * Team-local labels ("정기", "기획", "긴급"). A plain array, not a table.
+     *
+     * `skill_tags` exists but is NOT reused: it is the (still provisional)
+     * competency taxonomy shared across the club, and design 00 §8 keeps its
+     * final shape open. Meeting labels are the opposite kind of thing — a team
+     * invents them for itself, they mean nothing outside that team, and nobody
+     * should be tempted to aggregate across them. Mixing the two would quietly
+     * turn "우리 팀이 붙인 이름"으로 역량을 집계할 수 있게 만든다.
+     *
+     * `people_profiles.tags` already uses this shape, so it is the established
+     * pattern for free-form labels here.
+     */
+    tags: text("tags").array().notNull().$type<string[]>().default([]),
+    /**
      * Who first wrote it. Kept even after others edit, so "whose note is this"
      * survives. SET NULL rather than CASCADE: losing the account must not
      * delete the team's record of what they decided.
@@ -92,3 +107,46 @@ export const teamMeetingsTable = pgTable(
 
 export type TeamMeeting = typeof teamMeetingsTable.$inferSelect;
 export type InsertTeamMeeting = typeof teamMeetingsTable.$inferInsert;
+
+/**
+ * Who was in the room.
+ *
+ * A join table rather than a `text[]` of names (which is what `tags` gets):
+ * participants are real accounts we already have, and a table is what makes
+ * "회의에 안 들어온 사람" filterable and keeps a renamed user from stranding a
+ * stale string. Cascade on delete of the meeting; the user FK cascades too —
+ * unlike `authorId`, a participant row carries no content worth keeping once
+ * the account is gone.
+ *
+ * `userId` (not `studentId`) because an assigned mentor may sit in on a team
+ * meeting, and mentors have no `students` row.
+ */
+export const teamMeetingParticipantsTable = pgTable(
+  "team_meeting_participants",
+  {
+    id: serial("id").primaryKey(),
+    meetingId: integer("meeting_id")
+      .notNull()
+      .references(() => teamMeetingsTable.id, { onDelete: "cascade" }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => usersTable.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    // Same person twice in one meeting is meaningless; let the DB say so
+    // rather than relying on every writer to dedupe.
+    unq: uniqueIndex("team_meeting_participants_unique").on(
+      t.meetingId,
+      t.userId,
+    ),
+    byUser: index("team_meeting_participants_user_idx").on(t.userId),
+  }),
+);
+
+export type TeamMeetingParticipant =
+  typeof teamMeetingParticipantsTable.$inferSelect;
+export type InsertTeamMeetingParticipant =
+  typeof teamMeetingParticipantsTable.$inferInsert;

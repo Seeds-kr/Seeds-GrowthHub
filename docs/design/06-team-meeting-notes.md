@@ -96,6 +96,9 @@ erDiagram
     studies  ||--o{ team_meetings : "owner_type='study'"
     users    ||--o{ team_meetings : "author · last_editor"
 
+    team_meetings ||--o{ team_meeting_participants : "누가 들어왔나"
+    users ||--o{ team_meeting_participants : ""
+
     team_meetings {
         int id PK
         text owner_type "project|study"
@@ -103,12 +106,23 @@ erDiagram
         text title
         timestamptz met_at "언제 모였나"
         text content_md "source of truth"
+        text_array tags "팀 로컬 라벨"
         int author_id "최초 작성자"
         int last_edited_by "마지막 수정자"
         timestamptz created_at
         timestamptz updated_at
     }
+    team_meeting_participants {
+        int meeting_id FK
+        int user_id FK "학생·멘토 모두"
+    }
 ```
+
+**참여자는 테이블, 태그는 배열이다.** 갈린 이유가 있다. 참여자는 **이미 있는 계정**을 가리키므로 조인이 되고, "이 사람이 안 들어온 회의"를 물을 수 있고, 이름이 바뀌어도 따라온다. 태그는 팀이 그때그때 지어내는 **문자열**이라 테이블로 만들면 빈 껍데기 행만 쌓인다.
+
+`user_id`로 두는 이유는 담당 멘토도 팀 회의에 들어오기 때문이다. 멘토에게는 `students` 행이 없다.
+
+**`skill_tags`를 재사용하지 않는다.** 그건 동아리 전체가 공유하는 (아직 잠정인) 역량 분류이고 [00 §8](00-target-state.md)이 최종 형태를 열어뒀다. 팀 회의록 태그는 정반대다 — 팀이 자기를 위해 지어내고, 팀 밖에서는 뜻이 없고, **가로질러 집계되면 안 된다.** 섞으면 "우리 팀이 붙인 이름"으로 역량을 집계할 수 있게 된다. `people_profiles.tags`가 이미 같은 모양(`text[]`)을 쓴다.
 
 **`owner_type` + `owner_id` 폴리모픽인 이유.** `project_id`/`study_id` 두 nullable 컬럼을 두면 "둘 다 채워진 행"과 "둘 다 빈 행"이 가능해진다. 이 리포는 이미 `attachments`·`external_links`에서 폴리모픽 + `linkTargetExists()` 검증 패턴을 쓰고 있다. 같은 패턴을 따른다 — DB FK 대신 **쓰기 시점에 부모 존재를 확인**한다.
 
@@ -151,17 +165,23 @@ erDiagram
 
 ```text
 학생 (requireStudent + 멤버십 확인)
-  GET    /student/team-meetings?ownerType=project&ownerId=:id
+  GET    /student/team-meetings?ownerType=&ownerId=&page=&pageSize=&tag=&participantId=
+  GET    /student/team-meetings/:id          ← 본문은 여기서만
   POST   /student/team-meetings
   PATCH  /student/team-meetings/:id
   DELETE /student/team-meetings/:id
+  GET    /student/team-meetings/meta?ownerType=&ownerId=   태그 목록 · 참여자 후보
 
 멘토 (requireMentor + getMentorProjectIds)
-  GET    /mentor/team-meetings?projectId=:id
+  GET    /mentor/team-meetings?projectId=:id&page=&...
 
 운영진 (requireAdmin)
-  GET    /admin/team-meetings?ownerType=&ownerId=
+  GET    /admin/team-meetings?ownerType=&ownerId=&page=&...
 ```
+
+**목록은 본문(`contentMd`)을 싣지 않는다.** 회의록 한 편은 길다 — 20편이 쌓인 팀의 목록에 본문을 다 실으면 응답이 수백 KB가 되고, 화면은 어차피 제목만 보여준다. 본문은 펼칠 때 상세로 한 건만 가져온다.
+
+**페이지네이션은 목록의 성격이 바뀌어서 필요하다.** 처음에는 카드에 전부 펼쳐 놓았는데, 열 편만 쌓여도 스크롤이 감당이 안 됐다. 제목만 보여주기로 바꾸면서 같은 화면에 훨씬 많이 들어가므로, 끊어 주는 쪽이 맞다.
 
 **미들웨어 통과 후 핸들러에서 소유권을 다시 확인한다.** `evaluator` 표면이 쓰는 패턴이고, [`gap-register.md`](../gap-register.md) §4가 "미들웨어 통과 후 재확인 패턴이 신규 변경 시 누락될 수 있다"고 경고한 자리다. 라우트가 `requireStudent`를 통과했다는 것은 "학생이다"까지만 말해주지 "이 팀 사람이다"를 말해주지 않는다.
 
@@ -200,7 +220,8 @@ DELETE /student/external-links/:id  자기 팀 것만
 | 표면 | 무엇 |
 |---|---|
 | `/student/projects/:id` · `/student/studies/:id` | 회의록 목록 + 새로 쓰기 · 참고링크 목록 + 추가 |
-| `/student/team-meetings/:id` | 회의록 상세 · `MarkdownEditor`로 편집 |
+| 목록 | **제목 · 날짜 · 참여자 · 태그만.** 클릭하면 그 한 건만 펼쳐 본문을 가져온다 |
+| 필터 | 태그 · 참여자로 좁히기. 페이지당 10건 |
 | `/mentor/projects/:id` | 담당 팀 회의록 (읽기) |
 | `/admin/projects/:id` · `/admin/studies` | 회의록 (읽기) |
 

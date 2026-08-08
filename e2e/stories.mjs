@@ -730,7 +730,17 @@ console.log("\n── 학생 ─────────────────
 
     const mine = await api("/student/team-meetings");
     if (!mine.ok()) throw new Error(`내 회의록 목록 ${mine.status()}`);
-    const teams = (await mine.json()).items;
+    const page = await mine.json();
+    const teams = page.items;
+
+    // 목록은 본문을 싣지 않는다(설계 06 §6). 이게 무너지면 회의록이 쌓일수록
+    // 목록 응답이 무거워지는데, 화면은 제목만 그리므로 아무도 눈치채지 못한다.
+    if (teams.some((m) => "contentMd" in m)) {
+      throw new Error("목록 응답에 contentMd 가 실렸다");
+    }
+    for (const f of ["total", "page", "pageSize", "totalPages"]) {
+      if (!(f in page)) throw new Error(`페이지 정보 ${f} 없음`);
+    }
 
     const projects = await api("/student/projects");
     const projectId = projects.ok() ? (await projects.json()).items?.[0]?.id : null;
@@ -764,11 +774,41 @@ console.log("\n── 학생 ─────────────────
         throw new Error(`없는 팀에 작성이 ${ghost.status()} 로 통과됨`);
       }
 
+      // 참여자·태그. 팀 밖 사람을 참여자로 넣는 것은 막혀야 한다 — 회의록이
+      // "이 사람이 참석했다"를 임의로 주장하는 수단이 되면 안 된다.
+      const meta = await api(`/student/team-meetings/meta?ownerType=project&ownerId=${projectId}`);
+      if (!meta.ok()) throw new Error(`meta ${meta.status()}`);
+      const roster = (await meta.json()).roster;
+      if (!roster.length) throw new Error("팀 명단이 비어 있음");
+
+      const tagged = await api(`/student/team-meetings/${id}`, {
+        method: "PATCH",
+        data: { tags: ["주행", "", "주행"], participantUserIds: [roster[0].id] },
+      });
+      if (!tagged.ok()) throw new Error(`태그·참여자 저장 ${tagged.status()}`);
+      const t = await tagged.json();
+      // 빈 태그가 저장을 통째로 막으면 안 되고, 중복은 접혀야 한다.
+      if (t.tags.length !== 1 || t.tags[0] !== "주행") {
+        throw new Error(`태그 정리 실패: ${JSON.stringify(t.tags)}`);
+      }
+      if (t.participants.length !== 1) throw new Error("참여자 저장 실패");
+
+      const stranger = await api("/student/team-meetings", {
+        method: "POST",
+        data: {
+          ownerType: "project",
+          ownerId: projectId,
+          title: "주행 침입",
+          participantUserIds: [999999],
+        },
+      });
+      if (stranger.ok()) throw new Error("팀 밖 사람을 참여자로 넣었는데 통과됨");
+
       // 운영진 회의록으로는 절대 넘어가지 않는다 (ADR-009).
       const ops = await api("/admin/meetings");
       if (ops.ok()) throw new Error(`학생이 운영진 회의록을 읽음 (${ops.status()})`);
 
-      return `작성·재조회 확인 · 기존 ${teams.length}건 → ${teams.length + 1}건 · 운영진 회의록 ${ops.status()}`;
+      return `작성·재조회·태그·참여자 확인 · 목록 ${teams.length}건 · 외부인 ${stranger.status()} · 운영진 회의록 ${ops.status()}`;
     } finally {
       await api(`/student/team-meetings/${id}`, { method: "DELETE" }).catch(() => {});
     }

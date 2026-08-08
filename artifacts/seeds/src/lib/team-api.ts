@@ -4,19 +4,44 @@ import { api } from "@/lib/mvp3-api";
 
 export type TeamOwnerType = "project" | "study";
 
+export type TeamPerson = { id: number; name: string };
+export type RosterEntry = TeamPerson & { kind: "student" | "mentor" };
+
+/**
+ * List rows carry NO `contentMd` — the server does not send it (design 06 §6).
+ * Bodies arrive from `getTeamMeeting` when a row is expanded, which is why
+ * `contentMd` is optional on this type rather than a separate one: the list row
+ * and the detail are the same meeting, just fetched at different depths.
+ */
 export type TeamMeeting = {
   id: number;
   ownerType: TeamOwnerType;
   ownerId: number;
   title: string;
   metAt: string;
-  contentMd: string;
+  contentMd?: string;
+  tags: string[];
+  participants: TeamPerson[];
   authorId: number | null;
   lastEditedBy: number | null;
   authorName: string | null;
-  ownerTitle?: string | null;
   createdAt: string;
   updatedAt: string;
+};
+
+export type TeamMeetingPage = {
+  items: TeamMeeting[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
+export type TeamMeetingFilters = {
+  page?: number;
+  pageSize?: number;
+  tag?: string;
+  participantId?: number;
 };
 
 export type TeamLink = {
@@ -38,27 +63,51 @@ export type TeamLink = {
  */
 export type TeamViewer = "student" | "mentor" | "admin";
 
-export function teamMeetingsPath(
-  viewer: TeamViewer,
-  ownerType: TeamOwnerType,
-  ownerId: number,
-): string {
-  if (viewer === "mentor") return `/mentor/team-meetings?projectId=${ownerId}`;
-  const q = `ownerType=${ownerType}&ownerId=${ownerId}`;
-  return viewer === "admin"
-    ? `/admin/team-meetings?${q}`
-    : `/student/team-meetings?${q}`;
+/** The base path for `viewer`. Mentors have their own route; ops another. */
+function base(viewer: TeamViewer): string {
+  return viewer === "mentor"
+    ? "/mentor/team-meetings"
+    : viewer === "admin"
+      ? "/admin/team-meetings"
+      : "/student/team-meetings";
 }
 
 export async function listTeamMeetings(
   viewer: TeamViewer,
   ownerType: TeamOwnerType,
   ownerId: number,
-): Promise<TeamMeeting[]> {
-  const r = await api<{ items: TeamMeeting[] }>(
-    teamMeetingsPath(viewer, ownerType, ownerId),
-  );
-  return r.items;
+  filters: TeamMeetingFilters = {},
+): Promise<TeamMeetingPage> {
+  // URLSearchParams, not string concatenation — a tag like "기획/설계" or one
+  // with a space breaks a hand-built query string, and tags are user-invented.
+  const qs = new URLSearchParams();
+  if (viewer === "mentor") qs.set("projectId", String(ownerId));
+  else {
+    qs.set("ownerType", ownerType);
+    qs.set("ownerId", String(ownerId));
+  }
+  if (filters.page) qs.set("page", String(filters.page));
+  if (filters.pageSize) qs.set("pageSize", String(filters.pageSize));
+  if (filters.tag) qs.set("tag", filters.tag);
+  if (filters.participantId) qs.set("participantId", String(filters.participantId));
+  return api<TeamMeetingPage>(`${base(viewer)}?${qs.toString()}`);
+}
+
+/** One meeting WITH its body. Called when a row is expanded. */
+export async function getTeamMeeting(
+  viewer: TeamViewer,
+  id: number,
+): Promise<TeamMeeting> {
+  return api<TeamMeeting>(`${base(viewer)}/${id}`);
+}
+
+/** Tags already used by this team + who may be named as a participant. */
+export async function getTeamMeetingMeta(
+  ownerType: TeamOwnerType,
+  ownerId: number,
+): Promise<{ tags: string[]; roster: RosterEntry[] }> {
+  const qs = new URLSearchParams({ ownerType, ownerId: String(ownerId) });
+  return api(`/student/team-meetings/meta?${qs.toString()}`);
 }
 
 export async function createTeamMeeting(input: {
@@ -67,6 +116,8 @@ export async function createTeamMeeting(input: {
   title: string;
   metAt?: string;
   contentMd?: string;
+  tags?: string[];
+  participantUserIds?: number[];
 }): Promise<TeamMeeting> {
   return api<TeamMeeting>("/student/team-meetings", {
     method: "POST",
@@ -76,7 +127,13 @@ export async function createTeamMeeting(input: {
 
 export async function updateTeamMeeting(
   id: number,
-  patch: { title?: string; metAt?: string; contentMd?: string },
+  patch: {
+    title?: string;
+    metAt?: string;
+    contentMd?: string;
+    tags?: string[];
+    participantUserIds?: number[];
+  },
 ): Promise<TeamMeeting> {
   return api<TeamMeeting>(`/student/team-meetings/${id}`, {
     method: "PATCH",
