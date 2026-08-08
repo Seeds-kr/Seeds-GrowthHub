@@ -362,6 +362,17 @@ router.post("/mentor/projects/:id/feedback", requireMentor, async (req, res) => 
     res.status(400).json({ error: "Invalid body" });
     return;
   }
+  // `student_visible` with no subject reaches nobody. Every student-side read
+  // of `feedback` — /student/feedback, /student/projects/:id, the report —
+  // filters on `studentId = me`, so a team-wide row marked student_visible is
+  // saved, looks published to the mentor, and is seen by zero people. Silently
+  // writing into a void is worse than refusing.
+  if ((parsed.data.visibility ?? "admin_only") === "student_visible" && !parsed.data.studentId) {
+    res.status(422).json({
+      error: "학생에게 공개하려면 대상 학생을 골라 주세요. 팀 전체에 보이는 피드백은 아직 없습니다.",
+    });
+    return;
+  }
   // targetType/targetId are forced — a mentor cannot attach feedback to an
   // arbitrary object by crafting the body.
   const [row] = await db

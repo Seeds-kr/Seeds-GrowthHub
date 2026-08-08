@@ -264,15 +264,31 @@ function FeedbackForm({
         </Select>
         <Button
           size="sm"
-          disabled={!content.trim() || submit.isPending}
+          disabled={
+            !content.trim() ||
+            submit.isPending ||
+            (visibility === "student_visible" && !studentId)
+          }
           onClick={() => submit.mutate()}
+          data-testid="button-submit-feedback"
         >
           기록
         </Button>
       </div>
-      <p className="text-xs text-muted-foreground">
-        학생 공개를 고르면 해당 학생의 &ldquo;내 피드백&rdquo;에 나타납니다.
-      </p>
+      {/* 대상 없는 "학생 공개"는 아무에게도 안 간다 — 학생 쪽 조회가 전부
+          studentId = 나 로 걸러지기 때문이다. 전에는 그대로 저장돼서, 멘토는
+          보냈다고 믿고 학생은 못 받는 상태가 됐다. 서버도 422 로 막는다. */}
+      {visibility === "student_visible" && !studentId ? (
+        <p className="text-xs text-destructive" data-testid="feedback-needs-student">
+          대상 학생을 골라 주세요. 고르지 않으면 아무에게도 전달되지 않습니다.
+        </p>
+      ) : (
+        <p className="text-xs text-muted-foreground">
+          {visibility === "student_visible"
+            ? "해당 학생의 “내 피드백”에 나타납니다."
+            : "운영진과 멘토만 봅니다. 학생에게는 보이지 않습니다."}
+        </p>
+      )}
     </div>
   );
 }
