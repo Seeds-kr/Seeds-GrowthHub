@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { Readable } from "stream";
 import { and, desc, eq, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import {
@@ -206,7 +207,25 @@ router.get("/attachments/:id/download", requireAdmin, async (req, res) => {
 
   try {
     const file = await objectStorage.getObjectEntityFile(row.objectPath);
-    await objectStorage.downloadObject(file, 0);
+    // downloadObject() RETURNS a web Response — it does not write to `res`.
+    // Dropping it on the floor (as this route used to) leaves the request
+    // hanging until the client gives up, and leaks the read stream it opened.
+    // cacheTtlSec=0: this file is permission-gated, so nothing may cache it.
+    const response = await objectStorage.downloadObject(file, 0);
+    res.status(response.status);
+    response.headers.forEach((value, key) => res.setHeader(key, value));
+    // `inline`, not `attachment` — MarkdownEditor embeds this same URL as an
+    // <img> src, and `attachment` would turn every pasted image into a
+    // download prompt. filename* is RFC 5987 so Korean names survive.
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename*=UTF-8''${encodeURIComponent(row.fileName)}`,
+    );
+    if (response.body) {
+      Readable.fromWeb(response.body as ReadableStream<Uint8Array>).pipe(res);
+    } else {
+      res.end();
+    }
   } catch (err) {
     if (err instanceof ObjectNotFoundError) {
       res.status(404).json({ error: "File not found" });

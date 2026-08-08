@@ -12,6 +12,7 @@ import {
 import { alias } from "drizzle-orm/pg-core";
 import { requireOpsRole } from "../lib/auth";
 import { audit } from "../lib/audit";
+import { HttpUrl } from "../lib/safe-url";
 
 // ADR-002: finance 담당 운영진 + program_lead 만 접근.
 const requireFinance = requireOpsRole("finance");
@@ -54,12 +55,7 @@ const CreateFinance = z.object({
   status: z.enum(FINANCE_RECORD_STATUSES).optional(),
   requesterId: z.number().int().positive().nullable().optional(),
   approverId: z.number().int().positive().nullable().optional(),
-  receiptUrl: z
-    .string()
-    .trim()
-    .max(2000)
-    .url()
-    .nullable()
+  receiptUrl: HttpUrl.nullable()
     .optional()
     .or(z.literal("").transform(() => null)),
   linkedObjectType: z.enum(LINKED_OBJECT_TYPES).nullable().optional(),

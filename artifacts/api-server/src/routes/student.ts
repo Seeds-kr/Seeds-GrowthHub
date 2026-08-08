@@ -16,6 +16,7 @@ import {
   SUBMISSION_STATUSES,
 } from "@workspace/db";
 import { requireStudent } from "../lib/auth";
+import { HttpUrl } from "../lib/safe-url";
 
 const router: IRouter = Router();
 
@@ -317,10 +318,17 @@ router.get(
   },
 );
 
+/**
+ * The only student-writable URLs in the system, and admins click them while
+ * grading (`admin/assignment-detail.tsx` renders both as anchors). A bare
+ * `.url()` would let a student store `javascript:…` and run it in a grader's
+ * session — student → admin, across the privilege boundary. HttpUrl is what
+ * closes that.
+ */
 const SubmissionBody = z.object({
   content: z.string().max(8000).nullable().optional(),
-  fileUrl: z.string().url().max(2000).nullable().optional(),
-  externalUrl: z.string().url().max(2000).nullable().optional(),
+  fileUrl: HttpUrl.nullable().optional(),
+  externalUrl: HttpUrl.nullable().optional(),
 });
 
 router.post(

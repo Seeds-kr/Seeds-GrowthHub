@@ -23,6 +23,7 @@ import {
   skillTagsTable,
 } from "@workspace/db";
 import { requireAdmin } from "../lib/auth";
+import { HttpUrl } from "../lib/safe-url";
 
 const router: IRouter = Router();
 
@@ -34,9 +35,9 @@ const Body = z.object({
   problemStatement: z.string().max(8000).nullable().optional(),
   solutionSummary: z.string().max(8000).nullable().optional(),
   status: z.enum(PROJECT_STATUSES).optional(),
-  githubUrl: z.string().url().max(2000).nullable().optional(),
-  demoUrl: z.string().url().max(2000).nullable().optional(),
-  deckUrl: z.string().url().max(2000).nullable().optional(),
+  githubUrl: HttpUrl.nullable().optional(),
+  demoUrl: HttpUrl.nullable().optional(),
+  deckUrl: HttpUrl.nullable().optional(),
   targetUsers: z.string().max(2000).nullable().optional(),
   startedAt: z.string().datetime().nullable().optional(),
   endedAt: z.string().datetime().nullable().optional(),

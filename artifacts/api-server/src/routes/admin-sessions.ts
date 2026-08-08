@@ -20,12 +20,13 @@ import {
   type SessionMaterial,
 } from "@workspace/db";
 import { requireAdmin } from "../lib/auth";
+import { HttpUrl } from "../lib/safe-url";
 
 const router: IRouter = Router();
 
 const MaterialSchema = z.object({
   label: z.string().trim().min(1).max(200),
-  url: z.string().trim().min(1).max(2000).url(),
+  url: HttpUrl,
 });
 
 const CreateSession = z.object({
