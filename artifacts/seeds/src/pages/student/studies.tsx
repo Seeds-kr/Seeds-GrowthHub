@@ -99,16 +99,25 @@ export default function StudentStudies() {
               열고 싶은 스터디가 있으면 직접 제안하세요.
             </p>
           </div>
-          {!open && (
-            <Button
-              onClick={() => setOpen(true)}
-              disabled={hasPending}
-              title={hasPending ? "이미 심사 중인 제안이 있습니다" : undefined}
-              data-testid="button-propose-study"
-            >
-              <Plus className="mr-1 h-4 w-4" /> 스터디 제안
-            </Button>
-          )}
+          {/* 심사 중이면 버튼 대신 이유를 쓴다.
+              전에는 버튼을 disabled 로 두고 title 툴팁에만 이유를 넣었는데,
+              툴팁은 마우스를 올려야 보이고 폰에서는 아예 안 보인다. 눌리지 않는
+              버튼만 남으면 "고장났나"로 읽힌다. */}
+          {!open &&
+            (hasPending ? (
+              <p
+                className="rounded-md border border-amber-500/40 bg-amber-500/5 px-3 py-2 text-sm text-muted-foreground"
+                data-testid="propose-blocked-reason"
+              >
+                심사 중인 제안이 있어 새로 제안할 수 없습니다.
+                <br />
+                아래 <strong>내 제안</strong>에서 결과를 기다리거나 철회하세요.
+              </p>
+            ) : (
+              <Button onClick={() => setOpen(true)} data-testid="button-propose-study">
+                <Plus className="mr-1 h-4 w-4" /> 스터디 제안
+              </Button>
+            ))}
         </div>
 
         {open && (

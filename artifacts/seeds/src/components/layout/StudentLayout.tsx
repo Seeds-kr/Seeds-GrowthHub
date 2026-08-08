@@ -12,10 +12,11 @@ import { BrandMark } from "@/components/BrandMark";
  *  빠지는 메뉴가 생긴다. */
 const STUDENT_NAV = [
   { href: "/student", label: "대시보드" },
+  // 출석은 모임 안으로 들어갔다 — 학생이 묻는 "언제 모이지"와 "내가 갔었나"는
+  // 같은 모임에 대한 질문이라 한 표에서 답한다. 항목이 하나 줄고, 오가지 않는다.
   { href: "/student/sessions", label: "모임" },
   { href: "/student/assignments", label: "과제" },
   { href: "/student/announcements", label: "공지사항" },
-  { href: "/student/attendance", label: "출석" },
   { href: "/student/timeline", label: "타임라인" },
   { href: "/student/projects", label: "프로젝트" },
   { href: "/student/studies", label: "스터디" },
