@@ -139,7 +139,11 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
       { href: "/admin/evaluators", label: "평가 담당자(Evaluations)", icon: UserCheck },
       { href: "/admin/interviews", label: "면접(Interviews)", icon: Mic, requiredOpsRole: "recruiting" },
       { href: "/admin/sessions", label: "행사 / 모임(Events / Sessions)", icon: CalendarDays },
-      { href: "/admin/attendance", label: "출석(Attendance)", icon: ClipboardList },
+      // "출석"이 아니라 "출석 집계"다. 출석 입력은 모임 상세 안으로 들어갔고,
+      // 이 화면은 기수 단위 집계 — 특정 모임에 속하지 않는 질문("3기 출석률은
+      // 어떤가")에 답한다. 이름이 그냥 "출석"이면 모임과 별개 기능처럼 읽혀서
+      // 입력하러 여기 들어왔다가 되돌아 나가게 된다.
+      { href: "/admin/attendance", label: "출석 집계(Attendance)", icon: ClipboardList },
       { href: "/admin/assignments", label: "과제(Assignments)", icon: ClipboardList },
       { href: "/admin/announcements", label: "공지(Announcements)", icon: Megaphone },
       { href: "/admin/finance", label: "재정(Finance)", icon: Wallet, requiredOpsRole: "finance", badgeKey: "finance" },

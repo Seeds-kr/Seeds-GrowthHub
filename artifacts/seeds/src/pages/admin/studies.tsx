@@ -26,13 +26,16 @@ type Study = {
   id: number;
   title: string;
   topic: string | null;
-  status: "planned" | "active" | "completed" | "archived";
+  status: "proposed" | "rejected" | "planned" | "active" | "completed" | "archived";
   cohortId: number;
   cohortName: string | null;
   leaderName: string | null;
+  reviewNote: string | null;
 };
 
 const STATUS_LABEL: Record<Study["status"], string> = {
+  proposed: "심사 중",
+  rejected: "반려됨",
   planned: "준비 중",
   active: "진행 중",
   completed: "완료",
@@ -40,6 +43,8 @@ const STATUS_LABEL: Record<Study["status"], string> = {
 };
 
 const STATUS_STYLE: Record<Study["status"], string> = {
+  proposed: "border-amber-500 text-amber-700 dark:text-amber-400",
+  rejected: "border-destructive text-destructive",
   planned: "text-muted-foreground",
   active: "border-emerald-500 text-emerald-700 dark:text-emerald-400",
   completed: "border-blue-500 text-blue-700 dark:text-blue-400",
@@ -52,6 +57,93 @@ type StudyMember = {
   studentName: string;
   role: string | null;
 };
+
+/**
+ * 스터디 개설 요청 심사 (design 06 §10).
+ *
+ * 목록 맨 위에 세운다 — 대기 중인 제안은 누가 답을 기다리고 있다는 뜻이고,
+ * 표 안 어딘가의 한 행으로 두면 그 사실이 보이지 않는다. 대기가 없으면 아무것도
+ * 그리지 않으므로 평소에는 화면을 차지하지 않는다.
+ *
+ * 승인/반려는 `growth` 기능 역할만 가능하다(서버가 403). 다른 담당자에게도
+ * 버튼은 보이되 눌렀을 때 이유가 있는 오류를 받는 편이, 버튼을 감춰 "왜 나만
+ * 안 보이지"를 만드는 것보다 낫다 — 여기서는 권한이 곧 업무 분담이기 때문이다.
+ */
+function ReviewQueue({ studies }: { studies: Study[] }) {
+  const qc = useQueryClient();
+  const [note, setNote] = useState<Record<number, string>>({});
+  const pending = studies.filter((s) => s.status === "proposed");
+
+  const review = useMutation({
+    mutationFn: ({ id, action }: { id: number; action: "approve" | "reject" }) =>
+      api(`/admin/studies/${id}/${action}`, {
+        method: "POST",
+        body: { note: note[id]?.trim() || undefined },
+      }),
+    onSuccess: (_r, v) => {
+      void qc.invalidateQueries({ queryKey: ["admin-studies"] });
+      toast({ title: v.action === "approve" ? "승인했습니다" : "반려했습니다" });
+    },
+    onError: (e: unknown) =>
+      toast({
+        title: e instanceof Error ? e.message : "처리하지 못했습니다",
+        variant: "destructive",
+      }),
+  });
+
+  if (pending.length === 0) return null;
+
+  return (
+    <section className="space-y-2" data-testid="study-review-queue">
+      <h2 className="text-sm font-semibold">
+        심사 대기 <Badge variant="secondary">{pending.length}</Badge>
+      </h2>
+      <div className="grid gap-3">
+        {pending.map((s) => (
+          <Card key={s.id} className="border-amber-500/40" data-testid={`study-review-${s.id}`}>
+            <CardContent className="space-y-2 pt-4">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-medium">{s.title}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {s.leaderName ?? "제안자 미상"} · {s.cohortName ?? "기수 미지정"}
+                    {s.topic ? ` · ${s.topic}` : ""}
+                  </p>
+                </div>
+              </div>
+              <Input
+                placeholder="사유 — 반려에는 반드시 필요합니다"
+                value={note[s.id] ?? ""}
+                onChange={(e) => setNote({ ...note, [s.id]: e.target.value })}
+                data-testid={`study-review-note-${s.id}`}
+              />
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  disabled={review.isPending}
+                  onClick={() => review.mutate({ id: s.id, action: "approve" })}
+                  data-testid={`study-approve-${s.id}`}
+                >
+                  승인
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={review.isPending || !(note[s.id] ?? "").trim()}
+                  title={!(note[s.id] ?? "").trim() ? "반려 사유를 적어 주세요" : undefined}
+                  onClick={() => review.mutate({ id: s.id, action: "reject" })}
+                  data-testid={`study-reject-${s.id}`}
+                >
+                  반려
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 /** Member management for one study. Without this, study_members is unreachable. */
 function MemberPanel({ studyId }: { studyId: number }) {
@@ -209,6 +301,9 @@ export default function AdminStudies() {
             <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 불러오는 중…
           </div>
         )}
+
+        <ReviewQueue studies={data?.items ?? []} />
+
 
         {data && data.items.length === 0 && (
           <p className="rounded border bg-card p-6 text-center text-sm text-muted-foreground">

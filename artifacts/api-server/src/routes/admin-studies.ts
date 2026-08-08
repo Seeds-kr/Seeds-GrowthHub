@@ -11,7 +11,7 @@ import {
   mvp4ArtifactsTable,
   STUDY_STATUSES,
 } from "@workspace/db";
-import { requireAdmin } from "../lib/auth";
+import { requireAdmin, requireOpsRole } from "../lib/auth";
 
 const router: IRouter = Router();
 
@@ -199,6 +199,96 @@ router.post("/admin/studies/:id/archive", requireAdmin, async (req, res) => {
     return;
   }
   res.json({ ok: true });
+});
+
+/**
+ * 스터디 개설 요청 심사 (design 06 §10).
+ *
+ * Gated on the `growth` ops role, not plain admin: 설계 00 §2.3 이 성장경험
+ * 담당에게 "프로젝트·스터디·피드백"을 배정해 뒀고, 승인은 그 역할이 하는 일이다.
+ * 열람은 여전히 모든 운영진에게 열려 있다 — 막는 것은 결정뿐이다.
+ */
+const requireGrowth = requireOpsRole("growth");
+
+const ReviewBody = z.object({
+  // 반려에는 사실상 필수다(아래 참조). 승인에서는 없어도 된다.
+  note: z.string().trim().max(2000).optional(),
+});
+
+router.post("/admin/studies/:id/approve", requireGrowth, async (req, res) => {
+  const id = Number(req.params.id);
+  const parsed = ReviewBody.safeParse(req.body ?? {});
+  if (!Number.isFinite(id) || !parsed.success) {
+    res.status(400).json({ error: "Invalid body" });
+    return;
+  }
+  const [study] = await db
+    .select()
+    .from(studiesTable)
+    .where(eq(studiesTable.id, id))
+    .limit(1);
+  if (!study) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  // 이미 굴러가는 스터디를 다시 "승인"하면 status 가 planned 로 되돌아가
+  // 진행 중이던 것이 예정으로 바뀐다. 심사는 proposed 에만 있는 단계다.
+  if (study.status !== "proposed") {
+    res.status(409).json({ error: "심사 대기 중인 제안이 아닙니다.", status: study.status });
+    return;
+  }
+  const [row] = await db
+    .update(studiesTable)
+    .set({
+      status: "planned",
+      reviewNote: parsed.data.note ?? null,
+      reviewedBy: req.sessionUser!.id,
+      reviewedAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(eq(studiesTable.id, id))
+    .returning({ id: studiesTable.id, status: studiesTable.status });
+  res.json(row);
+});
+
+router.post("/admin/studies/:id/reject", requireGrowth, async (req, res) => {
+  const id = Number(req.params.id);
+  const parsed = ReviewBody.safeParse(req.body ?? {});
+  if (!Number.isFinite(id) || !parsed.success) {
+    res.status(400).json({ error: "Invalid body" });
+    return;
+  }
+  // 반려 사유를 강제한다. "안 됩니다"로 끝나면 학생은 무엇을 고쳐 다시 낼지
+  // 모르고, 대개 다시 내지 않는다. 반려는 종료가 아니라 되돌려 보내는 것이다.
+  if (!parsed.data.note) {
+    res.status(422).json({ error: "반려 사유를 적어 주세요. 학생이 고쳐서 다시 낼 수 있어야 합니다." });
+    return;
+  }
+  const [study] = await db
+    .select({ status: studiesTable.status })
+    .from(studiesTable)
+    .where(eq(studiesTable.id, id))
+    .limit(1);
+  if (!study) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  if (study.status !== "proposed") {
+    res.status(409).json({ error: "심사 대기 중인 제안이 아닙니다.", status: study.status });
+    return;
+  }
+  const [row] = await db
+    .update(studiesTable)
+    .set({
+      status: "rejected",
+      reviewNote: parsed.data.note,
+      reviewedBy: req.sessionUser!.id,
+      reviewedAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(eq(studiesTable.id, id))
+    .returning({ id: studiesTable.id, status: studiesTable.status });
+  res.json(row);
 });
 
 router.post("/admin/studies/:id/members", requireAdmin, async (req, res) => {
