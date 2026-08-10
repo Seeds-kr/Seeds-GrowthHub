@@ -176,7 +176,7 @@ export default function AdminSessions() {
             : data?.items.map((s) => (
               <TableRow key={s.id}>
                 <TableCell className="font-medium">
-                  <Link href={`/admin/sessions/${s.id}`}><a className="hover:underline">{s.title}</a></Link>
+                  <Link href={`/admin/sessions/${s.id}`} className="hover:underline">{s.title}</Link>
                   {s.isPublished === false && <Badge variant="outline" className="ml-2 bg-muted text-muted-foreground border-border">비공개</Badge>}
                 </TableCell>
                 <TableCell>{s.cohortName} {s.programName ? `/ ${s.programName}` : ""}</TableCell>

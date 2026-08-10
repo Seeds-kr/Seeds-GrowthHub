@@ -106,7 +106,7 @@ export default function AdminSessionDetail() {
 
   return (
     <>
-      <Link href="/admin/sessions"><a className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"><ArrowLeft className="h-4 w-4" />모임 목록</a></Link>
+      <Link href="/admin/sessions" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"><ArrowLeft className="h-4 w-4" />모임 목록</Link>
 
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
@@ -143,7 +143,7 @@ export default function AdminSessionDetail() {
             {data.checklist ? (
               <div className="flex items-center justify-between p-3 bg-muted/30 border border-border">
                 <div>
-                  <Link href={`/admin/documents/${data.checklist.id}`}><a className="font-medium hover:underline">{data.checklist.title}</a></Link>
+                  <Link href={`/admin/documents/${data.checklist.id}`} className="font-medium hover:underline">{data.checklist.title}</Link>
                   {data.checklist.archivedAt && <Badge variant="outline" className="ml-2 bg-amber-50 text-amber-700 border-amber-200">보관됨</Badge>}
                   <div className="text-xs text-muted-foreground mt-1">유형: {data.checklist.docType}</div>
                 </div>

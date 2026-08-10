@@ -23,6 +23,7 @@ import {
   studentProjectIds,
   studentStudyIds,
 } from "../lib/team-scope";
+import { recordActivity } from "../lib/activity";
 
 const router: IRouter = Router();
 
@@ -435,6 +436,17 @@ router.post("/student/team-meetings", requireStudent, async (req, res) => {
     }
   }
   const parts = await participantsFor([row.id]);
+  // 타임라인 (설계 07). 회의록을 남긴 것은 학생이 한 일이다. 참여자 전원이
+  // 아니라 작성자에게만 남긴다 — 참여자 목록은 "누가 그 자리에 있었나"를
+  // 작성자가 적은 것이라, 그걸 각자의 활동기록으로 바꾸면 남이 쓴 명단이
+  // 내 기록이 된다.
+  void recordActivity({
+    studentId,
+    sourceType: "project",
+    sourceId: row.id,
+    title: `팀 회의록 — ${row.title}`,
+    activityDate: row.metAt,
+  });
   res.status(201).json({
     ...row,
     metAt: row.metAt.toISOString(),

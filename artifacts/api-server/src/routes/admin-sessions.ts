@@ -21,6 +21,7 @@ import {
 } from "@workspace/db";
 import { requireAdmin } from "../lib/auth";
 import { HttpUrl } from "../lib/safe-url";
+import { recordActivity } from "../lib/activity";
 
 const router: IRouter = Router();
 
@@ -364,8 +365,15 @@ router.put(
       res.status(400).json({ error: "Invalid body" });
       return;
     }
+    // 존재 확인만 하던 자리라 id 하나만 뽑았는데, 타임라인 한 줄을 쓰려면
+    // 어느 기수의 무슨 모임인지가 필요하다.
     const [session] = await db
-      .select({ id: sessionsTable.id })
+      .select({
+        id: sessionsTable.id,
+        title: sessionsTable.title,
+        cohortId: sessionsTable.cohortId,
+        scheduledAt: sessionsTable.scheduledAt,
+      })
       .from(sessionsTable)
       .where(eq(sessionsTable.id, id))
       .limit(1);
@@ -400,6 +408,20 @@ router.put(
         })
         .returning();
       inserted.push(row);
+      // 타임라인 (설계 07). 출석은 운영진이 찍지만 그 자리에 있었던 것은
+      // 학생이다. 결석·사유결석은 남기지 않는다 — 안 온 것은 "한 일"이 아니고,
+      // 타임라인에 "결석" 줄이 쌓이면 활동 기록이 아니라 벌점표로 읽힌다.
+      // 출결 집계는 이미 모임 화면과 리포트가 따로 보여 준다.
+      if (r.status === "present" || r.status === "late") {
+        void recordActivity({
+          studentId: r.studentId,
+          cohortId: session.cohortId,
+          sourceType: "session",
+          sourceId: id,
+          title: `모임 참여 — ${session.title}`,
+          activityDate: session.scheduledAt,
+        });
+      }
     }
     res.json({
       records: inserted.map((r) => ({

@@ -338,9 +338,7 @@ export default function AdminMeetingsPage() {
             <div className="rounded border border-dashed border-border bg-muted/30 p-3 text-xs text-muted-foreground">
               회의 본문은 선택한 <strong>회의 유형의 템플릿</strong>으로 자동 채워집니다.
               생성 후 상세 화면에서 이어서 작성하세요. 템플릿 자체는{" "}
-              <Link href="/admin/documents">
-                <a className="underline underline-offset-2">문서 &amp; 템플릿</a>
-              </Link>
+              <Link href="/admin/documents" className="underline underline-offset-2">문서 &amp; 템플릿</Link>
               에서 수정할 수 있습니다.
             </div>
             <div>

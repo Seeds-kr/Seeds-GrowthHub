@@ -114,6 +114,10 @@
 | `project_status_checks` | `admin_only` / `mentor_visible` | `mentor_visible` | 팀 상태·블로커·지원요청. **학생에게 노출 안 함** |
 | `external_links` | `private` / `team_visible` / `cohort_visible` / `admin_only` | `admin_only` | `artifacts`와 동일 어휘 |
 | `attachments` | `private` / `admin_only` | `admin_only` | 영수증·증빙 포함 → 보수적 기본값. **W7에서 `team_visible` 제거** — 읽는 쪽이 없었다(아래 주석) |
+> `activity_records` 자동 기록은 **`student_visible` 로 넣는다**([설계 07 ADR-015](design/07-activity-timeline.md)).
+> `/student/timeline` 이 그 값만 읽으므로 `private` 로 넣으면 본인도 못 보고, 그러면 "학생이 스스로 본다"가 사라진다.
+> 운영진 전용 기록이 필요하면 수동(`manual`)으로 넣는다.
+
 | `team_meetings` | **(없음)** | — | 청중 고정: 팀원 + 담당 멘토 + 운영진. 작성자가 고르지 않는다 — [설계 06 ADR-011](design/06-team-meeting-notes.md) |
 | `audit_logs` | (없음) | — | `program_lead` + `system` 기능 역할만 |
 | `communication_logs` | (없음) | — | 발송 담당 기능 역할(`recruiting`/`community`) + `program_lead` |

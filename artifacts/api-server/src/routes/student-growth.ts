@@ -18,6 +18,7 @@ import {
   REFLECTION_VISIBILITIES,
 } from "@workspace/db";
 import { requireStudent } from "../lib/auth";
+import { recordActivity } from "../lib/activity";
 
 const router: IRouter = Router();
 
@@ -394,6 +395,15 @@ router.post("/student/reflections", requireStudent, async (req, res) => {
       reflectedOn: d.reflectedOn ?? null,
     })
     .returning();
+  // 타임라인 (설계 07). 회고를 "썼다"는 사실만 남기고 내용은 넣지 않는다 —
+  // ADR-001 이 회고 본문을 학생 소유로 못박았는데, 타임라인은 운영진도 리포트로
+  // 읽는 자리라 본문이 섞이면 그 보장이 옆문으로 뚫린다.
+  void recordActivity({
+    studentId: student.id,
+    sourceType: "project",
+    sourceId: row.id,
+    title: "회고 작성",
+  });
   res.status(201).json({
     ...row,
     createdAt: row.createdAt.toISOString(),

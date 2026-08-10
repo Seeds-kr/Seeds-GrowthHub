@@ -25,6 +25,7 @@ import {
 } from "@workspace/db";
 import { requireStudent } from "../lib/auth";
 import { HttpUrl } from "../lib/safe-url";
+import { recordActivity } from "../lib/activity";
 
 const router: IRouter = Router();
 
@@ -609,6 +610,14 @@ router.post("/student/artifacts", requireStudent, async (req, res) => {
       createdBy: req.sessionUser!.id,
     })
     .returning();
+  // 타임라인 (설계 07). 학생이 만든 것이므로 기록 대상이다.
+  void recordActivity({
+    studentId: student.id,
+    sourceType: "project",
+    sourceId: row.id,
+    title: `산출물 등록 — ${row.title}`,
+    description: row.description,
+  });
   res.status(201).json({
     ...row,
     createdAt: row.createdAt.toISOString(),
