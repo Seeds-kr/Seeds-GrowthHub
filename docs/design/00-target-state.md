@@ -197,7 +197,7 @@ Ops · 운영
   ✅ /admin/announcements            공지
   ✅ /admin/finance                  🔒 회계
   ✅ /admin/ops-dashboard            운영 대시보드
-  🟡 /admin/communications           🔒 발송 이력
+  ✅ /admin/communications           🔒 발송 이력 (recruiting/community)
 
 Growth · 성장
   ✅ /admin/students[/:id][/timeline][/report]

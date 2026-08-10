@@ -251,13 +251,20 @@ export default function AdminTasksPage() {
       <DesktopOnly feature="작업 보드">
       {isLoading ? (
         <Loader2 className="w-6 h-6 animate-spin" />
-      ) : !data || data.items.length === 0 ? (
-        <div className="border border-dashed border-border rounded-lg p-12 text-center text-muted-foreground">
-          작업이 없습니다. 회의록에서 액션 아이템을 만들거나 직접 추가해 보세요.
-        </div>
       ) : (
-        // Six fixed columns: the guard above already narrows this to >=1024px,
-        // so the old grid-cols-2 / md:grid-cols-3 steps were unreachable.
+        <>
+        {/* 작업이 없어도 보드는 그린다.
+            전에는 0건이면 보드를 통째로 감추고 "작업이 없습니다" 한 줄만 남겼다.
+            그러면 이 보드가 어떤 단계로 굴러가는지(할 일 → 진행 → 검토 → …)를
+            알 길이 없고, 처음 들어온 운영진에게는 빈 화면과 구분되지 않는다.
+            빈 칸반은 그 자체가 안내다 — 칸이 보여야 무엇을 어디로 옮기는지 안다. */}
+        {(!data || data.items.length === 0) && (
+          <p className="mb-3 rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
+            아직 작업이 없습니다. 회의록에서 액션 아이템을 만들거나 위에서 직접 추가해 보세요.
+          </p>
+        )}
+        {/* Six fixed columns: the guard above already narrows this to >=1024px,
+            so the old grid-cols-2 / md:grid-cols-3 steps were unreachable. */}
         <div className="grid grid-cols-6 gap-3">
           {OPS_TASK_STATUSES.map((status) => {
             const items = byStatus.get(status) ?? [];
@@ -418,6 +425,7 @@ export default function AdminTasksPage() {
             );
           })}
         </div>
+        </>
       )}
       </DesktopOnly>
 

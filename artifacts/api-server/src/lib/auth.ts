@@ -266,6 +266,49 @@ export function requireOpsRole(code: OpsRole): RequestHandler {
 }
 
 /**
+ * Gate on ANY ONE of several ops roles.
+ *
+ * `requireOpsRole` takes exactly one code, but some surfaces are owned jointly.
+ * `communication_logs` is the case that forced this: visibility-policy assigns
+ * it to `recruiting`/`community` together, because both of them send things and
+ * both need to see what went out. Chaining two single-role gates would 403 on
+ * the first one, so the second could never be reached.
+ *
+ * `program_lead` still passes — `hasOpsRole` treats it as a superuser.
+ */
+export function requireAnyOpsRole(...codes: OpsRole[]): RequestHandler {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    const user = await getCurrentUser(req);
+    if (!user) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+    if (!getEffectiveRoles(user).includes("admin")) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    if (!codes.some((c) => hasOpsRole(user, c))) {
+      logger.warn(
+        { userId: user.id, requiredAny: codes, held: getOpsRoles(user) },
+        "ops role denied",
+      );
+      req.sessionUser = user;
+      audit({
+        action: "permission_denied",
+        req,
+        targetType: "user",
+        targetId: user.id,
+        note: `requiredAny=${codes.join("|")} held=${getOpsRoles(user).join(",") || "none"} path=${req.path}`,
+      });
+      res.status(403).json({ error: "Forbidden", requiredAnyOpsRole: codes });
+      return;
+    }
+    req.sessionUser = user;
+    next();
+  };
+}
+
+/**
  * optionalAuth: populate req.sessionUser if a valid session cookie is present,
  * but do NOT 401 if none is — used for endpoints that return more data to
  * logged-in members (e.g. /people including phone numbers).
