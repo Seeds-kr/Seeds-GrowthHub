@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import { and, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
+import { z } from "zod";
 import {
   db,
   studentsTable,
@@ -17,8 +18,13 @@ import {
   attendanceRecordsTable,
   assignmentsTable,
   assignmentSubmissionsTable,
+  studiesTable,
+  studyMembersTable,
+  STUDY_PUBLIC_STATUSES,
+  ARTIFACT_TYPES,
 } from "@workspace/db";
 import { requireStudent } from "../lib/auth";
+import { HttpUrl } from "../lib/safe-url";
 
 const router: IRouter = Router();
 
@@ -504,6 +510,216 @@ router.get("/student/report", requireStudent, async (req, res) => {
       count: r.cnt,
     })),
   });
+});
+
+// ---- 산출물 등록 (design 06 §11) -------------------------------------------
+
+/**
+ * 학생이 자기 산출물을 올린다.
+ *
+ * 설계 00 §2.1 의 학생 여정에 "산출물 등록: 학생"이 있고 `/student/artifacts`가
+ * "포트폴리오의 원자료"라고 적혀 있는데, 정작 쓰기 경로가 없어서 운영진이
+ * 대신 넣어 주지 않으면 영원히 빈 화면이었다. baseline 05 가 산출물을 "성장
+ * 해석의 원자료"로 규정한 이상, 원자료가 안 쌓이면 리포트도 성장모델도 붙일
+ * 것이 없다.
+ *
+ * `admin_only` 는 학생이 고를 수 없다. 자기가 읽지 못하는 행을 만드는 셈이라
+ * 다음 화면에서 사라진 것처럼 보인다 — 학생 링크 쓰기와 같은 이유다(설계 06 §7).
+ */
+const STUDENT_ARTIFACT_VISIBILITIES = [
+  "private",
+  "student_visible",
+  "cohort_visible",
+] as const;
+
+const ArtifactBody = z.object({
+  title: z.string().trim().min(1).max(300),
+  url: HttpUrl,
+  artifactType: z.enum(ARTIFACT_TYPES).optional(),
+  description: z.string().max(4000).nullable().optional(),
+  visibility: z.enum(STUDENT_ARTIFACT_VISIBILITIES).optional(),
+  /** 붙일 팀. 없으면 개인 산출물. */
+  projectId: z.number().int().positive().nullable().optional(),
+  studyId: z.number().int().positive().nullable().optional(),
+});
+
+/** 학생이 실제로 속한 팀인지. 아니면 남의 팀에 자기 산출물을 붙일 수 있다. */
+async function ownsParent(
+  studentId: number,
+  projectId: number | null,
+  studyId: number | null,
+): Promise<boolean> {
+  if (projectId) {
+    const [r] = await db
+      .select({ id: projectMembersTable.id })
+      .from(projectMembersTable)
+      .where(
+        and(
+          eq(projectMembersTable.studentId, studentId),
+          eq(projectMembersTable.projectId, projectId),
+        ),
+      )
+      .limit(1);
+    if (!r) return false;
+  }
+  if (studyId) {
+    const [r] = await db
+      .select({ id: studyMembersTable.id })
+      .from(studyMembersTable)
+      .where(
+        and(
+          eq(studyMembersTable.studentId, studentId),
+          eq(studyMembersTable.studyId, studyId),
+        ),
+      )
+      .limit(1);
+    if (!r) return false;
+  }
+  return true;
+}
+
+router.post("/student/artifacts", requireStudent, async (req, res) => {
+  const parsed = ArtifactBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid body" });
+    return;
+  }
+  const student = await getStudentForUser(req.sessionUser!.id);
+  if (!student) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  const d = parsed.data;
+  if (!(await ownsParent(student.id, d.projectId ?? null, d.studyId ?? null))) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+
+  const [row] = await db
+    .insert(mvp4ArtifactsTable)
+    .values({
+      studentId: student.id,
+      projectId: d.projectId ?? null,
+      studyId: d.studyId ?? null,
+      title: d.title,
+      url: d.url,
+      artifactType: d.artifactType ?? "link",
+      description: d.description ?? null,
+      visibility: d.visibility ?? "student_visible",
+      createdBy: req.sessionUser!.id,
+    })
+    .returning();
+  res.status(201).json({
+    ...row,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  });
+});
+
+router.patch("/student/artifacts/:id", requireStudent, async (req, res) => {
+  const id = Number(req.params.id);
+  const parsed = ArtifactBody.partial().safeParse(req.body);
+  if (!Number.isFinite(id) || !parsed.success) {
+    res.status(400).json({ error: "Invalid body" });
+    return;
+  }
+  const student = await getStudentForUser(req.sessionUser!.id);
+  if (!student) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  const [target] = await db
+    .select()
+    .from(mvp4ArtifactsTable)
+    .where(eq(mvp4ArtifactsTable.id, id))
+    .limit(1);
+  // 본인 것만. 운영진이 등록해 준 것(studentId 는 나지만 createdBy 는 운영진)도
+  // 내 것이므로 studentId 로 판단한다.
+  if (!target || target.studentId !== student.id) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  const d = parsed.data;
+  if (
+    (d.projectId !== undefined || d.studyId !== undefined) &&
+    !(await ownsParent(
+      student.id,
+      d.projectId ?? target.projectId,
+      d.studyId ?? target.studyId,
+    ))
+  ) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  const [row] = await db
+    .update(mvp4ArtifactsTable)
+    .set({
+      ...(d.title !== undefined ? { title: d.title } : {}),
+      ...(d.url !== undefined ? { url: d.url } : {}),
+      ...(d.artifactType !== undefined ? { artifactType: d.artifactType } : {}),
+      ...(d.description !== undefined ? { description: d.description } : {}),
+      ...(d.visibility !== undefined ? { visibility: d.visibility } : {}),
+      ...(d.projectId !== undefined ? { projectId: d.projectId } : {}),
+      ...(d.studyId !== undefined ? { studyId: d.studyId } : {}),
+      updatedAt: new Date(),
+    })
+    .where(eq(mvp4ArtifactsTable.id, id))
+    .returning();
+  res.json({
+    ...row,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  });
+});
+
+router.delete("/student/artifacts/:id", requireStudent, async (req, res) => {
+  const id = Number(req.params.id);
+  const student = await getStudentForUser(req.sessionUser!.id);
+  if (!Number.isFinite(id) || !student) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  const [target] = await db
+    .select({ id: mvp4ArtifactsTable.id, studentId: mvp4ArtifactsTable.studentId })
+    .from(mvp4ArtifactsTable)
+    .where(eq(mvp4ArtifactsTable.id, id))
+    .limit(1);
+  if (!target || target.studentId !== student.id) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  await db.delete(mvp4ArtifactsTable).where(eq(mvp4ArtifactsTable.id, id));
+  res.json({ ok: true });
+});
+
+/** 붙일 수 있는 팀 목록. 화면이 드롭다운을 채우는 데 쓴다. */
+router.get("/student/artifacts/parents", requireStudent, async (req, res) => {
+  const student = await getStudentForUser(req.sessionUser!.id);
+  if (!student) {
+    res.json({ projects: [], studies: [] });
+    return;
+  }
+  const [projects, studies] = await Promise.all([
+    db
+      .select({ id: projectsTable.id, title: projectsTable.title })
+      .from(projectMembersTable)
+      .innerJoin(projectsTable, eq(projectsTable.id, projectMembersTable.projectId))
+      .where(eq(projectMembersTable.studentId, student.id)),
+    db
+      .select({ id: studiesTable.id, title: studiesTable.title })
+      .from(studyMembersTable)
+      .innerJoin(studiesTable, eq(studiesTable.id, studyMembersTable.studyId))
+      .where(
+        and(
+          eq(studyMembersTable.studentId, student.id),
+          // 심사 중이거나 반려된 스터디는 뺀다. 제안자는 그 스터디의 멤버로
+          // 미리 들어가 있어서(설계 06 §10) 필터가 없으면 아직 열리지도 않은
+          // 스터디가 목록에 뜬다 — 거기 붙일 산출물이 있을 리 없다.
+          inArray(studiesTable.status, [...STUDY_PUBLIC_STATUSES]),
+        ),
+      ),
+  ]);
+  res.json({ projects, studies });
 });
 
 export default router;

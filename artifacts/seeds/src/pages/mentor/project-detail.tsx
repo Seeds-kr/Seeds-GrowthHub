@@ -264,31 +264,23 @@ function FeedbackForm({
         </Select>
         <Button
           size="sm"
-          disabled={
-            !content.trim() ||
-            submit.isPending ||
-            (visibility === "student_visible" && !studentId)
-          }
+          disabled={!content.trim() || submit.isPending}
           onClick={() => submit.mutate()}
           data-testid="button-submit-feedback"
         >
           기록
         </Button>
       </div>
-      {/* 대상 없는 "학생 공개"는 아무에게도 안 간다 — 학생 쪽 조회가 전부
-          studentId = 나 로 걸러지기 때문이다. 전에는 그대로 저장돼서, 멘토는
-          보냈다고 믿고 학생은 못 받는 상태가 됐다. 서버도 422 로 막는다. */}
-      {visibility === "student_visible" && !studentId ? (
-        <p className="text-xs text-destructive" data-testid="feedback-needs-student">
-          대상 학생을 골라 주세요. 고르지 않으면 아무에게도 전달되지 않습니다.
-        </p>
-      ) : (
-        <p className="text-xs text-muted-foreground">
-          {visibility === "student_visible"
+      {/* 대상을 비우면 팀 전체 피드백이고, 그건 "내 피드백"이 아니라 프로젝트
+          화면에 뜬다. 전에는 어느 경우든 "해당 학생의 내 피드백에 나타납니다"
+          라고만 적혀 있어서, 팀에 남긴 글이 어디로 갔는지 알 수 없었다. */}
+      <p className="text-xs text-muted-foreground" data-testid="feedback-destination">
+        {visibility === "admin_only"
+          ? "운영진과 멘토만 봅니다. 학생에게는 보이지 않습니다."
+          : studentId
             ? "해당 학생의 “내 피드백”에 나타납니다."
-            : "운영진과 멘토만 봅니다. 학생에게는 보이지 않습니다."}
-        </p>
-      )}
+            : "팀 전체가 프로젝트 화면에서 봅니다. 한 사람에게 남기려면 대상 학생을 고르세요."}
+      </p>
     </div>
   );
 }
