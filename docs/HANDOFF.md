@@ -309,11 +309,15 @@ node -e 'import("/tmp/x.mjs").then(m => ...)'
 
 ## 7. 남은 작업
 
-### ~~W7 — `external_links`~~ (API 완료, **화면만 남음**)
+### ~~W7 — `external_links`~~ (완료 — 화면까지)
 
-스키마·권한·읽기 경로는 끝났고 런타임 검증까지 했다(§6). **프론트 화면이 없다** —
-`/admin`에 링크 관리 UI도, 학생·멘토 목록 화면도 붙이지 않았다. W8에서 placeholder를
-정리할 때 같이 배치하는 것이 자연스럽다.
+스키마·권한·읽기 경로는 끝났고 런타임 검증까지 했다(§6).
+
+**화면도 붙었다**(2026-08-11 기준, 이 문단은 "화면만 남음" 이라고 잘못 남아 있었다).
+운영진은 `/admin/media`(App.tsx 라우트 등록됨), 팀 쪽은 `components/team/TeamLinks.tsx` 가
+`student/study-detail` · `mentor/project-detail` 에 들어간다. **링크를 이제 학생도 건다** —
+전에는 운영진만 가능해서 "링크만 관리한다" 는 설계가 정작 링크 걸 사람을 운영진으로
+한정하고 있었다(PR #23 / 설계 06 ADR-010).
 
 읽기 규칙이 단순하지 않으니 화면을 붙이기 전에 [visibility-policy §5.1](visibility-policy.md)을 볼 것 —
 **자체 `visibility`만 보면 안 되고 부모 도달 가능성과 교집합**이다. 판정은
