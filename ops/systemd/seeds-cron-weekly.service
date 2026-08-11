@@ -1,0 +1,9 @@
+[Unit]
+Description=Seeds GrowthHub weekly mentor nudge (Discord)
+After=seeds-api.service
+Requires=seeds-api.service
+
+[Service]
+Type=oneshot
+User=harvester
+ExecStart=/home/harvester/Seeds-GrowthHub/ops/cron-tick.sh weekly-mentor-nudge

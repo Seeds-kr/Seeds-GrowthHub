@@ -1,0 +1,10 @@
+[Unit]
+Description=Seeds GrowthHub daily digest
+
+[Timer]
+# 아침에 한 번. 운영진이 그날 볼 것을 하루 시작에 받는다.
+OnCalendar=*-*-* 09:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
