@@ -17,11 +17,27 @@ set -a; . "$HOME/.secrets/seeds-preview.env"; set +a
 export E2E_BASE_URL=https://seeds.harvester.kr
 export E2E_ADMIN_EMAIL="$ADMIN_EMAIL"
 export E2E_ADMIN_PASSWORD="$ADMIN_PASSWORD"
-# 픽스처 계정. ops/reset-test-data.sh 를 돌린 뒤에는 실제 계정으로 바꿔야 한다.
-export E2E_MENTOR_EMAIL="${E2E_MENTOR_EMAIL:-smoke-mentor@seeds.local}"
-export E2E_MENTOR_PASSWORD="${E2E_MENTOR_PASSWORD:-Story!2026test}"
-export E2E_STUDENT_EMAIL="${E2E_STUDENT_EMAIL:-smoke-student@seeds.local}"
-export E2E_STUDENT_PASSWORD="${E2E_STUDENT_PASSWORD:-Story!2026test}"
+
+# 멘토·학생 축 자격증명은 여기 적지 않는다.
+#
+# 전에는 `${E2E_MENTOR_PASSWORD:-<픽스처 비밀번호>}` 처럼 기본값을 박아뒀다. 이 리포는
+# 공개다 — 즉 라이브 호스트 주소(바로 위 줄)와 거기서 통하는 비밀번호를 나란히
+# 게시한 셈이었다. 게다가 이 스크립트는 systemd 타이머가 매일 돌리므로, 검증이
+# 통과한다는 것 자체가 "그 계정이 지금 살아 있다"는 뜻이었다.
+#
+# 그 값이 무엇이었는지는 여기 옮겨 적지 않는다 — 주석도 똑같이 공개된다.
+# 지운 이력은 git 에 남아 있으므로, 실제 해결은 비밀번호 교체다(아래 참고).
+#
+# 이제 ~/.secrets/seeds-preview.env 에서만 온다(위 15행에서 이미 읽었다).
+# 없으면 검증을 건너뛰지 말고 즉시 멈춘다 — 조용히 SKIP 으로 떨어지면
+# 멘토·학생 축이 몇 달간 검증되지 않고 있어도 아무도 모른다.
+for v in E2E_MENTOR_EMAIL E2E_MENTOR_PASSWORD E2E_STUDENT_EMAIL E2E_STUDENT_PASSWORD; do
+  if [ -z "${!v:-}" ]; then
+    echo "설정 오류: $v 가 비어 있습니다. ~/.secrets/seeds-preview.env 에 넣어 주세요." >&2
+    echo "(ops/reset-test-data.sh 로 픽스처 계정을 지웠다면 실제 계정으로 바꿔야 합니다.)" >&2
+    exit 78   # EX_CONFIG
+  fi
+done
 
 cd "$REPO/e2e"
 fail=0

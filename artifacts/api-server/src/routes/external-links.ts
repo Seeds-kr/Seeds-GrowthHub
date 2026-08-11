@@ -10,6 +10,7 @@ import {
 } from "@workspace/db";
 import { requireAdmin, requireStudent, requireAdminOrMentor } from "../lib/auth";
 import { audit } from "../lib/audit";
+import { HttpUrl } from "../lib/safe-url";
 import {
   isLinkParentType,
   linkTargetExists,
@@ -37,7 +38,7 @@ const router: IRouter = Router();
  */
 
 const CreateBody = z.object({
-  url: z.string().url().max(2000),
+  url: HttpUrl,
   title: z.string().trim().min(1).max(300),
   linkType: z.enum(LINK_TYPES).optional(),
   description: z.string().max(4000).nullable().optional(),
@@ -47,7 +48,7 @@ const CreateBody = z.object({
 });
 
 const UpdateBody = z.object({
-  url: z.string().url().max(2000).optional(),
+  url: HttpUrl.optional(),
   title: z.string().trim().min(1).max(300).optional(),
   linkType: z.enum(LINK_TYPES).optional(),
   description: z.string().max(4000).nullable().optional(),

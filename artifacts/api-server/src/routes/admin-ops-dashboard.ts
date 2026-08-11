@@ -161,15 +161,20 @@ router.get("/admin/ops-dashboard/summary", requireAdmin, async (_req, res) => {
       )
       .groupBy(financeRecordsTable.status, financeRecordsTable.recordType),
 
-    // 6b. Top pending finance items (no amounts exposed beyond title/status)
+    // 6b. Top pending finance items.
+    //
+    //     NO per-item amount. This route is gated on requireAdmin alone, while
+    //     /admin/finance and receipt downloads require the `finance` ops role
+    //     (design/00 §5.2). Selecting `amount` here handed every admin the
+    //     itemised figures that gate exists to withhold — a side channel around
+    //     it. Titles + status are the "something is waiting" signal the ops
+    //     dashboard is for; the numbers live behind the gate.
     db
       .select({
         id: financeRecordsTable.id,
         title: financeRecordsTable.title,
         recordType: financeRecordsTable.recordType,
         status: financeRecordsTable.status,
-        amount: financeRecordsTable.amount,
-        currency: financeRecordsTable.currency,
         occurredOn: financeRecordsTable.occurredOn,
       })
       .from(financeRecordsTable)

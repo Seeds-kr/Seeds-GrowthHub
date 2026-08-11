@@ -17,7 +17,10 @@ import {
   Wallet,
   ExternalLink,
 } from "lucide-react";
-import { formatAmount } from "@/lib/finance-api";
+import {
+  FINANCE_RECORD_STATUS_LABEL,
+  type FinanceRecordStatus,
+} from "@/lib/finance-api";
 
 type OpsTaskItem = {
   id: number;
@@ -43,13 +46,15 @@ type SessionItem = {
   programName: string | null;
 };
 
+/**
+ * No `amount`/`currency`: this dashboard is admin-wide, but the figures are
+ * behind the `finance` ops role. Counts here, numbers at /admin/finance.
+ */
 type FinanceItem = {
   id: number;
   title: string;
   recordType: "income" | "expense" | "reimbursement";
-  status: string;
-  amount: string;
-  currency: string;
+  status: FinanceRecordStatus;
   occurredOn: string;
 };
 
@@ -445,9 +450,12 @@ export default function AdminOpsDashboard() {
                                 {formatDateOnly(f.occurredOn)} · {f.recordType}
                               </p>
                             </div>
-                            <span className="whitespace-nowrap font-mono text-sm">
-                              {formatAmount(f.amount, f.currency)}
-                            </span>
+                            <Badge
+                              variant="outline"
+                              className="whitespace-nowrap text-xs"
+                            >
+                              {FINANCE_RECORD_STATUS_LABEL[f.status] ?? f.status}
+                            </Badge>
                           </a>
                         </Link>
                       </li>

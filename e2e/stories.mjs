@@ -428,6 +428,67 @@ console.log("\n── 운영진 ────────────────
     return `${who} 배정 확인`;
   });
 
+  await story("O11", "붙임 파일을 올리고 다시 받는다", async () => {
+    need();
+    // 왜 이 스토리가 있는가: 다운로드 라우트가 응답을 아예 안 보내는 채로
+    // 배포돼 있었다. 회의록·문서에 붙여넣은 이미지가 전부 깨지는 상태였는데도
+    // 검증이 통과했다 — 어느 주행도 이 경로를 건드리지 않았기 때문이다.
+    // W5 수용 기준이 "비인증으로 안 열림"만 확인하고 "인증으로 열린다"를
+    // 확인하지 않은 자리다. 올린 것을 다시 받아봐야 그게 메워진다.
+    const api = async (path, init = {}) =>
+      p.request.fetch(BASE + "/api" + path, { timeout: 15000, ...init });
+
+    const docs = await api("/admin/documents");
+    if (!docs.ok()) throw blocked(`문서 목록 실패 (${docs.status()})`);
+    const target = (await docs.json()).items?.[0];
+    if (!target) throw blocked("붙일 대상 문서가 없음");
+
+    const up = await api("/admin/attachments/upload-url", { method: "POST" });
+    if (!up.ok()) throw blocked(`업로드 URL 실패 (${up.status()}) — 오브젝트 스토리지 미설정?`);
+    const { uploadUrl } = await up.json();
+
+    // 1x1 PNG. 내용이 그대로 돌아오는지 봐야 하므로 바이트를 기억해 둔다.
+    const png = Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+      "base64",
+    );
+    const put = await p.request.fetch(uploadUrl, {
+      method: "PUT",
+      headers: { "content-type": "image/png" },
+      data: png,
+      timeout: 20000,
+    });
+    if (!put.ok()) throw new Error(`스토리지 PUT 실패 (${put.status()})`);
+
+    const reg = await api("/admin/attachments", {
+      method: "POST",
+      data: {
+        objectPath: new URL(uploadUrl).pathname,
+        fileName: "주행-1x1.png",   // 한글 파일명 — Content-Disposition 인코딩까지 같이 본다
+        mimeType: "image/png",
+        sizeBytes: png.length,
+        linkedObjectType: "document",
+        linkedObjectId: target.id,
+      },
+    });
+    if (!reg.ok()) throw new Error(`등록 실패 (${reg.status()}) ${await reg.text()}`);
+    const { id } = await reg.json();
+
+    try {
+      // 핵심. 타임아웃이 짧은 것은 의도다 — 이 버그의 증상이 "느림"이 아니라
+      // "영영 응답 없음"이었으므로, 매달리면 통과가 아니라 실패여야 한다.
+      const got = await api(`/attachments/${id}/download`, { timeout: 10000 });
+      if (!got.ok()) throw new Error(`다운로드 ${got.status()}`);
+      const body = await got.body();
+      if (body.length !== png.length) {
+        throw new Error(`내용 불일치: 보낸 ${png.length}B, 받은 ${body.length}B`);
+      }
+      return `왕복 확인 ${body.length}B · ${got.headers()["content-type"]}`;
+    } finally {
+      await api(`/admin/attachments/${id}`, { method: "DELETE" }).catch(() => {});
+    }
+  });
+
   await story("O8", "권한 밖 리소스에 접근한다", async () => {
     need();
     const r = await expect404(p, "/admin/applications/99999");
