@@ -143,13 +143,18 @@ router.get("/admin/ops-dashboard/summary", requireAdmin, async (_req, res) => {
       )
       .groupBy(evaluationAssignmentsTable.status),
 
-    // 6a. Pending finance — counts + sums per pending bucket
+    // 6a. Pending finance — COUNTS ONLY, no sums.
+    //
+    //     `total` used to ride along here. Nothing on the client ever read it —
+    //     the ops-dashboard screen only draws `hooks` — so it was a dead field
+    //     that nonetheless handed every admin the pending total (실측 282,000원)
+    //     while /admin/finance itself requires the `finance` ops role. Removing
+    //     per-item amounts and leaving the sum would have been half a boundary.
     db
       .select({
         status: financeRecordsTable.status,
         recordType: financeRecordsTable.recordType,
         count: sql<number>`count(*)::int`,
-        total: sql<string>`coalesce(sum(${financeRecordsTable.amount}),0)::text`,
       })
       .from(financeRecordsTable)
       .where(
@@ -161,15 +166,20 @@ router.get("/admin/ops-dashboard/summary", requireAdmin, async (_req, res) => {
       )
       .groupBy(financeRecordsTable.status, financeRecordsTable.recordType),
 
-    // 6b. Top pending finance items (no amounts exposed beyond title/status)
+    // 6b. Top pending finance items.
+    //
+    //     NO per-item amount. This route is gated on requireAdmin alone, while
+    //     /admin/finance and receipt downloads require the `finance` ops role
+    //     (design/00 §5.2). Selecting `amount` here handed every admin the
+    //     itemised figures that gate exists to withhold — a side channel around
+    //     it. Titles + status are the "something is waiting" signal the ops
+    //     dashboard is for; the numbers live behind the gate.
     db
       .select({
         id: financeRecordsTable.id,
         title: financeRecordsTable.title,
         recordType: financeRecordsTable.recordType,
         status: financeRecordsTable.status,
-        amount: financeRecordsTable.amount,
-        currency: financeRecordsTable.currency,
         occurredOn: financeRecordsTable.occurredOn,
       })
       .from(financeRecordsTable)

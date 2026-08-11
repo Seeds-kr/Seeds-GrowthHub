@@ -1,104 +1,30 @@
-import { DesktopOnly } from "@/components/DesktopOnly";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/mvp3-api";
-import { ATTENDANCE_STATUSES, ATTENDANCE_STATUS_LABEL, formatKoreanDateTime } from "@/lib/admin-labels";
-import { useRoute, Link } from "wouter";
+import { useEffect } from "react";
+import { useRoute, useLocation } from "wouter";
 import { Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { useState, useEffect } from "react";
-import { toast } from "@/hooks/use-toast";
-import { ResourceMissing } from "@/components/ResourceMissing";
 
-type Roster = { studentId: number; name: string; email: string; status: string | null; note: string | null; recordId: number | null };
-type Resp = { session: { id: number; title: string; scheduledAt: string; locationOrLink: string | null }; roster: Roster[] };
-
-export default function AdminSessionAttendance() {
+/**
+ * 옛 출석 입력 화면. 이제 모임 상세 안에 있다.
+ *
+ * 라우트를 지우지 않고 넘겨보내는 이유: 이 주소가 북마크·메모·디스코드 메시지에
+ * 남아 있을 수 있다. 지우면 404 가 뜨는데, 사용자 입장에서는 기능이 사라진 것과
+ * 구분이 안 된다. 상세로 보내면 찾던 것이 거기 있다.
+ *
+ * `replace` 인 것도 의도다. push 로 넣으면 뒤로 가기가 이 화면으로 돌아와
+ * 다시 상세로 튕겨 나가는 고리에 갇힌다.
+ */
+export default function AdminSessionAttendanceRedirect() {
   const [, params] = useRoute("/admin/sessions/:id/attendance");
+  const [, navigate] = useLocation();
   const id = params?.id;
-  const qc = useQueryClient();
-  const { data, isLoading } = useQuery({
-    queryKey: ["admin-session-attendance", id],
-    queryFn: () => api<Resp>(`/admin/sessions/${id}/attendance`),
-    enabled: !!id,
-  });
-  const [draft, setDraft] = useState<Record<number, { status: string; note: string }>>({});
 
   useEffect(() => {
-    if (!data) return;
-    const d: Record<number, { status: string; note: string }> = {};
-    for (const r of data.roster) d[r.studentId] = { status: r.status ?? "present", note: r.note ?? "" };
-    setDraft(d);
-  }, [data]);
+    if (id) navigate(`/admin/sessions/${id}`, { replace: true });
+  }, [id, navigate]);
 
-  const save = useMutation({
-    mutationFn: () => api(`/admin/sessions/${id}/attendance`, {
-      method: "PUT",
-      body: { records: Object.entries(draft).map(([sid, v]) => ({ studentId: Number(sid), status: v.status, note: v.note || null })) },
-    }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-session-attendance", id] }); toast({ title: "저장됨" }); },
-    onError: (e: any) => toast({ title: "실패", description: e?.data?.error ?? e.message, variant: "destructive" }),
-  });
-
-  // 로딩과 "없음"을 갈라야 한다. 하나로 묶으면 없는 자료를 열었을 때
-
-  // 스피너가 영원히 돈다(느린 건지 없는 건지 알 수 없다).
-
-  if (isLoading) return <><div className="flex justify-center py-12"><Loader2 className="animate-spin" /></div></>;
-
-  if (!data)
-
-    return (
-
-      <>
-
-        <ResourceMissing label="모임" backHref="/admin/sessions" />
-
-      </>
-
-    );
   return (
-    <>
-      <div className="mb-4"><Link href="/admin/sessions" className="text-sm text-muted-foreground hover:text-primary">← 모임 목록</Link></div>
-      <h1 className="text-3xl font-serif font-bold mb-2">{data.session.title}</h1>
-      <div className="text-muted-foreground text-sm mb-6">
-        {formatKoreanDateTime(data.session.scheduledAt)}
-        {data.session.locationOrLink ? ` · ${data.session.locationOrLink}` : ""}
-      </div>
-      {/* W11 (design/05 §6.2) — C tier: a roster-wide status+memo grid cannot be
-          entered on a phone. The session heading above stays readable so the
-          notice arrives with context about which session it refers to. */}
-      <DesktopOnly feature="일괄 출석 입력">
-      {data.roster.length === 0 ? <div className="text-muted-foreground">이 모임의 기수에 학생이 없습니다.</div> : (
-        <>
-          <div className="rounded-lg bg-card border border-border mb-6">
-            <Table>
-              <TableHeader><TableRow><TableHead>학생</TableHead><TableHead>이메일</TableHead><TableHead>출석 상태</TableHead><TableHead>메모</TableHead></TableRow></TableHeader>
-              <TableBody>
-                {data.roster.map((r) => (
-                  <TableRow key={r.studentId}>
-                    <TableCell className="font-medium">{r.name}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{r.email}</TableCell>
-                    <TableCell>
-                      <Select value={draft[r.studentId]?.status ?? "present"} onValueChange={(v) => setDraft({ ...draft, [r.studentId]: { ...(draft[r.studentId] ?? { status: "present", note: "" }), status: v } })}>
-                        <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
-                        <SelectContent>{ATTENDANCE_STATUSES.map((s) => <SelectItem key={s} value={s}>{ATTENDANCE_STATUS_LABEL[s]}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Input placeholder="메모 (선택)" value={draft[r.studentId]?.note ?? ""} onChange={(e) => setDraft({ ...draft, [r.studentId]: { ...(draft[r.studentId] ?? { status: "present", note: "" }), note: e.target.value } })} />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          <Button disabled={save.isPending} onClick={() => save.mutate()}>{save.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}출석 저장</Button>
-        </>
-      )}
-      </DesktopOnly>
-    </>
+    <div className="flex justify-center py-12 text-muted-foreground">
+      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+      모임 상세로 이동합니다 — 출석 입력이 그 안으로 들어왔습니다.
+    </div>
   );
 }

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useSiteContent, HOME_DEFAULT } from "@/lib/site-content";
 import { ArrowRight } from "lucide-react";
-import seedsHero from "@assets/image_1779550028961.png";
+import { PHOTOS, WORKS } from "@/assets/photos";
 import { LiquidBackdrop } from "@/components/LiquidBackdrop";
 import { HorizontalDrift } from "@/components/HorizontalDrift";
 import { CountUp, Magnetic, Reveal, Stagger, StaggerItem } from "@/lib/motion";
@@ -75,19 +75,21 @@ export default function Home() {
               </Link>
             </div>
           </div>
-          {/* 이 래퍼에는 등장 애니메이션을 걸지 않는다. `.rise` 가 opacity 를
-              건드리는 순간 쌓임 맥락이 생기고, 그러면 아래 이미지의 blend 가
-              그 안에 갇혀 배경까지 닿지 못한다(transform 도 마찬가지다).
-              흰 사각형이 보이는 것보다 페이드 하나를 포기하는 편이 낫다. */}
-          <div className="flex justify-center md:justify-end">
-            {/* 이 PNG 는 배경이 불투명한 흰색이라 색이 깔린 위에 놓으면 오려
-                붙인 것처럼 뜬다. multiply 로 곱하면 흰 부분이 배경을 그대로
-                통과시켜 그림만 남는다. 원본 에셋은 건드리지 않는다. */}
-            <img
-              src={seedsHero}
-              alt="씨앗에서 나무로 자라는 Seeds 상징"
-              className="w-full max-w-md object-contain mix-blend-multiply"
-            />
+          {/* 클립아트를 실제 기수 사진으로 바꿨다. 지원자가 가장 알고 싶은 건
+              "여기 어떤 사람들이 있나" 인데, 일러스트는 그 질문에 답하지 못한다.
+              이 사진 한 장이 본문 세 문단보다 많은 말을 한다. */}
+          <div className="rise" style={{ animationDelay: "200ms" }}>
+            <figure className="relative overflow-hidden rounded-lg elev-2">
+              <img
+                src={PHOTOS.cohortGroup.src}
+                alt={PHOTOS.cohortGroup.alt}
+                /* 히어로 이미지는 첫 화면에 보이므로 지연 로딩하지 않는다.
+                   lazy 를 걸면 LCP 가 늦어진다. */
+                loading="eager"
+                fetchPriority="high"
+                className="aspect-[4/3] w-full object-cover"
+              />
+            </figure>
           </div>
         </div>
       </section>
@@ -166,6 +168,48 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── 학생들이 만든 것 ──────────────────────────────────────────────
+          사이트에 없던 판이다. "무엇을 하는 동아리인가" 는 문장으로 설명하고
+          있었지만, 실제로 나온 결과물은 한 장도 없었다. 지원자에게는 이게
+          가장 강한 증거다 — 여기 오면 이런 걸 만들게 된다는 것. */}
+      <section className="border-t border-border bg-muted/30 px-4 py-24">
+        <div className="container mx-auto max-w-5xl">
+          <Reveal>
+            <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-primary">
+              STUDENT WORK
+            </div>
+            <h2 className="mb-4 font-serif text-3xl font-bold md:text-4xl">
+              학생들이 만든 것
+            </h2>
+            <p className="mb-12 max-w-2xl leading-relaxed text-muted-foreground">
+              기수마다 팀을 짜서 처음부터 끝까지 만듭니다. 아래는 실제 결과물입니다.
+            </p>
+          </Reveal>
+          <Stagger className="grid gap-6 sm:grid-cols-2">
+            {WORKS.map((w) => (
+              <StaggerItem key={w.title}>
+                <SurfaceCard flush className="h-full">
+                  {/* 사진이 카드의 내용이므로 패딩 없이 위쪽을 꽉 채운다.
+                      비율을 고정해 넉 장이 서로 어긋나지 않게 한다. */}
+                  <img
+                    src={w.src}
+                    alt={w.alt}
+                    loading="lazy"
+                    className="aspect-[16/9] w-full border-b border-border bg-muted object-cover object-top"
+                  />
+                  <div className="p-5">
+                    <h3 className="text-base font-bold">{w.title}</h3>
+                    <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                      {w.note}
+                    </p>
+                  </div>
+                </SurfaceCard>
+              </StaggerItem>
+            ))}
+          </Stagger>
+        </div>
+      </section>
+
       {/* ── Year timeline ────────────────────────────────────────────────────
           이 판만 가로로 흐른다. 2023에서 2026으로 가는 것이 실제로 "앞으로
           나아가는" 일이라, 가로 이동이 내용의 의미와 맞는 유일한 자리다.
@@ -202,6 +246,9 @@ export default function Home() {
 
       {/* ── Recruit banner ───────────────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-primary px-4 py-24 text-primary-foreground">
+        {/* 사이트에서 가장 납작한 면이었다 — 초록 한 색으로 꽉 찬 판. 같은 초록의
+            명도만 흔들어 물속에 빛이 든 것처럼 만든다. */}
+        <LiquidBackdrop tone="brand" />
         <div className="container relative mx-auto max-w-3xl text-center">
           <Reveal>
             <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-primary-foreground">

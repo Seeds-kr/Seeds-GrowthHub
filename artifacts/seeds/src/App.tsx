@@ -76,6 +76,7 @@ import AdminTasks from "@/pages/admin/tasks";
 import AdminFinance from "@/pages/admin/finance";
 import AdminOpsDashboard from "@/pages/admin/ops-dashboard";
 import AdminAuditLogs from "@/pages/admin/audit-logs";
+import AdminCommunications from "@/pages/admin/communications";
 import AdminStudies from "@/pages/admin/studies";
 import AdminTeamStatus from "@/pages/admin/team-status";
 import AdminUsers from "@/pages/admin/users";
@@ -189,6 +190,7 @@ function Router() {
       <Route path="/admin/finance" component={AdminFinance} />
       <Route path="/admin/ops-dashboard" component={AdminOpsDashboard} />
       <Route path="/admin/audit-logs" component={AdminAuditLogs} />
+      <Route path="/admin/communications" component={AdminCommunications} />
       <Route path="/admin/studies" component={AdminStudies} />
       <Route path="/admin/team-status" component={AdminTeamStatus} />
       <Route path="/admin/users" component={AdminUsers} />

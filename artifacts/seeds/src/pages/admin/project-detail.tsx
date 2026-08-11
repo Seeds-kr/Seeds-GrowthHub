@@ -22,6 +22,8 @@ import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 import { RemovableTag } from "@/components/RemovableTag";
 import { ResourceMissing } from "@/components/ResourceMissing";
+import { TeamMeetings } from "@/components/team/TeamMeetings";
+import { TeamLinks } from "@/components/team/TeamLinks";
 
 type MentorAssignment = {
   id: number; mentorUserId: number; mentorName: string; mentorEmail: string;
@@ -434,6 +436,10 @@ export default function AdminProjectDetail() {
             </div>
           </CardContent>
         </Card>
+      </div>
+      <div className="mt-4 grid gap-4">
+        <TeamMeetings viewer="admin" ownerType="project" ownerId={id} />
+        <TeamLinks viewer="admin" ownerType="project" ownerId={id} />
       </div>
     </>
   );

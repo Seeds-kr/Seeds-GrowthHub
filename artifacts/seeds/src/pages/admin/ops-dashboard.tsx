@@ -17,7 +17,10 @@ import {
   Wallet,
   ExternalLink,
 } from "lucide-react";
-import { formatAmount } from "@/lib/finance-api";
+import {
+  FINANCE_RECORD_STATUS_LABEL,
+  type FinanceRecordStatus,
+} from "@/lib/finance-api";
 
 type OpsTaskItem = {
   id: number;
@@ -43,13 +46,15 @@ type SessionItem = {
   programName: string | null;
 };
 
+/**
+ * No `amount`/`currency`: this dashboard is admin-wide, but the figures are
+ * behind the `finance` ops role. Counts here, numbers at /admin/finance.
+ */
 type FinanceItem = {
   id: number;
   title: string;
   recordType: "income" | "expense" | "reimbursement";
-  status: string;
-  amount: string;
-  currency: string;
+  status: FinanceRecordStatus;
   occurredOn: string;
 };
 
@@ -257,8 +262,8 @@ export default function AdminOpsDashboard() {
                 <ul className="divide-y">
                   {data.overdueTasks.map((t) => (
                     <li key={t.id} className="py-2 first:pt-0 last:pb-0">
-                      <Link href={`/admin/tasks`}>
-                        <a className="flex items-center justify-between gap-3 hover:underline">
+                      <Link href={`/admin/tasks`} className="flex items-center justify-between gap-3 hover:underline">
+                        <span className="contents">
                           <div className="min-w-0 flex-1">
                             <p className="truncate font-medium">{t.title}</p>
                             <p className="text-xs text-muted-foreground">
@@ -272,7 +277,7 @@ export default function AdminOpsDashboard() {
                           >
                             {t.priority}
                           </Badge>
-                        </a>
+                        </span>
                       </Link>
                     </li>
                   ))}
@@ -294,8 +299,8 @@ export default function AdminOpsDashboard() {
                 <ul className="divide-y">
                   {data.blockedTasks.map((t) => (
                     <li key={t.id} className="py-2 first:pt-0 last:pb-0">
-                      <Link href={`/admin/tasks`}>
-                        <a className="flex items-center justify-between gap-3 hover:underline">
+                      <Link href={`/admin/tasks`} className="flex items-center justify-between gap-3 hover:underline">
+                        <span className="contents">
                           <div className="min-w-0 flex-1">
                             <p className="truncate font-medium">{t.title}</p>
                             <p className="text-xs text-muted-foreground">
@@ -309,7 +314,7 @@ export default function AdminOpsDashboard() {
                           >
                             {t.priority}
                           </Badge>
-                        </a>
+                        </span>
                       </Link>
                     </li>
                   ))}
@@ -331,8 +336,8 @@ export default function AdminOpsDashboard() {
                 <ul className="divide-y">
                   {data.upcomingSessions.map((s) => (
                     <li key={s.id} className="py-2 first:pt-0 last:pb-0">
-                      <Link href={`/admin/sessions/${s.id}/attendance`}>
-                        <a className="flex items-center justify-between gap-3 hover:underline">
+                      <Link href={`/admin/sessions/${s.id}`} className="flex items-center justify-between gap-3 hover:underline">
+                        <span className="contents">
                           <div className="min-w-0 flex-1">
                             <p className="truncate font-medium">{s.title}</p>
                             <p className="text-xs text-muted-foreground">
@@ -344,7 +349,7 @@ export default function AdminOpsDashboard() {
                           <Badge variant="outline">
                             {PREP_STATUS_LABEL[s.prepStatus] ?? s.prepStatus}
                           </Badge>
-                        </a>
+                        </span>
                       </Link>
                     </li>
                   ))}
@@ -437,18 +442,21 @@ export default function AdminOpsDashboard() {
                   <ul className="divide-y">
                     {data.finance.pendingItems.slice(0, 5).map((f) => (
                       <li key={f.id} className="py-2 first:pt-0 last:pb-0">
-                        <Link href="/admin/finance">
-                          <a className="flex items-center justify-between gap-3 hover:underline">
+                        <Link href="/admin/finance" className="flex items-center justify-between gap-3 hover:underline">
+                          <span className="contents">
                             <div className="min-w-0 flex-1">
                               <p className="truncate font-medium">{f.title}</p>
                               <p className="text-xs text-muted-foreground">
                                 {formatDateOnly(f.occurredOn)} · {f.recordType}
                               </p>
                             </div>
-                            <span className="whitespace-nowrap font-mono text-sm">
-                              {formatAmount(f.amount, f.currency)}
-                            </span>
-                          </a>
+                            <Badge
+                              variant="outline"
+                              className="whitespace-nowrap text-xs"
+                            >
+                              {FINANCE_RECORD_STATUS_LABEL[f.status] ?? f.status}
+                            </Badge>
+                          </span>
                         </Link>
                       </li>
                     ))}
@@ -471,8 +479,8 @@ export default function AdminOpsDashboard() {
                 <ul className="divide-y">
                   {data.teamSupport.items.map((t) => (
                     <li key={t.checkId} className="py-2 first:pt-0 last:pb-0">
-                      <Link href={`/admin/projects/${t.projectId}`}>
-                        <a className="block hover:underline">
+                      <Link href={`/admin/projects/${t.projectId}`} className="block hover:underline">
+                        <span className="contents">
                           <p className="truncate font-medium">{t.projectTitle}</p>
                           <p className="text-xs text-muted-foreground">
                             {t.note ?? t.blocker ?? "지원 요청"}
@@ -481,7 +489,7 @@ export default function AdminOpsDashboard() {
                             {t.authorName ? `${t.authorName} · ` : ""}
                             {formatDate(t.checkedAt)}
                           </p>
-                        </a>
+                        </span>
                       </Link>
                     </li>
                   ))}
@@ -503,15 +511,15 @@ export default function AdminOpsDashboard() {
                 <ul className="divide-y">
                   {data.staleStatusChecks.map((t) => (
                     <li key={t.projectId} className="py-2 first:pt-0 last:pb-0">
-                      <Link href={`/admin/projects/${t.projectId}`}>
-                        <a className="flex items-center justify-between gap-3 hover:underline">
+                      <Link href={`/admin/projects/${t.projectId}`} className="flex items-center justify-between gap-3 hover:underline">
+                        <span className="contents">
                           <span className="min-w-0 flex-1 truncate font-medium">
                             {t.projectTitle}
                           </span>
                           <span className="shrink-0 text-xs text-muted-foreground">
                             {t.lastCheckedAt ? formatDate(t.lastCheckedAt) : "기록 없음"}
                           </span>
-                        </a>
+                        </span>
                       </Link>
                     </li>
                   ))}
@@ -533,15 +541,15 @@ export default function AdminOpsDashboard() {
                 <ul className="divide-y">
                   {data.recentDocuments.map((d) => (
                     <li key={d.id} className="py-2 first:pt-0 last:pb-0">
-                      <Link href={`/admin/documents/${d.id}`}>
-                        <a className="flex items-center justify-between gap-3 hover:underline">
+                      <Link href={`/admin/documents/${d.id}`} className="flex items-center justify-between gap-3 hover:underline">
+                        <span className="contents">
                           <div className="min-w-0 flex-1">
                             <p className="truncate font-medium">{d.title}</p>
                             <p className="text-xs text-muted-foreground">
                               {d.docType} · {formatDate(d.updatedAt)}
                             </p>
                           </div>
-                        </a>
+                        </span>
                       </Link>
                     </li>
                   ))}
@@ -563,15 +571,15 @@ export default function AdminOpsDashboard() {
                 <ul className="divide-y">
                   {data.staleDocuments.map((d) => (
                     <li key={d.id} className="py-2 first:pt-0 last:pb-0">
-                      <Link href={`/admin/documents/${d.id}`}>
-                        <a className="flex items-center justify-between gap-3 hover:underline">
+                      <Link href={`/admin/documents/${d.id}`} className="flex items-center justify-between gap-3 hover:underline">
+                        <span className="contents">
                           <div className="min-w-0 flex-1">
                             <p className="truncate font-medium">{d.title}</p>
                             <p className="text-xs text-muted-foreground">
                               {d.docType} · {daysSince(d.updatedAt)}일 전 수정
                             </p>
                           </div>
-                        </a>
+                        </span>
                       </Link>
                     </li>
                   ))}

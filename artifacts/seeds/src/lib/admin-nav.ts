@@ -30,6 +30,7 @@ import {
   Plug,
   ScrollText,
   Settings,
+  Send,
   type LucideIcon,
 } from "lucide-react";
 
@@ -72,6 +73,12 @@ export type NavItem = {
    * Omitted = read-wide (visible to every admin).
    */
   requiredOpsRole?: OpsRoleCode;
+  /**
+   * 여럿 중 하나만 있으면 되는 경우. `communication_logs` 처럼 두 역할이 공동
+   * 소유하는 화면에 쓴다 — 둘 다 무언가를 보내고, 보낸 것을 확인하는 것은
+   * 보내는 일의 일부다. 서버의 requireAnyOpsRole() 과 짝이다.
+   */
+  requiredAnyOpsRole?: OpsRoleCode[];
   /**
    * Which counter from the ops-dashboard summary to show beside this item.
    * Badges are "currently open" counts, not an inbox — there is deliberately
@@ -139,9 +146,15 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
       { href: "/admin/evaluators", label: "평가 담당자(Evaluations)", icon: UserCheck },
       { href: "/admin/interviews", label: "면접(Interviews)", icon: Mic, requiredOpsRole: "recruiting" },
       { href: "/admin/sessions", label: "행사 / 모임(Events / Sessions)", icon: CalendarDays },
-      { href: "/admin/attendance", label: "출석(Attendance)", icon: ClipboardList },
+      // "출석"이 아니라 "출석 집계"다. 출석 입력은 모임 상세 안으로 들어갔고,
+      // 이 화면은 기수 단위 집계 — 특정 모임에 속하지 않는 질문("3기 출석률은
+      // 어떤가")에 답한다. 이름이 그냥 "출석"이면 모임과 별개 기능처럼 읽혀서
+      // 입력하러 여기 들어왔다가 되돌아 나가게 된다.
+      { href: "/admin/attendance", label: "출석 집계(Attendance)", icon: ClipboardList },
       { href: "/admin/assignments", label: "과제(Assignments)", icon: ClipboardList },
       { href: "/admin/announcements", label: "공지(Announcements)", icon: Megaphone },
+      // 공지 바로 아래. 무엇을 보냈는지 확인하는 자리라 보내는 화면 옆이 맞다.
+      { href: "/admin/communications", label: "발송 이력(Communications)", icon: Send, requiredAnyOpsRole: ["recruiting", "community"] },
       { href: "/admin/finance", label: "재정(Finance)", icon: Wallet, requiredOpsRole: "finance", badgeKey: "finance" },
       { href: "/admin/ops-dashboard", label: "운영 대시보드", icon: Gauge, badgeKey: "teamSupport" },
     ],
@@ -211,7 +224,10 @@ export function visibleNavSections(
   return ADMIN_NAV_SECTIONS.map((section) => ({
     ...section,
     items: section.items.filter(
-      (item) => !item.requiredOpsRole || hasOpsRole(opsRoles, item.requiredOpsRole),
+      (item) =>
+        (!item.requiredOpsRole || hasOpsRole(opsRoles, item.requiredOpsRole)) &&
+        (!item.requiredAnyOpsRole ||
+          item.requiredAnyOpsRole.some((c) => hasOpsRole(opsRoles, c))),
     ),
   })).filter((section) => section.items.length > 0);
 }

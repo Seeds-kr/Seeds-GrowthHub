@@ -73,7 +73,7 @@ export default function AdminAttendancePage() {
           출석(Attendance)
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          기수 단위 집계입니다. 출석 입력은 모임별 화면에서 합니다.
+          기수 단위 집계입니다. 출석 입력은 모임 상세 화면에서 합니다.
         </p>
       </div>
 

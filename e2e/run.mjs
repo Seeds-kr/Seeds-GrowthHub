@@ -146,7 +146,17 @@ if (STUDENT_EMAIL && STUDENT_PASSWORD) {
   if (vis) {
     await trigger.click();
     const links = await page.locator('aside[role="dialog"] nav a').allTextContents();
-    record("student drawer lists all 13 items", links.length === 13, `${links.length}: ${links.join(" / ")}`);
+    // 12 였다가 13 이 되는 식으로 숫자만 고치며 따라다니면, 항목이 실수로
+    // 사라져도 숫자를 맞춰 주는 것으로 끝난다. 드로어가 약속하는 것은 "헤더에
+    // 있는 것이 전부 여기에도 있다"이므로 그걸 직접 확인한다 — 출석이 모임
+    // 안으로 들어간 것 같은 의도된 변경은 통과하고, 빠뜨린 것은 걸린다.
+    const headerNav = await page.locator("header nav a").allTextContents();
+    const missing = headerNav.filter((h) => !links.includes(h));
+    record(
+      "student drawer covers every header nav item",
+      links.length > 0 && missing.length === 0,
+      `드로어 ${links.length} / 헤더 ${headerNav.length}${missing.length ? ` · 빠진 것: ${missing.join(", ")}` : ""}`,
+    );
     await page.keyboard.press("Escape");
     await page.waitForTimeout(250);
     const open = await page.locator('aside[role="dialog"]').isVisible().catch(() => false);

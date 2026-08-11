@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { AttendanceGrid } from "@/components/session/AttendanceGrid";
 
 type DocItem = { id: number; title: string; docType: string; isTemplate: boolean; archivedAt: string | null };
 type UserLite = { id: number; name: string; email: string };
@@ -28,6 +29,7 @@ export default function AdminSessionDetail() {
   const [, params] = useRoute("/admin/sessions/:id");
   const id = Number(params?.id);
   const qc = useQueryClient();
+  const [showAttendance, setShowAttendance] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-session", id],
@@ -104,7 +106,7 @@ export default function AdminSessionDetail() {
 
   return (
     <>
-      <Link href="/admin/sessions"><a className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"><ArrowLeft className="h-4 w-4" />모임 목록</a></Link>
+      <Link href="/admin/sessions" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"><ArrowLeft className="h-4 w-4" />모임 목록</Link>
 
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
@@ -141,7 +143,7 @@ export default function AdminSessionDetail() {
             {data.checklist ? (
               <div className="flex items-center justify-between p-3 bg-muted/30 border border-border">
                 <div>
-                  <Link href={`/admin/documents/${data.checklist.id}`}><a className="font-medium hover:underline">{data.checklist.title}</a></Link>
+                  <Link href={`/admin/documents/${data.checklist.id}`} className="font-medium hover:underline">{data.checklist.title}</Link>
                   {data.checklist.archivedAt && <Badge variant="outline" className="ml-2 bg-amber-50 text-amber-700 border-amber-200">보관됨</Badge>}
                   <div className="text-xs text-muted-foreground mt-1">유형: {data.checklist.docType}</div>
                 </div>
@@ -224,7 +226,14 @@ export default function AdminSessionDetail() {
           <section className="rounded-lg bg-card border border-border p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold">출석</h2>
-              <Link href={`/admin/sessions/${id}/attendance`}><Button size="sm">출석 관리 →</Button></Link>
+              <Button
+                size="sm"
+                variant={showAttendance ? "outline" : "default"}
+                onClick={() => setShowAttendance((v) => !v)}
+                data-testid="button-toggle-attendance"
+              >
+                {showAttendance ? "접기" : "출석 입력"}
+              </Button>
             </div>
             {data.attendanceSummary.total === 0 ? (
               <p className="text-sm text-muted-foreground">아직 출석 기록이 없습니다.</p>
@@ -236,6 +245,13 @@ export default function AdminSessionDetail() {
                 <div className="flex justify-between"><dt className="text-red-700">결석</dt><dd className="tabular-nums">{data.attendanceSummary.absent}</dd></div>
                 <div className="flex justify-between"><dt className="text-muted-foreground">사유 결석</dt><dd className="tabular-nums">{data.attendanceSummary.excused}</dd></div>
               </dl>
+            )}
+            {/* 보는 곳과 고치는 곳을 갈라 두지 않는다 — 요약을 보고 고칠 것이
+                생기면 여기서 바로 편다. 전에는 별도 화면으로 넘어가야 했다. */}
+            {showAttendance && (
+              <div className="mt-4 border-t pt-4">
+                <AttendanceGrid sessionId={Number(id)} />
+              </div>
             )}
           </section>
 

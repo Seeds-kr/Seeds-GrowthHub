@@ -10,11 +10,19 @@
 
 | 축 | 현재 | 완성 | 증가 |
 |---|---:|---:|---:|
-| 데이터 테이블 | **40** | **41** | +1 |
-| 화면(라우트) | **69** | **~78** | +9 |
-| 빈 placeholder 화면 | **8** | **0** | −8 |
+| 데이터 테이블 | **41** | **41** | — |
+| 화면(라우트) | **81** | **81** | — |
+| 빈 placeholder 화면 | **0** | **0** | — |
 | 워크스페이스 | 4 | 4 | — |
 | 운영진 기능 역할 | 7 | 7 | — |
+
+> **2026-08-08 실측 갱신.** 이 표는 "현재 40테이블·69라우트·placeholder 8개"로 남아
+> 있었으나 전부 낡은 값이었다. 실제로 센 값은 위와 같다 — 테이블 41(`lib/db/drizzle/
+> 0000_fine_moonstone.sql`의 `CREATE TABLE` 41개), 라우트 81(`App.tsx`의 `<Route path=`
+> 81개), placeholder 0. §7의 Wave 표도 같은 이유로 어긋나 있어 함께 고쳤다.
+>
+> `gap-register.md`가 경고한 드리프트가 설계 문서 안에서 재발한 자리다. 이 문서와
+> [`README.md` §4](README.md)가 서로 다른 말을 하고 있었고, 실측하면 README 쪽이 맞았다.
 
 **한 문장:** 운영진 7개 역할이 각자 필요한 것만 보면서 Seeds를 굴리고, 멘토는 담당 팀을 30초 만에 파악해 짧게 피드백하고, 학생은 자기 성장 흔적이 쌓이는 걸 스스로 본다 — 그리고 그 어느 것도 점수가 되지 않는다.
 
@@ -174,7 +182,7 @@ Core · 코어
   ✅ /admin/roles                    역할 & 권한 개요
   ✅ /admin/cohorts                  기수
   ✅ /admin/programs                 프로그램
-  ⬜ /admin/members                  통합 회원 명부
+  ❌ /admin/members                  ← W8에서 제거 결정 (/admin/users + /admin/people 로 충분)
 
 Ops · 운영
   ✅ /admin/meetings[/:id]           회의록 → 액션 생성
@@ -182,36 +190,36 @@ Ops · 운영
   ✅ /admin/documents[/:id]          Markdown 문서 + 버전 + 템플릿
   ✅ /admin/applications[/:id]       🔒 모집
   ✅ /admin/evaluators               평가 담당자 풀
-  ⬜ /admin/interviews               🔒 면접 일정 통합 뷰
+  ✅ /admin/interviews               🔒 면접 일정 통합 뷰
   ✅ /admin/sessions[/:id][/attendance]  행사/세션
-  ⬜ /admin/attendance               출석 집계
+  ✅ /admin/attendance               출석 집계
   ✅ /admin/assignments[/:id]        학생 과제
   ✅ /admin/announcements            공지
   ✅ /admin/finance                  🔒 회계
   ✅ /admin/ops-dashboard            운영 대시보드
-  🟡 /admin/communications           🔒 발송 이력
+  ✅ /admin/communications           🔒 발송 이력 (recruiting/community)
 
 Growth · 성장
   ✅ /admin/students[/:id][/timeline][/report]
   ✅ /admin/projects[/:id]           + 담당 멘토 · 마일스톤 · 상태체크 이력
   ✅ /admin/studies                  스터디
-  🟡 /admin/team-status              전체 팀 상태 보드
+  ✅ /admin/team-status              전체 팀 상태 보드
   ✅ /admin/activity-records
   ✅ /admin/artifacts
   ✅ /admin/feedback
   ❌ /admin/reflections              ← 만들지 않음 · placeholder 제거 완료 (§3.6)
   ✅ /admin/tags                     임시 분류 태그
-  ⬜ /admin/reports                  리포트 인덱스
+  ✅ /admin/reports                  리포트 인덱스
 
 Content · 콘텐츠
   ✅ /admin/site-content
-  ⬜ /admin/public-pages
-  🟡 /admin/media                    첨부 + 외부링크 통합
+  ❌ /admin/public-pages             ← W8에서 제거 결정 (/admin/site-content 가 담당)
+  ✅ /admin/media                    첨부 + 외부링크 통합
 
 System · 시스템
-  ⬜ /admin/integrations             외부 연동 링크 맵
+  ❌ /admin/integrations             ← W8에서 제거 결정 (/admin/media 가 담당)
   ✅ /admin/audit-logs               🔒 감사 로그
-  ⬜ /admin/settings
+  ❌ /admin/settings                 ← W8에서 제거 결정 (설정 대상이 아직 없다)
 ```
 
 ### 3.3 Mentor Workspace — 현재 2 → 완성 7
@@ -232,9 +240,10 @@ System · 시스템
 ✅ /student                     Dashboard
 ✅ /student/sessions · /attendance · /assignments[/:id] · /announcements
 ✅ /student/projects[/:id] · /artifacts · /timeline · /report · /profile
-✅ /student/studies             My Studies
+✅ /student/studies[/:id]       My Studies
 ✅ /student/reflections         My Reflections (공개범위 선택)
 ✅ /student/feedback            My Feedback
+🟡 /student/team-meetings/:id   팀 회의록 작성·수정 (설계 06)
 ```
 
 ### 3.5 Evaluation Surface — 완성
@@ -443,6 +452,14 @@ graph LR
 
 **GrowthHub는 외부 도구를 대체하지 않는다.** 링크와 메타데이터, 그리고 "이게 왜 여기 붙어 있는지"라는 맥락만 관리한다.
 
+> **2026-08-08 — 문서 축은 예외가 되었다 ([ADR-010](06-team-meeting-notes.md)).**
+> Notion을 도입하지 않기로 하면서 **팀 회의록의 source of truth가 GrowthHub 안으로** 들어온다
+> (`team_meetings`). 위 그림에서 Notion을 빼고 읽어야 한다.
+>
+> 경계 전체가 뒤집힌 것은 아니다 — GitHub(코드)·Discord(대화)·Drive(파일)는 그대로 밖이고,
+> 링크로만 붙는다. 다만 그 링크를 이제 **학생도 직접 걸 수 있다**(설계 06 §7). 전에는 운영진만
+> 가능해서, "링크만 관리한다"는 설계가 정작 링크 걸 사람을 운영진으로 한정하고 있었다.
+
 점선이 **한 방향인 것이 중요하다** — 외부에서 들어오는 것은 대화 신호이지 판정 근거가 아니다. 커밋 수로 기여도를 매기지 않고, Discord 메시지 수로 참여도를 재지 않는다.
 
 ---
@@ -475,7 +492,9 @@ graph LR
     style W11 fill:#fff3e0,stroke:#ef6c00
 ```
 
-W1~W6 및 W9~W10 완료. **세 축(권한/인프라 · 멘토/성장 · 제품 경험)이 대체로 독립**이다. 남은 것은 W5~W8과 경험 축 W9~W11이다. 점선은 약한 의존이다.
+**W1~W11 전부 완료.** 세 축(권한/인프라 · 멘토/성장 · 제품 경험)이 대체로 독립이라 병렬로 진행됐다. 점선은 약한 의존이다.
+
+남은 것은 Wave가 아니라 **미결 항목(§9)과 의도적 경계(§8)**뿐이다. 다만 "구현 완료"가 "검증 완료"는 아니다 — W11은 브라우저 실측이 남았고, W5는 첨부 다운로드가 응답을 보내지 않는 채로 "완료"로 표시돼 있었다(2026-08-08 수정). 수용 기준이 *막히는가*만 묻고 *뚫리는가*를 묻지 않으면 이런 것이 통과한다.
 
 | Wave | 산출물 | 축 | 상태 |
 |---|---|---|---|
@@ -485,11 +504,11 @@ W1~W6 및 W9~W10 완료. **세 축(권한/인프라 · 멘토/성장 · 제품 �
 | W4 | Mentor Workspace 4화면 | 성장 | ✅ 구현 완료 |
 | W5 | `audit_logs` · `attachments` + 인증 게이트 다운로드 | 인프라 | ✅ 구현 완료 |
 | W6 | `studies` · `study_members` · `reflections` + 학생 3화면 | 성장 | ✅ 구현 완료 |
-| W7 | `external_links` (`communication_logs`는 W10에서 완료) | 인프라 | 부분 완료 |
-| W8 | placeholder 11개 실체화 또는 제거 | 마감 | 미착수 |
+| W7 | `external_links` (`communication_logs`는 W10에서 완료) | 인프라 | ✅ 구현 완료 (화면은 W8의 `/admin/media`) |
+| W8 | placeholder 8개 → 실체화 4(미디어·면접·출석·리포트) / 제거 4(회원·공개페이지·외부연동·설정) | 마감 | ✅ 구현 완료 (라우트 실측 확인) |
 | **W9** | `MarkdownEditor` 툴바 + 회의록 유형별 템플릿 + `bodyMd` 이관 | **경험** | ✅ 구현 완료 |
 | **W10** | Discord 웹훅 + 인앱 배지 + 일일 요약 cron | **경험** | ✅ 구현 완료 |
-| **W11** | 반응형 A/B/C 등급 + `DesktopOnly` 가드 + 작업 보드 드래그 | **경험** | 미착수 |
+| **W11** | 반응형 A/B/C 등급 + `DesktopOnly` 가드 + 작업 보드 드래그 | **경험** | ✅ 구현·검증 완료 (`e2e/run.mjs` 22 PASS) |
 
 **병렬 가능:** 권한/인프라 축, 멘토/성장 축, 제품 경험 축이 서로 대체로 독립이다. W9의 이미지 붙여넣기만 W5에 의존한다.
 

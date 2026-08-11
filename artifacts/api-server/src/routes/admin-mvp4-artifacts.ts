@@ -10,6 +10,7 @@ import {
   projectsTable,
 } from "@workspace/db";
 import { requireAdmin } from "../lib/auth";
+import { HttpUrl } from "../lib/safe-url";
 
 const router: IRouter = Router();
 
@@ -21,7 +22,7 @@ const Body = z.object({
   title: z.string().trim().min(1).max(300),
   description: z.string().max(8000).nullable().optional(),
   artifactType: z.enum(ARTIFACT_TYPES).optional(),
-  url: z.string().url().max(2000),
+  url: HttpUrl,
   visibility: z.enum(ARTIFACT_VISIBILITIES).optional(),
 });
 

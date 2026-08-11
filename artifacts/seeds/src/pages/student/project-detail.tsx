@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ResourceMissing } from "@/components/ResourceMissing";
+import { TeamMeetings } from "@/components/team/TeamMeetings";
+import { TeamLinks } from "@/components/team/TeamLinks";
 
 type Detail = {
   project: Project;
@@ -89,6 +91,10 @@ export default function StudentProjectDetail() {
             : <div className="flex flex-wrap gap-1">{data.tags.map((t) => <Badge key={t.id} variant="outline" className="">{t.name}</Badge>)}</div>}
           </CardContent>
         </Card>
+      </div>
+      <div className="mt-4 grid gap-4">
+        <TeamMeetings viewer="student" ownerType="project" ownerId={id} />
+        <TeamLinks viewer="student" ownerType="project" ownerId={id} />
       </div>
     </>
   );

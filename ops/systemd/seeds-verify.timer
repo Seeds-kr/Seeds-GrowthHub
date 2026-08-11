@@ -1,0 +1,12 @@
+[Unit]
+Description=Seeds GrowthHub verification (daily)
+
+[Timer]
+# 백업(04:30) 뒤에 돌린다. 검증이 데이터를 만들므로 백업이 먼저여야
+# 백업본이 주행 잔여물로 지저분해지지 않는다.
+OnCalendar=*-*-* 05:10:00
+Persistent=true
+RandomizedDelaySec=600
+
+[Install]
+WantedBy=timers.target

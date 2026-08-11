@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { getAdminMeQueryKey } from "@workspace/api-client-react";
 import { Loader2 } from "lucide-react";
 import { RoleSwitcher, effectiveRoles, pickRedirectFor } from "./RoleSwitcher";
+import { BrandMark } from "@/components/BrandMark";
 
 export function EvaluatorLayout({ children }: { children: ReactNode }) {
   const [, setLocation] = useLocation();
@@ -58,9 +59,23 @@ export function EvaluatorLayout({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-50 w-full border-b border-border bg-card">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
-            <Link href="/evaluator" className="font-serif text-lg font-bold text-primary">Seeds 평가</Link>
+            <Link href="/evaluator" className="flex items-center gap-2 font-serif text-lg font-bold text-primary"><BrandMark size={24} />Seeds 평가</Link>
             <nav className="hidden md:flex items-center gap-6">
               <Link href="/evaluator" className="text-sm font-medium text-muted-foreground hover:text-primary">내 배정 목록</Link>
+              {/* 평가는 역할이 아니라 배정 기반 표면이라(설계 00 §3.5) 여기 온
+                  사람은 원래 멘토이거나 운영진이다. 그런데 이 헤더에는 원래
+                  자리로 돌아갈 링크가 없어서, 멘토가 대시보드 카드로 들어오면
+                  뒤로 가기 말고는 나갈 방법이 없었다. */}
+              {roles.includes("mentor") && (
+                <Link href="/mentor" className="text-sm font-medium text-muted-foreground hover:text-primary">
+                  ← 멘토 화면
+                </Link>
+              )}
+              {roles.includes("admin") && (
+                <Link href="/admin" className="text-sm font-medium text-muted-foreground hover:text-primary">
+                  ← 운영 화면
+                </Link>
+              )}
             </nav>
           </div>
           <div className="flex items-center gap-4">
