@@ -56,7 +56,16 @@ async function sweep(page, label, paths) {
     page.on("pageerror", onErr);
     page.on("console", onMsg);
     try {
-      await page.goto(BASE + path, { waitUntil: "networkidle" });
+      // 한 번은 봐준다. 세 스위트를 연달아 돌리면(ops/verify.sh) 이따금
+      // ERR_NETWORK_CHANGED 로 항해가 끊기는데, 그게 ✗ 로 찍히면 제품 결함과
+      // 구분이 안 된다. 두 번 다 실패하면 진짜다.
+      try {
+        await page.goto(BASE + path, { waitUntil: "networkidle" });
+      } catch (first) {
+        errors.length = 0;
+        await page.waitForTimeout(1200);
+        await page.goto(BASE + path, { waitUntil: "networkidle" });
+      }
       await page.waitForTimeout(900);
       const main = await page.locator("main").first().innerText().catch(() => "");
       const len = main.replace(/\s+/g, " ").trim().length;

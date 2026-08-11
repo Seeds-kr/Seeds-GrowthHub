@@ -12,7 +12,25 @@ type ActivationInfo = {
   status: "ok";
   email: string;
   name: string;
+  /** 서버가 알려주는 계정 역할. 이게 없어서 화면이 누구에게나 "학생" 이라고 말했다. */
+  role: "admin" | "mentor" | "student";
   expiresAt: string;
+};
+
+/**
+ * 역할마다 로그인 화면이 다르다. 학생은 /student/login, 운영진·멘토는 /login.
+ * 전에는 무조건 /login 으로 보내서, 활성화를 마친 학생이 자기가 쓸 수 없는
+ * 로그인 화면에 떨어졌다.
+ */
+const LOGIN_PATH: Record<ActivationInfo["role"], string> = {
+  student: "/student/login",
+  mentor: "/login",
+  admin: "/login",
+};
+const ROLE_LABEL: Record<ActivationInfo["role"], string> = {
+  student: "학생",
+  mentor: "멘토",
+  admin: "운영진",
 };
 
 export default function ActivatePage() {
@@ -37,11 +55,15 @@ export default function ActivatePage() {
     onSuccess: () => setDone(true),
   });
 
+  // 역할을 아직 모르면(불러오는 중·토큰 만료) 운영진 쪽으로 둔다. 학생 계정을
+  // 운영진 화면으로 보내는 것보다, 아는 게 없을 때 기본값이 하나인 편이 낫다.
+  const loginPath = data ? LOGIN_PATH[data.role] : "/login";
+
   useEffect(() => {
     if (!done) return;
-    const t = setTimeout(() => setLocation("/login"), 2500);
+    const t = setTimeout(() => setLocation(loginPath), 2500);
     return () => clearTimeout(t);
-  }, [done, setLocation]);
+  }, [done, setLocation, loginPath]);
 
   const errStatus = (error as any)?.data?.status as string | undefined;
   const errMessage =
@@ -62,7 +84,7 @@ export default function ActivatePage() {
           </div>
           <h1 className="text-2xl font-serif font-bold text-primary mb-1">계정 활성화</h1>
           <p className="text-muted-foreground text-sm">
-            Seeds 학생 계정의 비밀번호를 설정합니다.
+            Seeds {data ? ROLE_LABEL[data.role] : ""} 계정의 비밀번호를 설정합니다.
           </p>
         </div>
 
@@ -74,7 +96,7 @@ export default function ActivatePage() {
             <AlertDescription>
               {errMessage}
               <div className="mt-3">
-                <Button variant="outline" className="" onClick={() => setLocation("/login")}>로그인 페이지로</Button>
+                <Button variant="outline" className="" onClick={() => setLocation(loginPath)}>로그인 페이지로</Button>
               </div>
             </AlertDescription>
           </Alert>

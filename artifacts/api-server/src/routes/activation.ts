@@ -28,10 +28,14 @@ router.get("/activation/:token", rateLimit, async (req, res) => {
     });
     return;
   }
+  // 역할을 같이 준다. 활성화 화면이 이걸 몰라서 누구에게나 "학생 계정" 이라고
+  // 말했고, 끝난 뒤에도 무조건 /login(운영진·멘토용)으로 보냈다 — 학생이
+  // 활성화하면 자기가 못 쓰는 로그인 화면에 떨어졌다.
   res.json({
     status: "ok",
     email: r.user.email,
     name: r.user.name,
+    role: r.user.role,
     expiresAt: r.expiresAt!.toISOString(),
   });
 });

@@ -15,18 +15,41 @@
  * 덩어리를 감싼 컨테이너에 `overflow-hidden` 이 필요하다 — 안 그러면 흐림이
  * 섹션 밖으로 새어 가로 스크롤을 만든다.
  */
-export function LiquidBackdrop({ className = "" }: { className?: string }) {
+export function LiquidBackdrop({
+  className = "",
+  /**
+   * 어떤 면 위에 까는지.
+   *
+   *  `paper` 종이색 위. 브랜드 그린 덩어리가 색으로 드러난다.
+   *  `brand` 통초록 띠 위. 같은 초록의 **명도만** 흔든다 — 초록 위에 초록을
+   *          얹으면 아무것도 안 보이기 때문이다. 흰 글자가 올라가는 면이라
+   *          밝은 덩어리는 글줄 밖 모서리에 묶여 있다(index.css 참고).
+   */
+  tone = "paper",
+}: {
+  className?: string;
+  tone?: "paper" | "brand";
+}) {
+  const brand = tone === "brand";
   return (
     <div
       aria-hidden="true"
       className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`}
     >
-      <div className="liquid-blob liquid-blob-1" />
-      <div className="liquid-blob liquid-blob-2" />
-      <div className="liquid-blob liquid-blob-3" />
+      {/* 클래스 이름을 문자열로 조립하지 않는다. 통째로 적어야 나중에 grep 으로
+          "이 덩어리가 어디서 쓰이나" 를 찾을 수 있다. */}
+      {(brand
+        ? ["liquid-blob-brand-1", "liquid-blob-brand-2", "liquid-blob-brand-3"]
+        : ["liquid-blob-1", "liquid-blob-2", "liquid-blob-3"]
+      ).map((b) => (
+        <div key={b} className={`liquid-blob ${b}`} />
+      ))}
       {/* 아래쪽으로 갈수록 종이색으로 녹아 본문과 이어진다. 경계선이 생기면
-          배경이 "얹힌 판"으로 보이고, 유동적이라는 인상이 깨진다. */}
-      <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background" />
+          배경이 "얹힌 판"으로 보이고, 유동적이라는 인상이 깨진다.
+          통초록 띠는 위아래가 이미 다른 색으로 끊기므로 녹일 필요가 없다. */}
+      {brand ? null : (
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background" />
+      )}
     </div>
   );
 }

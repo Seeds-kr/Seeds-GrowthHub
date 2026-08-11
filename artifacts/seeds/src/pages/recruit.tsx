@@ -5,6 +5,8 @@ import { useSiteContent, RECRUIT_DEFAULT } from "@/lib/site-content";
 import { Reveal, Stagger, StaggerItem } from "@/lib/motion";
 import { SurfaceCard } from "@/components/SurfaceCard";
 import { YearTrack } from "@/components/YearTrack";
+import { Timeline } from "@/components/Timeline";
+import { LiquidBackdrop } from "@/components/LiquidBackdrop";
 
 /**
  * 제목 앞에 붙은 장식용 이모지를 뗀다(🗓 정기모집 → 정기모집).
@@ -22,7 +24,10 @@ export default function Recruit() {
   return (
     <PublicLayout>
       {/* Hero */}
-      <Reveal as="section" className="py-24 md:py-32 flex flex-col items-center justify-center text-center px-4 bg-gradient-to-b from-muted/50 to-background">
+      <section className="relative flex flex-col items-center justify-center overflow-hidden px-4 py-24 text-center md:py-32">
+        {/* /program·/faq 와 같은 배경. 세로 그라디언트 한 겹만 있던 자리다. */}
+        <LiquidBackdrop />
+        <Reveal className="relative flex flex-col items-center">
         <div className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-6 font-medium">
           {c.hero.eyebrow}
         </div>
@@ -37,7 +42,8 @@ export default function Recruit() {
             {c.hero.ctaLabel}
           </Button>
         </Link>
-      </Reveal>
+        </Reveal>
+      </section>
 
       {/* What is Seeds? */}
       <Reveal as="section" className="py-24 px-4 border-t border-border">
@@ -49,15 +55,24 @@ export default function Recruit() {
           <p className="text-muted-foreground text-lg leading-relaxed mb-12 max-w-3xl whitespace-pre-line">
             {c.intro.body}
           </p>
-          <div className="grid md:grid-cols-3 gap-6">
+          <Stagger className="grid gap-5 md:grid-cols-3">
             {c.intro.features.map((f, i) => (
-              <div key={i} className="border border-border bg-card p-8">
-                <div className="text-sm text-primary font-semibold mb-3">0{i + 1}</div>
-                <h3 className="text-xl font-bold mb-3">{f.title}</h3>
-                <p className="text-muted-foreground leading-relaxed">{f.desc}</p>
-              </div>
+              <StaggerItem key={i}>
+                <SurfaceCard className="h-full">
+                  {/* 번호는 세는 표시일 뿐 읽을 내용이 아니다. 크게 흐리게 두면
+                      순서는 전해지면서 제목을 가리지 않는다. */}
+                  <div
+                    className="font-serif text-3xl font-bold leading-none text-primary/25 transition-colors duration-200 group-hover:text-primary/45"
+                    aria-hidden="true"
+                  >
+                    {String(i + 1).padStart(2, "0")}
+                  </div>
+                  <h3 className="mt-4 text-xl font-bold tracking-tight">{f.title}</h3>
+                  <p className="mt-2.5 leading-relaxed text-muted-foreground">{f.desc}</p>
+                </SurfaceCard>
+              </StaggerItem>
             ))}
-          </div>
+          </Stagger>
         </div>
       </Reveal>
 
@@ -87,16 +102,13 @@ export default function Recruit() {
           <div className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-3 font-medium">
             {c.flow.eyebrow}
           </div>
-          <h2 className="text-3xl md:text-4xl font-serif font-bold mb-12">{c.flow.title}</h2>
-          <div className="grid md:grid-cols-4 gap-px bg-border border border-border">
-            {c.flow.steps.map((step, i) => (
-              <div key={i} className="bg-card p-8">
-                <div className="text-sm text-primary font-semibold mb-2">{step.month}</div>
-                <h3 className="text-xl font-bold mb-3">{step.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
-              </div>
-            ))}
-          </div>
+          <h2 className="mb-10 font-serif text-3xl font-bold md:text-4xl">{c.flow.title}</h2>
+          {/* 넉 장을 나란히 놓으면 시간의 흐름이 형태로 드러나지 않는다.
+              축을 하나 긋고 마디를 얹으면 순서가 보이고, 지금이 어느 단계인지도
+              같이 말할 수 있다. */}
+          <Timeline
+            items={c.flow.steps.map((s) => ({ label: s.month, title: s.title, desc: s.desc }))}
+          />
         </div>
       </Reveal>
 
@@ -145,14 +157,26 @@ export default function Recruit() {
             {c.faqTeaser.eyebrow}
           </div>
           <h2 className="text-3xl md:text-4xl font-serif font-bold mb-12">{c.faqTeaser.title}</h2>
-          <div className="space-y-4 mb-10">
+          <Stagger className="mb-10 flex flex-col gap-3">
             {c.faqTeaser.items.map((item, i) => (
-              <div key={i} className="border border-border bg-card p-6">
-                <h3 className="font-bold mb-2">Q. {item.q}</h3>
-                <p className="text-muted-foreground leading-relaxed">{item.a}</p>
-              </div>
+              <StaggerItem key={i}>
+                <SurfaceCard>
+                  <div className="flex gap-3">
+                    <span
+                      className="font-serif text-lg font-bold leading-none text-primary/60"
+                      aria-hidden="true"
+                    >
+                      Q
+                    </span>
+                    <div className="min-w-0">
+                      <h3 className="font-bold">{item.q}</h3>
+                      <p className="mt-1.5 leading-relaxed text-muted-foreground">{item.a}</p>
+                    </div>
+                  </div>
+                </SurfaceCard>
+              </StaggerItem>
             ))}
-          </div>
+          </Stagger>
           <Link href="/faq">
             <Button variant="outline" className="">
               {c.faqTeaser.ctaLabel}
@@ -162,8 +186,9 @@ export default function Recruit() {
       </Reveal>
 
       {/* Apply CTA */}
-      <Reveal as="section" className="py-24 px-4 bg-primary text-primary-foreground">
-        <div className="container mx-auto max-w-3xl text-center">
+      <section className="relative overflow-hidden bg-primary px-4 py-24 text-primary-foreground">
+        <LiquidBackdrop tone="brand" />
+        <Reveal className="container relative mx-auto max-w-3xl text-center">
           <h2 className="text-3xl md:text-4xl font-serif font-bold mb-6">{c.cta.title}</h2>
           <p className="text-primary-foreground text-lg mb-10 leading-relaxed whitespace-pre-line">
             {c.cta.body}
@@ -173,8 +198,8 @@ export default function Recruit() {
               {c.cta.ctaLabel}
             </Button>
           </Link>
-        </div>
-      </Reveal>
+        </Reveal>
+      </section>
     </PublicLayout>
   );
 }

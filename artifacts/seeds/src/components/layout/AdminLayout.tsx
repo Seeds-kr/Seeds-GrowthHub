@@ -216,8 +216,9 @@ export function AdminLayout({ children }: { children: ReactNode }) {
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex fixed inset-y-0 left-0 w-60 flex-col border-r border-border bg-card z-40">
         <div className="h-16 px-6 flex items-center border-b border-border">
-          <Link href="/admin" className="text-lg font-bold text-primary tracking-tight">
-            Seeds <span className="text-muted-foreground font-normal">Admin</span>
+          <Link href="/admin" className="flex items-center gap-2 text-base font-bold text-primary">
+            <BrandMark size={26} />
+            Seeds Admin
           </Link>
         </div>
         <SidebarContent currentPath={location} opsRoles={opsRoles} badges={badges} />
@@ -248,8 +249,9 @@ export function AdminLayout({ children }: { children: ReactNode }) {
 
       {/* Mobile top bar */}
       <header className="lg:hidden sticky top-0 z-40 h-14 px-4 flex items-center justify-between bg-card border-b border-border">
-        <Link href="/admin" className="text-base font-bold text-primary">
-          Seeds <span className="text-muted-foreground font-normal">Admin</span>
+        <Link href="/admin" className="flex items-center gap-2 text-base font-bold text-primary">
+          <BrandMark size={22} />
+          Seeds Admin
         </Link>
         <button
           onClick={() => setMobileOpen(true)}

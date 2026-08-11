@@ -1,6 +1,9 @@
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { useSiteContent, ABOUT_DEFAULT } from "@/lib/site-content";
-import { Reveal } from "@/lib/motion";
+import { Reveal, Stagger, StaggerItem } from "@/lib/motion";
+import { SurfaceCard } from "@/components/SurfaceCard";
+import { Mail, MessageCircle } from "lucide-react";
+import { OPS_EMAIL, OPS_KAKAO, opsMailto } from "@/lib/contact";
 import { PHOTOS } from "@/assets/photos";
 
 export default function About() {
@@ -67,23 +70,60 @@ export default function About() {
         {c.values.length > 0 && (
           <div className="mt-16">
             <h2 className="text-2xl font-serif font-bold mb-6">핵심 가치</h2>
-            <div className="grid sm:grid-cols-3 gap-4">
+            <Stagger className="grid gap-4 sm:grid-cols-3">
               {c.values.map((v, i) => (
-                <div key={i} className="border border-border bg-card p-5 rounded-lg">
-                  <div className="font-bold text-foreground mb-2">{v.label}</div>
-                  <div className="text-sm text-muted-foreground leading-relaxed">{v.desc}</div>
-                </div>
+                <StaggerItem key={i}>
+                  <SurfaceCard dense className="h-full">
+                    <div className="mb-2 font-bold text-foreground">{v.label}</div>
+                    <div className="text-sm leading-relaxed text-muted-foreground">{v.desc}</div>
+                  </SurfaceCard>
+                </StaggerItem>
               ))}
-            </div>
+            </Stagger>
           </div>
         )}
 
-        <div className="mt-16 pt-8 border-t border-border text-sm text-muted-foreground">
-          <div className="font-semibold text-foreground mb-2">문의</div>
-          <ul className="space-y-1">
-            <li>이메일: <a href="mailto:seeds.code@gmail.com" className="text-primary hover:underline">seeds.code@gmail.com</a></li>
-            <li>카카오톡 오픈채팅: <a href="https://open.kakao.com/o/sqpmEzEf" target="_blank" rel="noreferrer" className="text-primary hover:underline">바로가기</a></li>
-          </ul>
+        {/* 문의. 글줄 안에 링크를 박아두면 페이지 끝에서 눈에 안 띈다 — FAQ 아래쪽과
+            같은 판으로 맞춘다(같은 일을 하는 두 곳이 다르게 생기지 않게). */}
+        <div className="mt-16 border-t border-border pt-10">
+          <h2 className="mb-4 font-serif text-2xl font-bold">문의</h2>
+          <Stagger className="grid gap-3 sm:grid-cols-2">
+            {[
+              {
+                href: OPS_KAKAO,
+                icon: MessageCircle,
+                title: "카카오톡 오픈채팅",
+                sub: "새 창에서 열립니다",
+                external: true,
+              },
+              {
+                href: opsMailto("Seeds 문의"),
+                icon: Mail,
+                title: "이메일",
+                sub: OPS_EMAIL,
+                external: false,
+              },
+            ].map((ch) => (
+              <StaggerItem key={ch.href}>
+                <a
+                  href={ch.href}
+                  {...(ch.external ? { target: "_blank", rel: "noreferrer noopener" } : {})}
+                  className="flex items-center gap-3 rounded-lg border border-border bg-card p-5 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-1 hover:border-primary/60 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                >
+                  <span
+                    className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/12 text-primary"
+                    aria-hidden="true"
+                  >
+                    <ch.icon className="h-4 w-4" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold">{ch.title}</span>
+                    <span className="block truncate text-xs text-muted-foreground">{ch.sub}</span>
+                  </span>
+                </a>
+              </StaggerItem>
+            ))}
+          </Stagger>
         </div>
       </Reveal>
     </PublicLayout>
