@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { MarkdownView } from "@/components/markdown/MarkdownEditor";
 import { Loader2, ArrowLeft, ExternalLink } from "lucide-react";
 import { api } from "@/lib/mvp3-api";
+import { TeamMeetings } from "@/components/team/TeamMeetings";
+import { TeamLinks } from "@/components/team/TeamLinks";
 
 type Detail = {
   study: {
@@ -173,6 +175,10 @@ export default function StudentStudyDetail() {
             )}
           </CardContent>
         </Card>
+      </div>
+      <div className="mt-4 grid gap-4">
+        <TeamMeetings viewer="student" ownerType="study" ownerId={id} />
+        <TeamLinks viewer="student" ownerType="study" ownerId={id} />
       </div>
     </>
   );

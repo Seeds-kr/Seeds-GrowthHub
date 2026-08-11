@@ -362,6 +362,11 @@ router.post("/mentor/projects/:id/feedback", requireMentor, async (req, res) => 
     res.status(400).json({ error: "Invalid body" });
     return;
   }
+  // `studentId` 를 비우는 것은 유효하다 — 그러면 팀 전체 피드백이 되고,
+  // `/student/projects/:id` 가 `isNull(studentId) OR studentId = me` 로 읽어
+  // 팀원 모두에게 보인다(그 라우트 주석이 의도를 적어 뒀다). 대상을 지정하면
+  // 그 학생의 "내 피드백"에도 뜬다. 둘 다 정상 경로라 막지 않는다.
+  //
   // targetType/targetId are forced — a mentor cannot attach feedback to an
   // arbitrary object by crafting the body.
   const [row] = await db

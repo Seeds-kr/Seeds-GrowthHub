@@ -143,13 +143,18 @@ router.get("/admin/ops-dashboard/summary", requireAdmin, async (_req, res) => {
       )
       .groupBy(evaluationAssignmentsTable.status),
 
-    // 6a. Pending finance — counts + sums per pending bucket
+    // 6a. Pending finance — COUNTS ONLY, no sums.
+    //
+    //     `total` used to ride along here. Nothing on the client ever read it —
+    //     the ops-dashboard screen only draws `hooks` — so it was a dead field
+    //     that nonetheless handed every admin the pending total (실측 282,000원)
+    //     while /admin/finance itself requires the `finance` ops role. Removing
+    //     per-item amounts and leaving the sum would have been half a boundary.
     db
       .select({
         status: financeRecordsTable.status,
         recordType: financeRecordsTable.recordType,
         count: sql<number>`count(*)::int`,
-        total: sql<string>`coalesce(sum(${financeRecordsTable.amount}),0)::text`,
       })
       .from(financeRecordsTable)
       .where(

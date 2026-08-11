@@ -738,6 +738,145 @@ console.log("\n── 학생 ─────────────────
     return `저장 확인, 공개 범위=${scope}`;
   });
 
+  await story("S7", "팀 회의록을 쓰고, 남의 팀 것은 못 본다", async () => {
+    need();
+    // 설계 06. 학생이 쓸 수 있는 세 번째 것이다(회고·과제 제출에 이어).
+    // 경계가 이 스토리의 절반이다 — 쓰는 것만 확인하면 "남의 팀 것도 보인다"를
+    // 놓친다. 팀 회의록은 종종 "이게 잘 안 된다"를 담으므로 새면 곤란하다.
+    const api = async (path, init = {}) =>
+      p.request.fetch(BASE + "/api" + path, { timeout: 15000, ...init });
+
+    const mine = await api("/student/team-meetings");
+    if (!mine.ok()) throw new Error(`내 회의록 목록 ${mine.status()}`);
+    const page = await mine.json();
+    const teams = page.items;
+
+    // 목록은 본문을 싣지 않는다(설계 06 §6). 이게 무너지면 회의록이 쌓일수록
+    // 목록 응답이 무거워지는데, 화면은 제목만 그리므로 아무도 눈치채지 못한다.
+    if (teams.some((m) => "contentMd" in m)) {
+      throw new Error("목록 응답에 contentMd 가 실렸다");
+    }
+    for (const f of ["total", "page", "pageSize", "totalPages"]) {
+      if (!(f in page)) throw new Error(`페이지 정보 ${f} 없음`);
+    }
+
+    const projects = await api("/student/projects");
+    const projectId = projects.ok() ? (await projects.json()).items?.[0]?.id : null;
+    if (!projectId) throw blocked("소속 프로젝트가 없음");
+
+    const title = `주행 회의록 ${Date.now()}`;
+    const made = await api("/student/team-meetings", {
+      method: "POST",
+      data: {
+        ownerType: "project",
+        ownerId: projectId,
+        title,
+        contentMd: "## 정한 것\n- 주행 확인용",
+      },
+    });
+    if (made.status() !== 201) throw new Error(`작성 ${made.status()} ${await made.text()}`);
+    const id = (await made.json()).id;
+
+    try {
+      // 다시 읽히는가 — 저장됐다는 응답만으로는 부족하다.
+      const back = await api(`/student/team-meetings/${id}`);
+      if (!back.ok()) throw new Error(`재조회 ${back.status()}`);
+      if ((await back.json()).title !== title) throw new Error("제목이 다르게 저장됨");
+
+      // 없는 팀에 쓰려 하면 막히는가.
+      const ghost = await api("/student/team-meetings", {
+        method: "POST",
+        data: { ownerType: "project", ownerId: 999999, title: "주행 유령팀" },
+      });
+      if (ghost.status() !== 422 && ghost.status() !== 404) {
+        throw new Error(`없는 팀에 작성이 ${ghost.status()} 로 통과됨`);
+      }
+
+      // 참여자·태그. 팀 밖 사람을 참여자로 넣는 것은 막혀야 한다 — 회의록이
+      // "이 사람이 참석했다"를 임의로 주장하는 수단이 되면 안 된다.
+      const meta = await api(`/student/team-meetings/meta?ownerType=project&ownerId=${projectId}`);
+      if (!meta.ok()) throw new Error(`meta ${meta.status()}`);
+      const roster = (await meta.json()).roster;
+      if (!roster.length) throw new Error("팀 명단이 비어 있음");
+
+      const tagged = await api(`/student/team-meetings/${id}`, {
+        method: "PATCH",
+        data: { tags: ["주행", "", "주행"], participantUserIds: [roster[0].id] },
+      });
+      if (!tagged.ok()) throw new Error(`태그·참여자 저장 ${tagged.status()}`);
+      const t = await tagged.json();
+      // 빈 태그가 저장을 통째로 막으면 안 되고, 중복은 접혀야 한다.
+      if (t.tags.length !== 1 || t.tags[0] !== "주행") {
+        throw new Error(`태그 정리 실패: ${JSON.stringify(t.tags)}`);
+      }
+      if (t.participants.length !== 1) throw new Error("참여자 저장 실패");
+
+      const stranger = await api("/student/team-meetings", {
+        method: "POST",
+        data: {
+          ownerType: "project",
+          ownerId: projectId,
+          title: "주행 침입",
+          participantUserIds: [999999],
+        },
+      });
+      if (stranger.ok()) throw new Error("팀 밖 사람을 참여자로 넣었는데 통과됨");
+
+      // 운영진 회의록으로는 절대 넘어가지 않는다 (ADR-009).
+      const ops = await api("/admin/meetings");
+      if (ops.ok()) throw new Error(`학생이 운영진 회의록을 읽음 (${ops.status()})`);
+
+      return `작성·재조회·태그·참여자 확인 · 목록 ${teams.length}건 · 외부인 ${stranger.status()} · 운영진 회의록 ${ops.status()}`;
+    } finally {
+      await api(`/student/team-meetings/${id}`, { method: "DELETE" }).catch(() => {});
+    }
+  });
+
+  await story("S8", "팀 드라이브 링크를 건다", async () => {
+    need();
+    const api = async (path, init = {}) =>
+      p.request.fetch(BASE + "/api" + path, { timeout: 15000, ...init });
+
+    const projects = await api("/student/projects");
+    const projectId = projects.ok() ? (await projects.json()).items?.[0]?.id : null;
+    if (!projectId) throw blocked("소속 프로젝트가 없음");
+
+    const made = await api("/student/external-links", {
+      method: "POST",
+      data: {
+        ownerType: "project",
+        ownerId: projectId,
+        title: "주행 팀 드라이브",
+        url: "https://drive.google.com/drive/folders/e2e",
+        linkType: "drive",
+      },
+    });
+    if (made.status() !== 201) throw new Error(`링크 추가 ${made.status()} ${await made.text()}`);
+    const id = (await made.json()).id;
+
+    try {
+      // 학생이 고를 수 없어야 하는 것들. 서버가 막지 않으면 화면만 막은 셈이다.
+      const adminOnly = await api("/student/external-links", {
+        method: "POST",
+        data: { ownerType: "project", ownerId: projectId, title: "x", url: "https://a.kr", visibility: "admin_only" },
+      });
+      if (adminOnly.ok()) throw new Error("학생이 admin_only 를 골랐는데 통과됨");
+
+      const js = await api("/student/external-links", {
+        method: "POST",
+        data: { ownerType: "project", ownerId: projectId, title: "x", url: "javascript:alert(1)" },
+      });
+      if (js.ok()) throw new Error("javascript: URL 이 통과됨");
+
+      const back = await api("/student/external-links");
+      const found = (await back.json()).items.some((l) => l.id === id);
+      if (!found) throw new Error("건 링크가 목록에 없음");
+      return `drive 링크 왕복 확인 · admin_only ${adminOnly.status()} · javascript: ${js.status()}`;
+    } finally {
+      await api(`/student/external-links/${id}`, { method: "DELETE" }).catch(() => {});
+    }
+  });
+
   await story("S5", "내 출석 현황을 본다", async () => {
     need();
     await p.goto(BASE + "/student/attendance", { waitUntil: "networkidle" });

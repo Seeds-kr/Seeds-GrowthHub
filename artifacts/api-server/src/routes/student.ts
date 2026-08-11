@@ -16,6 +16,7 @@ import {
   SUBMISSION_STATUSES,
 } from "@workspace/db";
 import { requireStudent } from "../lib/auth";
+import { recordActivity } from "../lib/activity";
 import { HttpUrl } from "../lib/safe-url";
 
 const router: IRouter = Router();
@@ -423,6 +424,17 @@ router.post(
         },
       })
       .returning();
+    // 타임라인 (설계 07). 과제가 기수를 알고 있으니 넘겨 준다 — 헬퍼가 학생의
+    // 기수를 다시 조회하지 않아도 된다. 재제출은 갱신이지 새 사건이 아니라
+    // 헬퍼가 중복으로 걸러 낸다.
+    void recordActivity({
+      studentId: student.id,
+      cohortId: a.cohortId,
+      sourceType: "assignment",
+      sourceId: id,
+      title: `과제 제출 — ${a.title}`,
+      activityDate: now,
+    });
     res.json({
       ...row,
       submittedAt: row.submittedAt ? row.submittedAt.toISOString() : null,

@@ -12,10 +12,11 @@ import { BrandMark } from "@/components/BrandMark";
  *  빠지는 메뉴가 생긴다. */
 const STUDENT_NAV = [
   { href: "/student", label: "대시보드" },
+  // 출석은 모임 안으로 들어갔다 — 학생이 묻는 "언제 모이지"와 "내가 갔었나"는
+  // 같은 모임에 대한 질문이라 한 표에서 답한다. 항목이 하나 줄고, 오가지 않는다.
   { href: "/student/sessions", label: "모임" },
   { href: "/student/assignments", label: "과제" },
   { href: "/student/announcements", label: "공지사항" },
-  { href: "/student/attendance", label: "출석" },
   { href: "/student/timeline", label: "타임라인" },
   { href: "/student/projects", label: "프로젝트" },
   { href: "/student/studies", label: "스터디" },
@@ -70,7 +71,7 @@ export function StudentLayout({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-50 w-full border-b border-border bg-card">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
-            <Link href="/student"><BrandMark label="Seeds 학생" size={24} /></Link>
+            <Link href="/student" className="flex items-center gap-2 font-serif text-lg font-bold text-primary"><BrandMark size={24} />Seeds 학생</Link>
             {/* lg 기준이다. 13개를 768px에 한 줄로 넣으면 눌러지지 않을 만큼
                 좁아져서, 그 구간은 MobileNav가 맡는다. */}
             <nav className="hidden lg:flex items-center gap-6">

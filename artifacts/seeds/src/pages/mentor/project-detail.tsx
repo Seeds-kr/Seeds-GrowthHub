@@ -28,6 +28,8 @@ import {
   type MentorProjectDetail,
   type TeamStatus,
 } from "@/lib/mentor-api";
+import { TeamMeetings } from "@/components/team/TeamMeetings";
+import { TeamLinks } from "@/components/team/TeamLinks";
 
 const MILESTONE_LABEL: Record<string, string> = {
   planned: "예정",
@@ -264,12 +266,20 @@ function FeedbackForm({
           size="sm"
           disabled={!content.trim() || submit.isPending}
           onClick={() => submit.mutate()}
+          data-testid="button-submit-feedback"
         >
           기록
         </Button>
       </div>
-      <p className="text-xs text-muted-foreground">
-        학생 공개를 고르면 해당 학생의 &ldquo;내 피드백&rdquo;에 나타납니다.
+      {/* 대상을 비우면 팀 전체 피드백이고, 그건 "내 피드백"이 아니라 프로젝트
+          화면에 뜬다. 전에는 어느 경우든 "해당 학생의 내 피드백에 나타납니다"
+          라고만 적혀 있어서, 팀에 남긴 글이 어디로 갔는지 알 수 없었다. */}
+      <p className="text-xs text-muted-foreground" data-testid="feedback-destination">
+        {visibility === "admin_only"
+          ? "운영진과 멘토만 봅니다. 학생에게는 보이지 않습니다."
+          : studentId
+            ? "해당 학생의 “내 피드백”에 나타납니다."
+            : "팀 전체가 프로젝트 화면에서 봅니다. 한 사람에게 남기려면 대상 학생을 고르세요."}
       </p>
     </div>
   );
@@ -610,6 +620,10 @@ export default function MentorProjectDetailPage() {
             ) : null}
           </CardContent>
         </Card>
+      </div>
+      <div className="mt-4 grid gap-4">
+        <TeamMeetings viewer="mentor" ownerType="project" ownerId={id} />
+        <TeamLinks viewer="mentor" ownerType="project" ownerId={id} />
       </div>
     </>
   );

@@ -197,7 +197,7 @@ Ops · 운영
   ✅ /admin/announcements            공지
   ✅ /admin/finance                  🔒 회계
   ✅ /admin/ops-dashboard            운영 대시보드
-  🟡 /admin/communications           🔒 발송 이력
+  ✅ /admin/communications           🔒 발송 이력 (recruiting/community)
 
 Growth · 성장
   ✅ /admin/students[/:id][/timeline][/report]
@@ -240,9 +240,10 @@ System · 시스템
 ✅ /student                     Dashboard
 ✅ /student/sessions · /attendance · /assignments[/:id] · /announcements
 ✅ /student/projects[/:id] · /artifacts · /timeline · /report · /profile
-✅ /student/studies             My Studies
+✅ /student/studies[/:id]       My Studies
 ✅ /student/reflections         My Reflections (공개범위 선택)
 ✅ /student/feedback            My Feedback
+🟡 /student/team-meetings/:id   팀 회의록 작성·수정 (설계 06)
 ```
 
 ### 3.5 Evaluation Surface — 완성
@@ -451,6 +452,14 @@ graph LR
 
 **GrowthHub는 외부 도구를 대체하지 않는다.** 링크와 메타데이터, 그리고 "이게 왜 여기 붙어 있는지"라는 맥락만 관리한다.
 
+> **2026-08-08 — 문서 축은 예외가 되었다 ([ADR-010](06-team-meeting-notes.md)).**
+> Notion을 도입하지 않기로 하면서 **팀 회의록의 source of truth가 GrowthHub 안으로** 들어온다
+> (`team_meetings`). 위 그림에서 Notion을 빼고 읽어야 한다.
+>
+> 경계 전체가 뒤집힌 것은 아니다 — GitHub(코드)·Discord(대화)·Drive(파일)는 그대로 밖이고,
+> 링크로만 붙는다. 다만 그 링크를 이제 **학생도 직접 걸 수 있다**(설계 06 §7). 전에는 운영진만
+> 가능해서, "링크만 관리한다"는 설계가 정작 링크 걸 사람을 운영진으로 한정하고 있었다.
+
 점선이 **한 방향인 것이 중요하다** — 외부에서 들어오는 것은 대화 신호이지 판정 근거가 아니다. 커밋 수로 기여도를 매기지 않고, Discord 메시지 수로 참여도를 재지 않는다.
 
 ---
@@ -499,7 +508,7 @@ graph LR
 | W8 | placeholder 8개 → 실체화 4(미디어·면접·출석·리포트) / 제거 4(회원·공개페이지·외부연동·설정) | 마감 | ✅ 구현 완료 (라우트 실측 확인) |
 | **W9** | `MarkdownEditor` 툴바 + 회의록 유형별 템플릿 + `bodyMd` 이관 | **경험** | ✅ 구현 완료 |
 | **W10** | Discord 웹훅 + 인앱 배지 + 일일 요약 cron | **경험** | ✅ 구현 완료 |
-| **W11** | 반응형 A/B/C 등급 + `DesktopOnly` 가드 + 작업 보드 드래그 | **경험** | ✅ 구현 완료 (브라우저 검증 미완) |
+| **W11** | 반응형 A/B/C 등급 + `DesktopOnly` 가드 + 작업 보드 드래그 | **경험** | ✅ 구현·검증 완료 (`e2e/run.mjs` 22 PASS) |
 
 **병렬 가능:** 권한/인프라 축, 멘토/성장 축, 제품 경험 축이 서로 대체로 독립이다. W9의 이미지 붙여넣기만 W5에 의존한다.
 

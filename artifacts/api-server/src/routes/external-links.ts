@@ -11,6 +11,7 @@ import {
 import { requireAdmin, requireStudent, requireAdminOrMentor } from "../lib/auth";
 import { audit } from "../lib/audit";
 import { HttpUrl } from "../lib/safe-url";
+import { getStudentIdForUser, studentOnTeam } from "../lib/team-scope";
 import {
   isLinkParentType,
   linkTargetExists,
@@ -31,10 +32,20 @@ const router: IRouter = Router();
  * see visibility-policy §5.1 and `lib/external-link-scope.ts`. No route filters
  * on `visibility` alone.
  *
- * Writes are ops-only, mirroring `attachments`. §4 frames this table as
- * operational context ("Discord 채널, Drive 운영자료, 참고 문서"); the
- * student-facing headline URLs of a project are columns on `projects`, not rows
- * here, so there is no student write path to add.
+ * Writes WERE ops-only. That is no longer true — design 06 §7 added a student
+ * write path scoped to the caller's own project/study.
+ *
+ * The old reasoning was that this table is operational context ("Discord 채널,
+ * Drive 운영자료, 참고 문서") and a project's headline URLs live in columns on
+ * `projects`. What it missed: with Notion dropped (ADR-010), a team's Drive
+ * folders and issue boards have nowhere else to go, and the columns on
+ * `projects` are three fixed slots (github/demo/deck), not a list. Saying
+ * "GrowthHub manages the links" while only ops could add one made ops the
+ * bottleneck for every team's reference material.
+ *
+ * Students may only reach `project`/`study` parents they are a member of, and
+ * may only choose `team_visible`/`cohort_visible` — see §7 and the student
+ * routes at the bottom of this file.
  */
 
 const CreateBody = z.object({
@@ -361,6 +372,11 @@ router.get("/mentor/external-links", requireAdminOrMentor, async (req, res) => {
       title: externalLinksTable.title,
       linkType: externalLinksTable.linkType,
       description: externalLinksTable.description,
+      // The student route already returns this; the mentor route did not, which
+      // left a caller unable to tell which team a link belongs to when a mentor
+      // carries more than one. Not sensitive — mentor scope is already
+      // project-only, so the value is always a project they were assigned.
+      linkedObjectType: externalLinksTable.linkedObjectType,
       linkedObjectId: externalLinksTable.linkedObjectId,
       visibility: externalLinksTable.visibility,
       freshnessCheckedAt: externalLinksTable.freshnessCheckedAt,
@@ -371,6 +387,158 @@ router.get("/mentor/external-links", requireAdminOrMentor, async (req, res) => {
     .orderBy(desc(externalLinksTable.createdAt));
 
   res.json({ items: rows, total: rows.length });
+});
+
+// ---- Student writes (design 06 §7) ---------------------------------------
+
+/**
+ * A student may only attach links to a `project`/`study` they are ON, and only
+ * with an audience they themselves can see.
+ *
+ * `admin_only` and `private` are excluded deliberately: `admin_only` would let
+ * a student create a row they cannot read back (it would vanish on the next
+ * page load, which reads as a bug), and `private` on a team parent means
+ * "visible to me alone", which defeats the point of pinning it to the team.
+ * Ops keeps the full four-value vocabulary on its own routes.
+ */
+const STUDENT_LINK_VISIBILITIES = ["team_visible", "cohort_visible"] as const;
+
+const StudentCreateBody = z.object({
+  url: HttpUrl,
+  title: z.string().trim().min(1).max(300),
+  linkType: z.enum(LINK_TYPES).optional(),
+  description: z.string().max(4000).nullable().optional(),
+  ownerType: z.enum(["project", "study"]),
+  ownerId: z.number().int().positive(),
+  visibility: z.enum(STUDENT_LINK_VISIBILITIES).optional(),
+});
+
+const StudentUpdateBody = z.object({
+  url: HttpUrl.optional(),
+  title: z.string().trim().min(1).max(300).optional(),
+  linkType: z.enum(LINK_TYPES).optional(),
+  description: z.string().max(4000).nullable().optional(),
+  visibility: z.enum(STUDENT_LINK_VISIBILITIES).optional(),
+});
+
+/**
+ * Resolve the caller to a team-member student, or null.
+ * Shared by all three student write routes so the membership re-check cannot
+ * be forgotten in one of them.
+ */
+async function studentMemberOf(
+  userId: number,
+  ownerType: "project" | "study",
+  ownerId: number,
+): Promise<number | null> {
+  const studentId = await getStudentIdForUser(userId);
+  if (!studentId) return null;
+  return (await studentOnTeam(studentId, ownerType, ownerId)) ? studentId : null;
+}
+
+router.post("/student/external-links", requireStudent, async (req, res) => {
+  const parsed = StudentCreateBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid body" });
+    return;
+  }
+  const d = parsed.data;
+  if (!(await studentMemberOf(req.sessionUser!.id, d.ownerType, d.ownerId))) {
+    // 404 not 403 — same rule as the rest of the team surfaces.
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  if (!(await linkTargetExists(d.ownerType, d.ownerId))) {
+    res.status(422).json({ error: "연결 대상이 존재하지 않습니다." });
+    return;
+  }
+
+  const [row] = await db
+    .insert(externalLinksTable)
+    .values({
+      url: d.url,
+      title: d.title,
+      linkType: d.linkType ?? "other",
+      description: d.description ?? null,
+      linkedObjectType: d.ownerType,
+      linkedObjectId: d.ownerId,
+      ownerId: req.sessionUser!.id,
+      visibility: d.visibility ?? "team_visible",
+    })
+    .returning();
+  res.status(201).json(row);
+});
+
+router.patch("/student/external-links/:id", requireStudent, async (req, res) => {
+  const id = Number(req.params.id);
+  const parsed = StudentUpdateBody.safeParse(req.body);
+  if (!Number.isFinite(id) || !parsed.success) {
+    res.status(400).json({ error: "Invalid body" });
+    return;
+  }
+  const [existing] = await db
+    .select()
+    .from(externalLinksTable)
+    .where(eq(externalLinksTable.id, id))
+    .limit(1);
+  // Only team-parented links are reachable here at all — a student must never
+  // be able to edit a link hanging off a meeting or a finance record.
+  if (
+    !existing ||
+    (existing.linkedObjectType !== "project" &&
+      existing.linkedObjectType !== "study") ||
+    !(await studentMemberOf(
+      req.sessionUser!.id,
+      existing.linkedObjectType,
+      existing.linkedObjectId,
+    ))
+  ) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+
+  const d = parsed.data;
+  const [row] = await db
+    .update(externalLinksTable)
+    .set({
+      ...(d.url !== undefined ? { url: d.url } : {}),
+      ...(d.title !== undefined ? { title: d.title } : {}),
+      ...(d.linkType !== undefined ? { linkType: d.linkType } : {}),
+      ...(d.description !== undefined ? { description: d.description } : {}),
+      ...(d.visibility !== undefined ? { visibility: d.visibility } : {}),
+      updatedAt: new Date(),
+    })
+    .where(eq(externalLinksTable.id, id))
+    .returning();
+  res.json(row);
+});
+
+router.delete("/student/external-links/:id", requireStudent, async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  const [existing] = await db
+    .select()
+    .from(externalLinksTable)
+    .where(eq(externalLinksTable.id, id))
+    .limit(1);
+  if (
+    !existing ||
+    (existing.linkedObjectType !== "project" &&
+      existing.linkedObjectType !== "study") ||
+    !(await studentMemberOf(
+      req.sessionUser!.id,
+      existing.linkedObjectType,
+      existing.linkedObjectId,
+    ))
+  ) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  await db.delete(externalLinksTable).where(eq(externalLinksTable.id, id));
+  res.json({ ok: true });
 });
 
 export default router;

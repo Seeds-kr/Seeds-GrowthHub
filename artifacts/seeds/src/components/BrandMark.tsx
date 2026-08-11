@@ -1,48 +1,34 @@
-import markSrc from "@/assets/brand/mark.png";
+import markUrl from "@/assets/brand/mark.png";
+import { cn } from "@/lib/utils";
 
 /**
- * 헤더의 브랜드 표식.
+ * 로고 마크(새싹). 워드마크 없이 마크만 쓴다.
  *
- * 공개 헤더는 "Seeds" 글자만, 어드민·학생·멘토 헤더는 글자 앞에 초록 `S` 사각형을
- * 손으로 그려 쓰고 있었다. 실제 로고가 생겼으니 한 자리로 모은다 — 표면마다 다른
- * 표식을 쓰면 같은 서비스로 안 보인다.
+ * 헤더에는 이미 "Seeds 학생" · "Seeds Admin" 처럼 글자가 있다. 워드마크가 든
+ * 전체 로고를 그 옆에 두면 "seeds"가 두 번 나온다. 그래서 마크만 붙이고 글자는
+ * 각 레이아웃이 그대로 쓴다.
  *
- * 마크는 새싹만 잘라 쓴다. 원본에는 "seeds" 워드마크가 같이 있는데, 헤더에는
- * 이미 글자가 있어서 두 번 나온다.
+ * 원본은 256×256 이라 24px로 그려도 선명하다. (72×64 판을 쓰다가 해상도가
+ * 더 높은 쪽으로 통일했다 — 두 벌을 들고 있을 이유가 없다.) `alt=""`인 것은
+ * 의도다 — 바로 옆 텍스트가 이미 같은 것을 말하므로, 스크린리더에 "Seeds 로고
+ * Seeds 학생"으로 두 번 읽히지 않게 장식으로 표시한다.
  */
 export function BrandMark({
-  /** 마크 옆에 붙는 글자. 표면마다 다르다("Seeds 학생", "Seeds Admin"). */
-  label,
-  /** 굵게 표시할 앞부분. 나머지는 보통 굵기로 흐려진다. */
-  strong = "Seeds",
-  className = "",
-  size = 26,
+  className,
+  size = 24,
 }: {
-  label?: string;
-  strong?: string;
   className?: string;
   size?: number;
 }) {
-  const rest = label && label.startsWith(strong) ? label.slice(strong.length) : "";
   return (
-    <span className={`group inline-flex items-center gap-2 ${className}`}>
-      <img
-        src={markSrc}
-        alt=""
-        width={size}
-        height={size}
-        /* 장식이다 — 옆 글자가 이름을 말하므로 alt 를 비운다. 채우면
-           스크린리더가 "Seeds Seeds" 로 두 번 읽는다. */
-        aria-hidden="true"
-        className="shrink-0 transition-transform duration-200 group-hover:scale-110"
-        style={{ width: size, height: size }}
-      />
-      {label ? (
-        <span className="font-bold tracking-[-0.02em]">
-          <span className="text-primary">{strong}</span>
-          {rest ? <span className="text-foreground">{rest}</span> : null}
-        </span>
-      ) : null}
-    </span>
+    <img
+      src={markUrl}
+      alt=""
+      aria-hidden="true"
+      width={size}
+      height={size}
+      className={cn("shrink-0 object-contain", className)}
+      style={{ height: size, width: "auto" }}
+    />
   );
 }

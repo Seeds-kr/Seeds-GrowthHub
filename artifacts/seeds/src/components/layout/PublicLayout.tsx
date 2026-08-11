@@ -6,9 +6,25 @@ import { MobileNav } from "./MobileNav";
 import { Magnetic } from "@/lib/motion";
 import { BrandMark } from "@/components/BrandMark";
 import { CursorGlow } from "@/components/CursorGlow";
+import { useAdminMe, getAdminMeQueryKey } from "@workspace/api-client-react";
+import { effectiveRoles, pickRedirectFor } from "./RoleSwitcher";
 
 export function PublicLayout({ children }: { children: ReactNode }) {
   const [location] = useLocation();
+
+  /**
+   * 공개 사이트는 비로그인 방문자용이지만, 로그인한 사람도 여기로 온다 —
+   * `/people`(회원 디렉터리)이 공개 라우트라 멘토·학생이 그 링크를 따라오면
+   * 이 헤더를 만난다. 그때 "로그인 / 지원하기"가 뜨면 이미 들어와 있는 사람에게
+   * 다시 들어오라고 하는 셈이고, 자기 화면으로 돌아갈 길도 없다.
+   *
+   * 실패는 조용히 넘긴다. 비로그인 방문자에게 401 은 정상이고, 그 경우 아래
+   * 로직이 그대로 원래 버튼을 그린다.
+   */
+  const { data: me } = useAdminMe({
+    query: { retry: false, queryKey: getAdminMeQueryKey() },
+  });
+  const myHome = me ? pickRedirectFor(effectiveRoles(me)) : null;
 
   // 스크롤하면 헤더가 얇아지고 그림자가 생긴다. 페이지 맨 위인지 아닌지를
   // 알려주는 신호이자, 본문이 헤더 아래로 지나간다는 걸 보여주는 깊이 단서다.
@@ -60,7 +76,10 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             scrolled ? "h-14" : "h-16"
           }`}
         >
-          <Link href="/"><BrandMark label="Seeds" size={28} /></Link>
+          <Link href="/" className="flex items-center gap-2 font-serif text-xl font-bold tracking-tight text-primary">
+            <BrandMark size={28} />
+            Seeds
+          </Link>
           <nav className="hidden items-center gap-8 md:flex">
             {navItems.map((item) => {
               const on = location === item.href;
@@ -88,14 +107,22 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             })}
           </nav>
           <div className="flex items-center gap-2">
-            <Link href="/login">
-              <Button variant="ghost" size="sm" className="hidden sm:inline-flex">로그인</Button>
-            </Link>
-            <Magnetic strength={5}>
-              <Link href="/apply">
-                <Button>지원하기</Button>
+            {myHome ? (
+              <Link href={myHome}>
+                <Button data-testid="button-my-workspace">← 내 화면으로</Button>
               </Link>
-            </Magnetic>
+            ) : (
+              <>
+                <Link href="/login">
+                  <Button variant="ghost" size="sm" className="hidden sm:inline-flex">로그인</Button>
+                </Link>
+                <Magnetic strength={5}>
+                  <Link href="/apply">
+                    <Button>지원하기</Button>
+                  </Link>
+                </Magnetic>
+              </>
+            )}
             {/* 헤더 nav가 md 미만에서 사라지므로, 없으면 폰에서 소개·프로그램·
                 사람들·모집·FAQ 어디에도 갈 수 없다. 공개 사이트는 A 등급이고
                 A는 "내용 전부 읽힘"을 약속한다(design/05 §6.2). */}
@@ -104,10 +131,10 @@ export function PublicLayout({ children }: { children: ReactNode }) {
               title="Seeds"
               footer={
                 <Link
-                  href="/login"
+                  href={myHome ?? "/login"}
                   className="block rounded-md px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
                 >
-                  로그인 (관리자 / 멘토 / 학생)
+                  {myHome ? "← 내 화면으로" : "로그인 (관리자 / 멘토 / 학생)"}
                 </Link>
               }
             />

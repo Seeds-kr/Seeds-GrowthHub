@@ -7,6 +7,7 @@ import {
   studentCohortsTable,
   studiesTable,
   studyMembersTable,
+  STUDY_PUBLIC_STATUSES,
   projectMembersTable,
   reflectionsTable,
   mvp4ArtifactsTable,
@@ -17,6 +18,7 @@ import {
   REFLECTION_VISIBILITIES,
 } from "@workspace/db";
 import { requireStudent } from "../lib/auth";
+import { recordActivity } from "../lib/activity";
 
 const router: IRouter = Router();
 
@@ -67,10 +69,25 @@ router.get("/student/studies", requireStudent, async (req, res) => {
   ).map((r) => r.id);
 
   // Studies are cohort-open (design/03 §4): my studies ∪ same-cohort studies.
+  //
+  // BUT only for statuses the cohort is allowed to browse. `proposed` and
+  // `rejected` are the request lane (design 06 §10) and must NOT ride along on
+  // the cohort branch — a proposal still under review is not the cohort's
+  // business, and a rejection is the proposer's alone. Those two reach exactly
+  // the student who owns them, via the membership branch.
   const conditions = [];
   if (myStudyIds.length > 0) conditions.push(inArray(studiesTable.id, myStudyIds));
+  // The proposer is added as leader + member on create, so the membership
+  // branch already covers "my own proposal" — this catches the edge where a
+  // membership row was removed but the proposal is still theirs.
+  conditions.push(eq(studiesTable.leaderStudentId, student.id));
   if (cohortIds.length > 0)
-    conditions.push(inArray(studiesTable.cohortId, cohortIds));
+    conditions.push(
+      and(
+        inArray(studiesTable.cohortId, cohortIds),
+        inArray(studiesTable.status, [...STUDY_PUBLIC_STATUSES]),
+      ),
+    );
   if (conditions.length === 0) {
     res.json({ items: [], total: 0 });
     return;
@@ -85,6 +102,9 @@ router.get("/student/studies", requireStudent, async (req, res) => {
       cohortId: studiesTable.cohortId,
       cohortName: cohortsTable.name,
       leaderStudentId: studiesTable.leaderStudentId,
+      description: studiesTable.description,
+      reviewNote: studiesTable.reviewNote,
+      reviewedAt: studiesTable.reviewedAt,
     })
     .from(studiesTable)
     .leftJoin(cohortsTable, eq(studiesTable.cohortId, cohortsTable.id))
@@ -126,7 +146,15 @@ router.get("/student/studies/:id", requireStudent, async (req, res) => {
     )
     .limit(1);
   const cohortIds = await getCohortIds(student.id);
-  if (!membership && !cohortIds.includes(study.cohortId)) {
+  // Same split as the list route: the cohort branch only opens studies whose
+  // status the cohort may browse. Without this, `proposed`/`rejected` would be
+  // readable by anyone in the same cohort — including the reviewer's rejection
+  // note, which is addressed to the proposer and nobody else.
+  const isMine = study.leaderStudentId === student.id;
+  const cohortMaySee =
+    cohortIds.includes(study.cohortId) &&
+    (STUDY_PUBLIC_STATUSES as readonly string[]).includes(study.status);
+  if (!membership && !isMine && !cohortMaySee) {
     res.status(404).json({ error: "Not found" });
     return;
   }
@@ -186,6 +214,124 @@ router.get("/student/studies/:id", requireStudent, async (req, res) => {
         updatedAt: a.updatedAt.toISOString(),
       })),
   });
+});
+
+// ---- 스터디 개설 요청 (design 06 §10) --------------------------------------
+
+/**
+ * A student proposes a study; ops with the `growth` role approves it
+ * (`admin-studies.ts`). Until then it sits at `proposed` and only the proposer
+ * sees it.
+ *
+ * Everything the student writes here is what the study runs with once approved
+ * — that is why this is a `studies` row from the start rather than a request
+ * object to be copied across later.
+ */
+const StudyProposalBody = z.object({
+  title: z.string().trim().min(1).max(200),
+  topic: z.string().trim().max(120).nullable().optional(),
+  description: z.string().trim().max(4000).nullable().optional(),
+  weeklyPlanMd: z.string().max(60000).optional(),
+  cohortId: z.number().int().positive().optional(),
+});
+
+router.post("/student/studies", requireStudent, async (req, res) => {
+  const parsed = StudyProposalBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid body" });
+    return;
+  }
+  const student = await getStudentForUser(req.sessionUser!.id);
+  if (!student) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  const cohortIds = await getCohortIds(student.id);
+  if (cohortIds.length === 0) {
+    res.status(422).json({ error: "소속된 기수가 없어 스터디를 제안할 수 없습니다." });
+    return;
+  }
+  const d = parsed.data;
+  // A student may only propose into a cohort they belong to. Unstated means
+  // their (only / most recent) cohort rather than an error — most students have
+  // exactly one, and making them pick from a list of one is noise.
+  const cohortId = d.cohortId ?? cohortIds[0];
+  if (!cohortIds.includes(cohortId)) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+
+  // One open proposal at a time. Without this a student can flood the review
+  // queue, and the queue is a person's attention.
+  const [pending] = await db
+    .select({ id: studiesTable.id })
+    .from(studiesTable)
+    .where(
+      and(
+        eq(studiesTable.leaderStudentId, student.id),
+        eq(studiesTable.status, "proposed"),
+      ),
+    )
+    .limit(1);
+  if (pending) {
+    res.status(409).json({
+      error: "이미 심사 중인 제안이 있습니다. 결과를 받은 뒤 다시 제안해 주세요.",
+      pendingStudyId: pending.id,
+    });
+    return;
+  }
+
+  const [row] = await db
+    .insert(studiesTable)
+    .values({
+      cohortId,
+      title: d.title,
+      topic: d.topic ?? null,
+      description: d.description ?? null,
+      weeklyPlanMd: d.weeklyPlanMd ?? "",
+      leaderStudentId: student.id,
+      status: "proposed",
+    })
+    .returning();
+
+  // The proposer joins their own study. Otherwise an approved study starts with
+  // nobody in it and the leader has to be added by hand.
+  await db
+    .insert(studyMembersTable)
+    .values({ studyId: row.id, studentId: student.id, role: "스터디장" });
+
+  res.status(201).json({
+    ...row,
+    startedAt: null,
+    endedAt: null,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+    reviewedAt: null,
+  });
+});
+
+/** Withdraw an own proposal while it is still pending. */
+router.delete("/student/studies/:id", requireStudent, async (req, res) => {
+  const id = Number(req.params.id);
+  const student = await getStudentForUser(req.sessionUser!.id);
+  if (!Number.isFinite(id) || !student) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  const [study] = await db
+    .select()
+    .from(studiesTable)
+    .where(eq(studiesTable.id, id))
+    .limit(1);
+  // Only an own, still-pending proposal. An approved study is the cohort's now,
+  // not the proposer's to delete.
+  if (!study || study.leaderStudentId !== student.id || study.status !== "proposed") {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  await db.delete(studyMembersTable).where(eq(studyMembersTable.studyId, id));
+  await db.delete(studiesTable).where(eq(studiesTable.id, id));
+  res.json({ ok: true });
 });
 
 // ---- My Reflections ------------------------------------------------------
@@ -249,6 +395,15 @@ router.post("/student/reflections", requireStudent, async (req, res) => {
       reflectedOn: d.reflectedOn ?? null,
     })
     .returning();
+  // 타임라인 (설계 07). 회고를 "썼다"는 사실만 남기고 내용은 넣지 않는다 —
+  // ADR-001 이 회고 본문을 학생 소유로 못박았는데, 타임라인은 운영진도 리포트로
+  // 읽는 자리라 본문이 섞이면 그 보장이 옆문으로 뚫린다.
+  void recordActivity({
+    studentId: student.id,
+    sourceType: "project",
+    sourceId: row.id,
+    title: "회고 작성",
+  });
   res.status(201).json({
     ...row,
     createdAt: row.createdAt.toISOString(),
