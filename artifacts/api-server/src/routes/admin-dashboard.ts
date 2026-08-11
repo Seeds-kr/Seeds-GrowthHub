@@ -4,6 +4,7 @@ import {
   db,
   applicationsTable,
   APPLICATION_STATUSES,
+  FINAL_DECISIONS,
   usersTable,
   studentsTable,
   studentCohortsTable,
@@ -32,6 +33,7 @@ router.get("/admin/dashboard", requireAdmin, async (_req, res) => {
   // Run queries in parallel
   const [
     appByStatusRows,
+    appByDecisionRows,
     appLast7Row,
     activeStudentsRow,
     pendingActivationRow,
@@ -57,6 +59,16 @@ router.get("/admin/dashboard", requireAdmin, async (_req, res) => {
       })
       .from(applicationsTable)
       .groupBy(applicationsTable.status),
+      // 결과(합격/불합격/대기)는 `status` 가 아니라 `final_decision` 에 있다.
+      // `status` 로 세면 합격 처리한 지원서가 여전히 submitted 로 잡힌다 —
+      // /final-decision 이 `status` 를 갱신하지 않기 때문이다(이슈 #4).
+      db
+        .select({
+          decision: applicationsTable.finalDecision,
+          count: sql<number>`count(*)::int`,
+        })
+        .from(applicationsTable)
+        .groupBy(applicationsTable.finalDecision),
     db
       .select({ count: sql<number>`count(*)::int` })
       .from(applicationsTable)
@@ -206,6 +218,12 @@ router.get("/admin/dashboard", requireAdmin, async (_req, res) => {
       byStatus: APPLICATION_STATUSES.map((status) => ({
         status,
         count: Number(appByStatusRows.find((r) => r.status === status)?.count ?? 0),
+      })),
+      byDecision: FINAL_DECISIONS.map((decision) => ({
+        decision,
+        count: Number(
+          appByDecisionRows.find((r) => r.decision === decision)?.count ?? 0,
+        ),
       })),
       last7d: Number(appLast7Row[0]?.count ?? 0),
     },

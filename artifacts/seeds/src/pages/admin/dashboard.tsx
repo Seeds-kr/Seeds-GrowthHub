@@ -22,6 +22,22 @@ import {
 } from "lucide-react";
 import { CountUp } from "@/lib/motion";
 
+/**
+ * 결과(합격/불합격/대기)는 **단계와 다른 축**이다.
+ *
+ * `status` 열거형에 `accepted`·`rejected` 가 같이 들어 있어서 대시보드가 그걸로
+ * 세고 있었는데, `/final-decision` 은 `status` 를 갱신하지 않는다. 그래서 합격
+ * 처리한 지원서가 화면에서는 계속 `submitted` 로 잡혔다(이슈 #4).
+ * 결과는 `final_decision` 에서 따로 읽어 나란히 보여준다.
+ */
+const FINAL_DECISION_LABEL: Record<string, string> = {
+  pending: "미정",
+  accepted: "합격",
+  rejected: "불합격",
+  waitlisted: "예비",
+  withdrawn: "취소",
+};
+
 const APPLICATION_STATUS_LABEL: Record<string, string> = {
   submitted: "제출 완료",
   reviewing: "검토 중",
@@ -340,6 +356,22 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                     ))}
+                  </div>
+                  {/* 결과는 단계와 다른 축이라 한 줄로 따로 둔다. 같은 격자에 섞으면
+                      "최종 합격" 이 두 군데 나오고 어느 쪽이 참인지 알 수 없다 — 실제로
+                      그 상태였다(이슈 #4). */}
+                  <div className="mt-3 border-t border-border pt-3">
+                    <div className="mb-1.5 text-[11px] text-muted-foreground">최종 결과</div>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1">
+                      {data.applications.byDecision.map((d) => (
+                        <div key={d.decision} className="flex items-baseline gap-1.5">
+                          <span className="text-[11px] text-muted-foreground">
+                            {FINAL_DECISION_LABEL[d.decision] ?? d.decision}
+                          </span>
+                          <span className="text-sm font-bold tabular-nums">{d.count}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </CardContent>
               </Card>

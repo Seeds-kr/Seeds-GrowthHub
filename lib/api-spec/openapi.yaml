@@ -771,6 +771,14 @@ components:
         count: { type: integer }
       required: [status, count]
 
+    ApplicationDecisionCount:
+      type: object
+      properties:
+        decision:
+          $ref: "#/components/schemas/FinalDecision"
+        count: { type: integer }
+      required: [decision, count]
+
     ApplicationStats:
       type: object
       properties:
@@ -836,8 +844,14 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/ApplicationStatusCount"
+            # 결과(합격/불합격/대기)는 `status` 가 아니라 `final_decision` 에 있다.
+            # byStatus 로 세면 합격 처리한 지원서가 여전히 submitted 로 잡힌다.
+            byDecision:
+              type: array
+              items:
+                $ref: "#/components/schemas/ApplicationDecisionCount"
             last7d: { type: integer }
-          required: [total, byStatus, last7d]
+          required: [total, byStatus, byDecision, last7d]
         members:
           type: object
           properties:
