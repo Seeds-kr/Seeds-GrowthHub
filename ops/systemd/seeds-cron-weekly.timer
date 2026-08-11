@@ -1,0 +1,10 @@
+[Unit]
+Description=Seeds GrowthHub weekly mentor nudge
+
+[Timer]
+# 월요일 아침. 한 주가 시작될 때 담당 팀 상태를 한 번 짚게 한다.
+OnCalendar=Mon *-*-* 09:30:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

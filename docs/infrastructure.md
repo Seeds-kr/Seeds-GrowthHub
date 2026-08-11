@@ -135,3 +135,28 @@ ops/reset-test-data.sh     # 무엇이 지워지는지 보여주고 확인을 �
   준비는 해 뒀다: 백업이 이미 GPG 대칭키로 암호화된 사본을 같이 만든다. 목적지만
   정하면 그대로 올리면 되고, 어디에 두든 내용은 읽히지 않는다. USB 에 주기적으로
   복사하는 정도로도 충분하다.
+
+## 알림 다이제스트 타이머 (2026-08-11 추가)
+
+`POST /internal/cron/*` 는 **부르는 주체가 없으면 아무 일도 안 한다.** 알림 계층
+(ADR-007: Discord 웹훅 + 인앱 배지)은 만들어져 배선까지 돼 있었는데, 두
+다이제스트를 호출할 스케줄이 없어서 영영 안 나갈 상태였다.
+
+| 유닛 | 시각 | 하는 일 |
+|---|---|---|
+| `seeds-cron-daily.timer` | 매일 09:00 | 운영진 채널에 그날 볼 것 |
+| `seeds-cron-weekly.timer` | 월 09:30 | 멘토에게 상태체크 넛지 |
+
+둘 다 `ops/cron-tick.sh` 를 부른다. **설정이 없으면 조용히 넘어간다** —
+`CRON_SECRET` 이나 Discord 웹훅 URL 이 없는 것은 고장이 아니라 "아직 안 켰다" 이고,
+매일 실패를 쌓을 이유가 없다. 설정이 있는데 실패하면 종료 코드를 남긴다.
+
+켜려면 `~/.secrets/seeds-preview.env` 에 셋을 넣는다.
+
+```
+export CRON_SECRET=...
+export SEEDS_DISCORD_OPS_WEBHOOK_URL=...
+export SEEDS_DISCORD_MENTOR_WEBHOOK_URL=...
+```
+
+웹훅 URL 은 Discord 서버 관리자만 만들 수 있다.
