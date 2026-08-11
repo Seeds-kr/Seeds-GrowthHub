@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react";
 import { RoleSwitcher, effectiveRoles, pickRedirectFor } from "./RoleSwitcher";
 import { MobileNav } from "./MobileNav";
 import { BrandMark } from "@/components/BrandMark";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 /** 데스크톱 헤더와 모바일 드로어가 같은 목록을 쓴다. */
 const MENTOR_NAV = [
@@ -85,6 +86,7 @@ export function MentorLayout({ children }: { children: ReactNode }) {
             </nav>
           </div>
           <div className="flex items-center gap-4">
+            <ThemeToggle />
             <RoleSwitcher roles={roles} current="mentor" />
             <span className="hidden lg:inline text-sm text-muted-foreground">{me.name} ({me.email})</span>
             <Button

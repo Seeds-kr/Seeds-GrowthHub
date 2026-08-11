@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { MobileNav } from "./MobileNav";
 import { Magnetic } from "@/lib/motion";
 import { BrandMark } from "@/components/BrandMark";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { CursorGlow } from "@/components/CursorGlow";
 import { useAdminMe, getAdminMeQueryKey } from "@workspace/api-client-react";
 import { effectiveRoles, pickRedirectFor } from "./RoleSwitcher";
@@ -107,6 +108,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             })}
           </nav>
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             {myHome ? (
               <Link href={myHome}>
                 <Button data-testid="button-my-workspace">← 내 화면으로</Button>

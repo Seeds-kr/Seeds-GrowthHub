@@ -16,6 +16,7 @@ import { RoleSwitcher, effectiveRoles, pickRedirectFor } from "./RoleSwitcher";
 import { visibleNavSections, type NavSection } from "@/lib/admin-nav";
 import { motion, useReducedMotion } from "framer-motion";
 import { BrandMark } from "@/components/BrandMark";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 function isActive(currentPath: string, href: string): boolean {
   if (href === "/admin") return currentPath === "/admin";
@@ -230,6 +231,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
             </div>
           </div>
           <RoleSwitcher roles={roles} current="admin" />
+          <ThemeToggle />
           <Button
             variant="outline"
             size="sm"

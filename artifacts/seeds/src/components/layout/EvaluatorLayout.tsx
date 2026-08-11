@@ -7,6 +7,7 @@ import { getAdminMeQueryKey } from "@workspace/api-client-react";
 import { Loader2 } from "lucide-react";
 import { RoleSwitcher, effectiveRoles, pickRedirectFor } from "./RoleSwitcher";
 import { BrandMark } from "@/components/BrandMark";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function EvaluatorLayout({ children }: { children: ReactNode }) {
   const [, setLocation] = useLocation();
@@ -79,6 +80,7 @@ export function EvaluatorLayout({ children }: { children: ReactNode }) {
             </nav>
           </div>
           <div className="flex items-center gap-4">
+            <ThemeToggle />
             <RoleSwitcher roles={roles} current={switcherCurrent} />
             <span className="text-sm text-muted-foreground">{me.name} ({me.email})</span>
             <Button variant="outline" size="sm" onClick={handleLogout} disabled={logout.isPending}>
