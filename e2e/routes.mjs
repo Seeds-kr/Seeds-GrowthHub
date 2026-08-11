@@ -52,7 +52,20 @@ async function sweep(page, label, paths) {
   for (const path of paths) {
     const errors = [];
     const onErr = (e) => errors.push(String(e).slice(0, 90));
-    const onMsg = (m) => { if (m.type() === "error") errors.push(m.text().slice(0, 90)); };
+    // 공개 페이지의 세션 조회는 비로그인에게 401 이 정상이다. PublicLayout 이
+    // `/api/admin/me` 를 물어 로그인한 사람에게 "내 화면으로" 를 띄우기 때문인데,
+    // 방문자 대부분은 비로그인이라 매번 401 이 찍힌다. 이걸 결함으로 세면
+    // 공개 7화면이 항상 ✗ 가 되어 이 훑기가 늑대소년이 된다.
+    //
+    // 메시지 본문에는 URL 이 없다("Failed to load resource: … 401 ()"). 어느
+    // 요청이었는지는 `location().url` 에만 있으므로 거기서 본다.
+    // 다른 401 은 그대로 잡는다 — 경로를 콕 집어 하나만 통과시킨다.
+    const onMsg = (m) => {
+      if (m.type() !== "error") return;
+      const from = m.location?.()?.url ?? "";
+      if (from.endsWith("/api/admin/me")) return;
+      errors.push(m.text().slice(0, 90));
+    };
     page.on("pageerror", onErr);
     page.on("console", onMsg);
     try {
