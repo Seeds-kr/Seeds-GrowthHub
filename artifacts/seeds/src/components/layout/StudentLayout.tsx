@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { RoleSwitcher, effectiveRoles, pickRedirectFor } from "./RoleSwitcher";
 import { MobileNav } from "./MobileNav";
 import { BrandMark } from "@/components/BrandMark";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 /** 데스크톱 헤더와 모바일 드로어가 같은 목록을 쓴다 — 갈라지면 폰에서만
  *  빠지는 메뉴가 생긴다. */
@@ -91,6 +92,7 @@ export function StudentLayout({ children }: { children: ReactNode }) {
             {/* 이메일은 폰에서 숨긴다 — 헤더 폭을 가장 많이 먹으면서
                 정보 가치는 가장 낮다. 드로어 하단에 그대로 나온다. */}
             <span className="hidden md:inline text-sm text-muted-foreground">{me.email}</span>
+            <ThemeToggle />
             <Button
               variant="outline"
               size="sm"

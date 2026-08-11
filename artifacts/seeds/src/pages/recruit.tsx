@@ -186,11 +186,11 @@ export default function Recruit() {
       </Reveal>
 
       {/* Apply CTA */}
-      <section className="relative overflow-hidden bg-primary px-4 py-24 text-primary-foreground">
+      <section className="relative overflow-hidden brand-band px-4 py-24">
         <LiquidBackdrop tone="brand" />
         <Reveal className="container relative mx-auto max-w-3xl text-center">
           <h2 className="text-3xl md:text-4xl font-serif font-bold mb-6">{c.cta.title}</h2>
-          <p className="text-primary-foreground text-lg mb-10 leading-relaxed whitespace-pre-line">
+          <p className="text-lg mb-10 leading-relaxed whitespace-pre-line">
             {c.cta.body}
           </p>
           <Link href="/apply">

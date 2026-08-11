@@ -20,6 +20,19 @@
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet" />
+      <script>
+      /* 테마를 첫 페인트 전에 정한다. React 안에서 붙이면 흰 화면이 한 번
+         번쩍인 뒤 어두워진다. 규칙은 src/lib/theme.tsx 와 같아야 한다. */
+      (function () {
+        try {
+          var c = localStorage.getItem("seeds-theme");
+          var dark = c === "dark" || (c !== "light" &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.classList.toggle("dark", dark);
+          document.documentElement.style.colorScheme = dark ? "dark" : "light";
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
