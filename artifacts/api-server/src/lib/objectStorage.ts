@@ -11,23 +11,44 @@ import {
 
 const REPLIT_SIDECAR_ENDPOINT = "http://127.0.0.1:1106";
 
-export const objectStorageClient = new Storage({
-  credentials: {
-    audience: "replit",
-    subject_token_type: "access_token",
-    token_url: `${REPLIT_SIDECAR_ENDPOINT}/token`,
-    type: "external_account",
-    credential_source: {
-      url: `${REPLIT_SIDECAR_ENDPOINT}/credential`,
-      format: {
-        type: "json",
-        subject_token_field_name: "access_token",
+/**
+ * Replit 사이드카를 쓸 것인가.
+ *
+ * 이 파일은 인증도 서명도 전부 `http://127.0.0.1:1106` 으로 받게 돼 있었다.
+ * Replit 위에서는 맞지만 **그 밖에서는 첨부 기능이 통째로 죽는다** — 이 서비스는
+ * 이미 Replit 을 떠나 systemd 로 도는데, 사이드카가 없으니 업로드 URL 발급이
+ * 500 이고 그 앞단에서 막혀 다운로드 라우트는 도달조차 못 한다.
+ *
+ * 그래서 두 갈래로 둔다. 사이드카가 있으면 그대로 쓰고(Replit 배포를 깨지 않는다),
+ * 없으면 표준 GCS 인증(서비스 계정 / ADC)으로 떨어진다.
+ *
+ * 판단은 `GOOGLE_APPLICATION_CREDENTIALS` 하나로 한다 — 사이드카 존재 여부를
+ * 런타임에 찔러보는 건 모듈 로드 시점에 할 수 없고(비동기), 있는지 없는지로
+ * 갈리는 것보다 "어느 쪽으로 쓰겠다" 를 배포가 명시하는 편이 예측 가능하다.
+ */
+const useSidecar = !process.env.GOOGLE_APPLICATION_CREDENTIALS;
+
+export const objectStorageClient = useSidecar
+  ? new Storage({
+      credentials: {
+        audience: "replit",
+        subject_token_type: "access_token",
+        token_url: `${REPLIT_SIDECAR_ENDPOINT}/token`,
+        type: "external_account",
+        credential_source: {
+          url: `${REPLIT_SIDECAR_ENDPOINT}/credential`,
+          format: {
+            type: "json",
+            subject_token_field_name: "access_token",
+          },
+        },
+        universe_domain: "googleapis.com",
       },
-    },
-    universe_domain: "googleapis.com",
-  },
-  projectId: "",
-});
+      projectId: "",
+    })
+  : // keyFilename 을 명시하지 않는다 — 라이브러리가 GOOGLE_APPLICATION_CREDENTIALS
+    // 를 읽는 게 표준이고, 워크로드 아이덴티티 같은 다른 ADC 경로도 그대로 통한다.
+    new Storage();
 
 export class ObjectNotFoundError extends Error {
   constructor() {
@@ -249,6 +270,21 @@ async function signObjectURL({
     method,
     expires_at: new Date(Date.now() + ttlSec * 1000).toISOString(),
   };
+  // 사이드카가 없으면 라이브러리가 직접 서명한다. 서비스 계정 키에 개인키가
+  // 들어 있으므로 별도 서비스 없이 V4 서명이 된다.
+  if (!useSidecar) {
+    const [url] = await objectStorageClient
+      .bucket(bucketName)
+      .file(objectName)
+      .getSignedUrl({
+        version: "v4",
+        action:
+          method === "PUT" ? "write" : method === "DELETE" ? "delete" : "read",
+        expires: Date.now() + ttlSec * 1000,
+      });
+    return url;
+  }
+
   const response = await fetch(
     `${REPLIT_SIDECAR_ENDPOINT}/object-storage/signed-object-url`,
     {
