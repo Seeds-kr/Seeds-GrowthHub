@@ -270,16 +270,36 @@ export const reflectionsTable = pgTable("reflections", {
 
 ## 8. 수용 기준
 
-- [ ] 멘토가 상태체크를 작성하면 `/admin/ops-dashboard`의 지원 필요 위젯에 반영된다.
-- [ ] `project_status_checks`에 대한 학생 라우트가 **존재하지 않는다** (코드 검색으로 확인).
-- [ ] 상태체크 수정·삭제 API가 없다 (`opsResolved*` 스탬프 제외).
-- [ ] 학생이 `private` 회고를 작성하면 admin·mentor 어떤 경로로도 조회되지 않는다.
-- [ ] 운영진 라우트 전체에 `reflections` 목록 조회가 없다 (`cohort_visible` 노출 경로 외).
-- [ ] 학생이 회고 공개범위를 `cohort_visible` → `private`으로 되돌릴 수 있다.
-- [ ] 스터디 산출물이 `artifacts.studyId`로 연결되고 기존 visibility 규칙을 따른다.
-- [ ] `projects` 확장 후 기존 `/admin/projects/:id`와 `/student/projects/:id`가 회귀 없이 동작한다.
-- [ ] 마일스톤 `dropped` 상태가 부정적으로 표시되지 않는다.
-- [ ] [visibility-policy §6](../visibility-policy.md) 체크리스트 통과.
+> **2026-08-11 검증.** 아래 항목을 하나씩 확인했다. 근거를 각 줄에 적는다 —
+> 체크만 하고 근거를 안 남기면 다음 사람이 처음부터 다시 봐야 한다.
+
+- [x] 멘토가 상태체크를 작성하면 `/admin/ops-dashboard`의 지원 필요 위젯에 반영된다.
+      → **실측.** `POST /mentor/projects/2/status-checks`(`needsOpsSupport:true`) 직후
+      `summary.teamSupport.openCount` 가 `0 → 1`, `items` 에 해당 팀이 들어왔다.
+- [x] `project_status_checks`에 대한 학생 라우트가 **존재하지 않는다** (코드 검색으로 확인).
+      → `routes/*.ts` 의 `router.*("/student…")` 중 상태체크를 다루는 것 0건.
+- [x] 상태체크 수정·삭제 API가 없다 (`opsResolved*` 스탬프 제외).
+      → `router.(patch|put|delete)` 중 상태체크 대상 0건. `opsResolvedAt` 은 읽기에만 쓰인다.
+- [x] 학생이 `private` 회고를 작성하면 admin·mentor 어떤 경로로도 조회되지 않는다.
+      → `reflectionsTable` 을 읽는 라우트 파일은 `mentor-teams.ts` · `student-growth.ts` **둘뿐**이다.
+      **admin 라우트는 아예 읽지 않는다.** 멘토 경로는
+      `inArray(visibility, ["mentor_visible","cohort_visible"])` 로 `private` 을 뺀다.
+- [x] 운영진 라우트 전체에 `reflections` 목록 조회가 없다.
+      → `router.get("/admin/…")` 중 reflection 0건, `routes/admin*.ts` 에 `reflectionsTable` 참조 0건.
+- [x] 학생이 회고 공개범위를 `cohort_visible` → `private`으로 되돌릴 수 있다.
+      → **실측.** 회고 #38 을 `cohort_visible` 로 만들자 `/mentor/reflections` 에 1건 보였고,
+      `PATCH {visibility:"private"}` 뒤 **0건**이 됐다. 본인 목록에는 그대로 남는다.
+- [x] 스터디 산출물이 `artifacts.studyId`로 연결되고 기존 visibility 규칙을 따른다.
+      → `mvp4-artifacts.ts` 에 `studyId` FK, 학생 조회는 `studyMembersTable` 멤버십 조인 +
+      `inArray(visibility, …)` 를 **쿼리 안에서** 건다.
+- [x] `projects` 확장 후 기존 `/admin/projects/:id`와 `/student/projects/:id`가 회귀 없이 동작한다.
+      → 전 라우트 훑기(`e2e/routes.mjs`) ✗ 0.
+- [x] 마일스톤 `dropped` 상태가 부정적으로 표시되지 않는다.
+      → 라벨 `"계획 변경"`, 색 `text-muted-foreground`(중립). 파괴적 톤 없음.
+- [~] [visibility-policy §6](../visibility-policy.md) 체크리스트.
+      → **개수 누수 항목만 확인했다.** `/student/studies` 의 `total` 은 `rows.length` 라
+      필터와 같은 쿼리에서 나온다 — 별도 count 쿼리가 없어 `proposed`/`rejected` 가
+      개수로 새지 않는다. 나머지 항목은 라우트를 새로 만들 때마다 그 변경에서 본다.
 
 ## 9. 미결 (Parallel B 이후)
 

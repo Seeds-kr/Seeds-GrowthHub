@@ -11,9 +11,11 @@
 #   - 여러 번 돌려도 안전하다. 같은 제목이 이미 있으면 건너뛴다.
 #   - 프로덕션에서 돌리지 않는다. 아래 가드를 보라.
 #
-# 채우지 못하는 것 두 개(엔드포인트가 없다, 이 스크립트의 문제가 아니다)
-#   student_programs    읽는 곳은 5군데인데 쓰는 라우트가 없다.
+# 채우지 못하는 것 하나
 #   communication_logs  internal-cron 만 쓴다. 손으로 만들 경로가 없다.
+#
+# (student_programs 는 한때 "쓰는 라우트가 없다" 고 적어 뒀는데 틀렸다 —
+#  POST /admin/students/:id/programs 가 있다. 이 스크립트가 안 부른 것뿐이었다.)
 #
 #   ops/seed-demo-data.sh
 set -uo pipefail
@@ -51,6 +53,14 @@ echo
 echo "프로그램"
 PROG="$(post /admin/programs "{\"cohortId\":$COHORT,\"name\":\"2026 정규 프로그램\",\"description\":\"2월 팀빌딩부터 11월 공유회까지, 열 달 과정.\",\"status\":\"active\"}" | j id)"
 say "programs" "id=$PROG"
+
+echo
+echo "프로그램 등록"
+# 학생을 프로그램에 넣지 않으면 /student/report·/admin/reports 의 프로그램 축이 빈다.
+for s in $STUDENTS; do
+  post "/admin/students/$s/programs" "{\"programId\":$PROG}" >/dev/null
+done
+say "student_programs" "$(echo "$STUDENTS" | wc -w)명"
 
 echo
 echo "스터디 · 스터디원"
@@ -116,6 +126,55 @@ post /admin/activity-records "{\"studentId\":$S1,\"cohortId\":$COHORT,\"programI
 post /admin/activity-records "{\"studentId\":$S2,\"cohortId\":$COHORT,\"programId\":$PROG,\"sourceType\":\"session\",\"title\":\"1주차 모임 참석\",\"activityDate\":\"2026-07-10\",\"visibility\":\"student_visible\"}" >/dev/null
 post /admin/activity-records "{\"studentId\":$S2,\"cohortId\":$COHORT,\"sourceType\":\"feedback\",\"title\":\"멘토 피드백 반영\",\"description\":\"배포 파이프라인을 먼저 세웠습니다.\",\"activityDate\":\"2026-08-01\",\"visibility\":\"student_visible\"}" >/dev/null
 say "activity_records" "3건"
+
+echo
+echo "출석"
+# 세션에 출석 기록이 없으면 /student/attendance 와 /admin/attendance 가 빈 상태만 검증된다.
+SESSION="$(curl -s -b "$JAR" "$API/admin/sessions" | python3 -c "
+import sys,json;d=json.load(sys.stdin);r=d if isinstance(d,list) else d.get('items',[]);print(r[0]['id'] if r else '')")"
+if [ -n "$SESSION" ]; then
+  # present/late/excused 를 돌려 가며 붙인다. absent 는 넣지 않는다 —
+  # 활동 기록에 결석을 안 남기는 것과 같은 이유(설계 07 ADR-013).
+  RECS=""; i=0
+  for s in $STUDENTS; do
+    case $((i % 3)) in 0) ST=present;; 1) ST=late;; *) ST=excused;; esac
+    [ -n "$RECS" ] && RECS="$RECS,"
+    RECS="$RECS{\"studentId\":$s,\"status\":\"$ST\"}"
+    i=$((i+1))
+  done
+  curl -s -b "$JAR" -X PUT "$API/admin/sessions/$SESSION/attendance" \
+    -H 'content-type: application/json' -d "{\"records\":[$RECS]}" >/dev/null
+  say "attendance_records" "모임 $SESSION · $(echo "$STUDENTS" | wc -w)명"
+else
+  say "attendance_records" "건너뜀 — 모임이 없다"
+fi
+
+echo
+echo "팀 회의록 (설계 06)"
+# 팀원 본인만 쓸 수 있다 — 운영진 계정으로는 못 만든다.
+if [ -n "${SEED_STUDENT_EMAIL:-}" ] && [ -n "${SEED_STUDENT_PASSWORD:-}" ]; then
+  SJAR="$(mktemp)"
+  curl -s -c "$SJAR" -X POST "$API/admin/login" -H 'content-type: application/json' \
+    -d "{\"email\":\"$SEED_STUDENT_EMAIL\",\"password\":\"$SEED_STUDENT_PASSWORD\"}" >/dev/null
+  MYPROJ="$(curl -s -b "$SJAR" "$API/student/projects" | python3 -c "
+import sys,json;d=json.load(sys.stdin);r=d if isinstance(d,list) else d.get('items',[]);print(r[0]['id'] if r else '')")"
+  if [ -n "$MYPROJ" ]; then
+    post_s() { curl -s -b "$SJAR" -X POST "$API$1" -H 'content-type: application/json' -d "$2" >/dev/null; }
+    # 참여자를 안 넣으면 team_meeting_participants 가 계속 0행이라 그 경로가
+    # 검증되지 않는다. 팀 명단(meta.roster)에서 그대로 가져다 붙인다 —
+    # 명단 밖 id 를 넣으면 서버가 422 로 거부하므로 지어내면 안 된다.
+    ROSTER="$(curl -s -b "$SJAR" "$API/student/team-meetings/meta?ownerType=project&ownerId=$MYPROJ" | python3 -c "
+import sys,json;d=json.load(sys.stdin);print(','.join(str(r['id']) for r in d.get('roster',[])))")"
+    post_s /student/team-meetings "{\"ownerType\":\"project\",\"ownerId\":$MYPROJ,\"title\":\"8월 2주차 팀 회의\",\"contentMd\":\"## 정한 것\\n- 배포 파이프라인을 먼저 세운다\\n- 다음 주까지 롤백을 한 번 연습한다\\n\\n## 막힌 것\\n- 오브젝트 스토리지 설정 권한이 없다\",\"tags\":[\"배포\",\"주간\"],\"participantUserIds\":[$ROSTER]}"
+    post_s /student/team-meetings "{\"ownerType\":\"project\",\"ownerId\":$MYPROJ,\"title\":\"8월 1주차 팀 회의\",\"contentMd\":\"## 정한 것\\n- 화면 흐름을 셋으로 줄인다\\n- 각자 맡을 화면을 나눴다\",\"tags\":[\"기획\"]}"
+    say "team_meetings" "프로젝트 $MYPROJ · 2건"
+  else
+    say "team_meetings" "건너뜀 — 이 학생의 프로젝트가 없다"
+  fi
+  rm -f "$SJAR"
+else
+  say "team_meetings" "건너뜀 — SEED_STUDENT_EMAIL/PASSWORD 미설정"
+fi
 
 echo
 echo "태그 · 태그 연결"
