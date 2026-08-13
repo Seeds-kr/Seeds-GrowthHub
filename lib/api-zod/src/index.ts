@@ -11,7 +11,7 @@ export type {
   ApplicationListItem,
   ApplicationStats,
   ApplicationStatus,
-  ApplicationStatusCount,
+  ApplicationStageCount,
   AssignmentStatus,
   CreateApplicationResponse,
   DecisionLog,

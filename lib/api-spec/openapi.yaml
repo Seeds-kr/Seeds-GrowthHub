@@ -133,10 +133,6 @@ paths:
           name: q
           schema: { type: string }
         - in: query
-          name: status
-          schema:
-            $ref: "#/components/schemas/ApplicationStatus"
-        - in: query
           name: applicationStatus
           schema:
             $ref: "#/components/schemas/ApplicationLifecycleStatus"
@@ -763,13 +759,13 @@ components:
         total: { type: integer }
       required: [items, total]
 
-    ApplicationStatusCount:
+    ApplicationStageCount:
       type: object
       properties:
-        status:
-          $ref: "#/components/schemas/ApplicationStatus"
+        stage:
+          $ref: "#/components/schemas/ApplicationLifecycleStatus"
         count: { type: integer }
-      required: [status, count]
+      required: [stage, count]
 
     ApplicationDecisionCount:
       type: object
@@ -783,11 +779,11 @@ components:
       type: object
       properties:
         total: { type: integer }
-        byStatus:
+        byStage:
           type: array
           items:
-            $ref: "#/components/schemas/ApplicationStatusCount"
-      required: [total, byStatus]
+            $ref: "#/components/schemas/ApplicationStageCount"
+      required: [total, byStage]
 
     DashboardCohortItem:
       type: object
@@ -840,18 +836,18 @@ components:
           type: object
           properties:
             total: { type: integer }
-            byStatus:
+            byStage:
               type: array
               items:
-                $ref: "#/components/schemas/ApplicationStatusCount"
+                $ref: "#/components/schemas/ApplicationStageCount"
             # 결과(합격/불합격/대기)는 `status` 가 아니라 `final_decision` 에 있다.
-            # byStatus 로 세면 합격 처리한 지원서가 여전히 submitted 로 잡힌다.
+            # 단계(byStage)로만 세면 합격 처리한 지원서가 결과로 안 잡힌다.
             byDecision:
               type: array
               items:
                 $ref: "#/components/schemas/ApplicationDecisionCount"
             last7d: { type: integer }
-          required: [total, byStatus, byDecision, last7d]
+          required: [total, byStage, byDecision, last7d]
         members:
           type: object
           properties:

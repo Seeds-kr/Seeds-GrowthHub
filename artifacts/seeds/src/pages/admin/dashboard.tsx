@@ -38,13 +38,15 @@ const FINAL_DECISION_LABEL: Record<string, string> = {
   withdrawn: "취소",
 };
 
-const APPLICATION_STATUS_LABEL: Record<string, string> = {
-  submitted: "제출 완료",
-  reviewing: "검토 중",
-  interview: "면접 대상",
-  accepted: "최종 합격",
-  rejected: "불합격",
-  waitlisted: "예비 후보",
+/** 심사 단계. 결과(합격/불합격)는 아래 FINAL_DECISION_LABEL 이 따로 맡는다. */
+const APPLICATION_STAGE_LABEL: Record<string, string> = {
+  submitted: "접수",
+  document_review: "서류 검토 중",
+  document_review_completed: "서류 검토 완료",
+  interview: "면접 단계",
+  interview_scheduled: "면접 예정",
+  interview_completed: "면접 완료",
+  final_decision_made: "최종 결정",
   withdrawn: "지원 취소",
 };
 
@@ -62,16 +64,19 @@ const APPLICATION_STATUS_LABEL: Record<string, string> = {
  * 파이프라인에서 벗어난 셋만 다른 색을 쓴다. 이건 진행의 어느 단계가 아니라
  * 흐름 밖으로 나간 상태라 같은 계단에 올리면 오히려 헷갈린다.
  */
-const APPLICATION_STATUS_TONE: Record<string, string> = {
+const APPLICATION_STAGE_TONE: Record<string, string> = {
   // 농도가 올라가면 글자색도 같이 넘어가야 한다. 45% 초록 위에 흰 글자를
   // 얹었더니 1.00:1 이 나왔다(실측). 옅은 단계는 브랜드색 글자, 짙은 단계는
   // 잉크색 글자, 마지막 solid 만 흰 글자다.
+  //
+  // 단계가 진행될수록 짙어진다 — 색만 봐도 어디까지 왔는지 읽힌다.
   submitted: "bg-primary/10 text-primary ring-1 ring-inset ring-primary/20",
-  reviewing: "bg-primary/20 text-primary ring-1 ring-inset ring-primary/30",
-  interview: "bg-primary/30 text-foreground ring-1 ring-inset ring-primary/40",
-  accepted: "bg-primary text-primary-foreground elev-1",
-  rejected: "bg-destructive/10 text-destructive ring-1 ring-inset ring-destructive/20",
-  waitlisted: "bg-muted text-muted-foreground ring-1 ring-inset ring-border",
+  document_review: "bg-primary/15 text-primary ring-1 ring-inset ring-primary/25",
+  document_review_completed: "bg-primary/20 text-primary ring-1 ring-inset ring-primary/30",
+  interview: "bg-primary/25 text-foreground ring-1 ring-inset ring-primary/35",
+  interview_scheduled: "bg-primary/30 text-foreground ring-1 ring-inset ring-primary/40",
+  interview_completed: "bg-primary/40 text-foreground ring-1 ring-inset ring-primary/50",
+  final_decision_made: "bg-primary text-primary-foreground elev-1",
   withdrawn: "bg-transparent text-muted-foreground/70 ring-1 ring-inset ring-border",
 };
 
@@ -341,15 +346,15 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {data.applications.byStatus.map((s) => (
+                    {data.applications.byStage.map((s) => (
                       <div
-                        key={s.status}
+                        key={s.stage}
                         className={`rounded-md px-3 py-2.5 transition-transform duration-150 hover:-translate-y-0.5 ${
-                          APPLICATION_STATUS_TONE[s.status] ?? "bg-muted"
+                          APPLICATION_STAGE_TONE[s.stage] ?? "bg-muted"
                         }`}
                       >
                         <div className="text-[11px] opacity-80">
-                          {APPLICATION_STATUS_LABEL[s.status] ?? s.status}
+                          {APPLICATION_STAGE_LABEL[s.stage] ?? s.stage}
                         </div>
                         <div className="text-lg font-bold tabular-nums">
                           {s.count}

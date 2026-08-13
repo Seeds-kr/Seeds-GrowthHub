@@ -27,6 +27,20 @@ export const finalDecisionLabels: Record<string, string> = {
   withdrawn: "취소",
 };
 
+/**
+ * 운영진이 드롭다운에서 **직접** 고르는 단계.
+ *
+ * 나머지 단계는 자동으로 온다 — 면접 예정·면접 완료는 면접 폼이, 최종 결정과
+ * 지원 취소는 최종 결정 버튼이 쓴다. 한 사실에 쓰는 주체를 하나로 두지 않으면
+ * 두 곳이 서로 다른 말을 하게 된다(레거시 `status` 가 정확히 그랬다).
+ */
+export const MANUAL_LIFECYCLE_STAGES = [
+  "submitted",
+  "document_review",
+  "document_review_completed",
+  "interview",
+] as const;
+
 export const interviewStatusLabels: Record<string, string> = {
   not_scheduled: "미배정",
   scheduled: "예정",

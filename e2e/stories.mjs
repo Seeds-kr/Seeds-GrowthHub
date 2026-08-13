@@ -235,7 +235,7 @@ console.log("\n── 운영진 ────────────────
     return `본문 ${txt.trim().length}자`;
   });
 
-  await story("O2", "들어온 지원서를 열어 상태를 바꾼다", async () => {
+  await story("O2", "들어온 지원서를 열어 심사 단계를 바꾼다", async () => {
     need();
     await p.goto(BASE + "/admin/applications", { waitUntil: "networkidle" });
     await p.waitForTimeout(900);
@@ -244,11 +244,15 @@ console.log("\n── 운영진 ────────────────
     if (n === 0) throw blocked("지원서 데이터가 없어 주행 불가");
     await rows.first().click();
     await p.waitForTimeout(1000);
-    // 이 화면에는 콤보박스가 5개 있다(평가자·평가단계·상태·면접·최종결정).
-    // 라벨로 고르면 "서류 평가"(평가 단계)를 상태로 오인한다 — 실제로 한 번
-    // 그렇게 잘못 짚었다. 화면이 붙여둔 testid 로 정확히 겨냥한다.
-    const trig = p.locator('[data-testid="select-legacy-status"]');
-    if (!(await trig.count())) throw new Error("상태 콤보박스(select-legacy-status)를 못 찾음");
+    // 이 화면에는 콤보박스가 5개 있다(평가자·평가단계·심사단계·면접·최종결정).
+    // 라벨로 고르면 "서류 평가"(평가 단계)를 오인한다 — 실제로 한 번 그렇게
+    // 잘못 짚었다. 화면이 붙여둔 testid 로 정확히 겨냥한다.
+    //
+    // 2026-08-11: `select-lifecycle` → `select-lifecycle`. 그 드롭다운이
+    // 단계와 결과를 섞은 레거시 컬럼을 쓰고 있어서 심사 단계 전용으로 바꿨다
+    // (이슈 #4). 합격·불합격은 이제 이 콤보박스에 없고 최종 결정이 맡는다.
+    const trig = p.locator('[data-testid="select-lifecycle"]');
+    if (!(await trig.count())) throw new Error("심사 단계 콤보박스(select-lifecycle)를 못 찾음");
     const before = (await trig.innerText()).trim();
     await trig.click();
     await p.waitForTimeout(400);
@@ -268,7 +272,7 @@ console.log("\n── 운영진 ────────────────
     await p.waitForTimeout(1600);
     await p.reload({ waitUntil: "networkidle" });
     await p.waitForTimeout(1400);
-    const after = (await p.locator('[data-testid="select-legacy-status"]').innerText()).trim();
+    const after = (await p.locator('[data-testid="select-lifecycle"]').innerText()).trim();
     if (after !== picked) throw new Error(`새로고침 후 안 남음: ${before} → ${picked} → ${after}`);
     return `${before} → ${picked} 저장 확인`;
   });

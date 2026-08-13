@@ -220,8 +220,8 @@ export interface ApplicationList {
   total: number;
 }
 
-export interface ApplicationStatusCount {
-  status: ApplicationStatus;
+export interface ApplicationStageCount {
+  stage: ApplicationLifecycleStatus;
   count: number;
 }
 
@@ -232,7 +232,7 @@ export interface ApplicationDecisionCount {
 
 export interface ApplicationStats {
   total: number;
-  byStatus: ApplicationStatusCount[];
+  byStage: ApplicationStageCount[];
 }
 
 export interface DashboardCohortItem {
@@ -272,7 +272,7 @@ export interface DashboardAnnouncementItem {
 
 export type AdminDashboardApplications = {
   total: number;
-  byStatus: ApplicationStatusCount[];
+  byStage: ApplicationStageCount[];
   byDecision: ApplicationDecisionCount[];
   last7d: number;
 };
@@ -545,7 +545,6 @@ export interface EvaluatorApplicationDetail {
 
 export type ListApplicationsParams = {
   q?: string;
-  status?: ApplicationStatus;
   applicationStatus?: ApplicationLifecycleStatus;
   finalDecision?: FinalDecision;
   evaluationCompletion?: ListApplicationsEvaluationCompletion;

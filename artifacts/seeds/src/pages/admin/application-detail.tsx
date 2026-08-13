@@ -28,13 +28,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import {
-  ApplicationStatus,
+  ApplicationLifecycleStatus,
   EvaluationStage,
   FinalDecision,
   InterviewStatus,
 } from "@workspace/api-zod";
 import {
-  statusLabels,
+  MANUAL_LIFECYCLE_STAGES,
   lifecycleLabels,
   finalDecisionLabels,
   interviewStatusLabels,
@@ -65,7 +65,7 @@ export default function AdminApplicationDetail() {
   const upsertInterview = useUpsertInterview();
   const setFinal = useSetFinalDecision();
 
-  const [status, setStatus] = useState<ApplicationStatus | "">("");
+  const [lifecycle, setLifecycle] = useState<ApplicationLifecycleStatus | "">("");
   const [adminNote, setAdminNote] = useState("");
 
   // Assignment form state
@@ -84,7 +84,7 @@ export default function AdminApplicationDetail() {
 
   useEffect(() => {
     if (!application) return;
-    setStatus(application.status);
+    setLifecycle(application.applicationStatus);
     setAdminNote(application.adminNote || "");
     if (application.interview) {
       setInterviewScheduledAt(
@@ -105,11 +105,16 @@ export default function AdminApplicationDetail() {
   };
 
   const handleSaveStatus = () => {
-    if (!status) return;
+    if (!lifecycle) return;
     updateMutation.mutate(
       {
         id: appId,
-        data: { status: status as ApplicationStatus, adminNote: adminNote || null },
+        // 단계(applicationStatus)를 보낸다. 레거시 `status` 는 더 보내지 않는다 —
+        // 결과 값(합격/불합격)까지 담고 있어서 최종 결정과 갈라지던 컬럼이다.
+        data: {
+          applicationStatus: lifecycle as ApplicationLifecycleStatus,
+          adminNote: adminNote || null,
+        },
       },
       {
         onSuccess: () => {
@@ -431,17 +436,25 @@ export default function AdminApplicationDetail() {
           <div className="bg-muted border border-border p-6 sticky top-24 space-y-4">
             <h2 className="text-lg font-serif font-bold">관리자 메모 / 상태</h2>
             <div>
-              <Label>지원 상태 (레거시)</Label>
-              <Select value={status} onValueChange={(v) => setStatus(v as ApplicationStatus)}>
-                <SelectTrigger className="bg-background" data-testid="select-legacy-status">
+              <Label>심사 단계</Label>
+              <Select
+                value={lifecycle}
+                onValueChange={(v) => setLifecycle(v as ApplicationLifecycleStatus)}
+              >
+                <SelectTrigger className="bg-background" data-testid="select-lifecycle">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(statusLabels).map(([k, v]) => (
-                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                  {MANUAL_LIFECYCLE_STAGES.map((k) => (
+                    <SelectItem key={k} value={k}>{lifecycleLabels[k] ?? k}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {/* 면접·최종 결정 단계는 여기서 고르지 않는다. 각각 아래 면접 폼과
+                  최종 결정 버튼이 쓴다 — 한 사실을 두 곳에서 적으면 갈라진다. */}
+              <p className="mt-1 text-xs text-muted-foreground">
+                면접 예정·완료는 아래 면접 일정에서, 합격·불합격은 최종 결정에서 정합니다.
+              </p>
             </div>
             <div>
               <Label>관리자 메모</Label>

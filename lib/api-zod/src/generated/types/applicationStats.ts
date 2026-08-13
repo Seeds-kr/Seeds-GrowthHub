@@ -8,9 +8,9 @@
 **넓힐 때의 기준**: 엔드포인트가 (1) 화면 두 곳 이상에서 쓰이고 (2) 응답 모양이 굳었으면 여기로 옮긴다. 그 전에는 옮기지 않는다 — 스펙이 코드를 못 따라오면 계약이 아니라 낡은 문서가 된다.
  * OpenAPI spec version: 0.2.0
  */
-import type { ApplicationStatusCount } from "./applicationStatusCount";
+import type { ApplicationStageCount } from "./applicationStageCount";
 
 export interface ApplicationStats {
   total: number;
-  byStatus: ApplicationStatusCount[];
+  byStage: ApplicationStageCount[];
 }

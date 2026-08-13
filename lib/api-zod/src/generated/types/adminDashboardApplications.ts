@@ -9,11 +9,11 @@
  * OpenAPI spec version: 0.2.0
  */
 import type { ApplicationDecisionCount } from "./applicationDecisionCount";
-import type { ApplicationStatusCount } from "./applicationStatusCount";
+import type { ApplicationStageCount } from "./applicationStageCount";
 
 export type AdminDashboardApplications = {
   total: number;
-  byStatus: ApplicationStatusCount[];
+  byStage: ApplicationStageCount[];
   byDecision: ApplicationDecisionCount[];
   last7d: number;
 };
