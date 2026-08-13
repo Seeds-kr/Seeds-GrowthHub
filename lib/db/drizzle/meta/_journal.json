@@ -29,6 +29,13 @@
       "when": 1786172476383,
       "tag": "0003_burly_talisman",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1786630593232,
+      "tag": "0004_sleepy_grandmaster",
+      "breakpoints": true
     }
   ]
 }

@@ -129,17 +129,19 @@ function isInterviewStatus(v: unknown): v is InterviewStatus {
 router.get("/admin/applications/stats", requireRecruiting, async (_req, res) => {
   const rows = await db
     .select({
-      status: applicationsTable.status,
+      // 단계 기준으로 센다. 레거시 `status` 는 단계와 결과를 섞고 있어
+      // 합격자가 계속 submitted 로 잡혔다(이슈 #4).
+      stage: applicationsTable.applicationStatus,
       count: sql<number>`count(*)::int`,
     })
     .from(applicationsTable)
-    .groupBy(applicationsTable.status);
+    .groupBy(applicationsTable.applicationStatus);
   const total = rows.reduce((sum, r) => sum + Number(r.count), 0);
   res.json({
     total,
-    byStatus: APPLICATION_STATUSES.map((status) => ({
-      status,
-      count: Number(rows.find((r) => r.status === status)?.count ?? 0),
+    byStage: APPLICATION_LIFECYCLE_STATUSES.map((stage) => ({
+      stage,
+      count: Number(rows.find((r) => r.stage === stage)?.count ?? 0),
     })),
   });
 });
@@ -240,9 +242,6 @@ router.get("/admin/applications", requireRecruiting, async (req, res) => {
       ilike(applicationsTable.school, like),
     );
     if (orFilter) filters.push(orFilter);
-  }
-  if (isApplicationStatus(req.query.status)) {
-    filters.push(eq(applicationsTable.status, req.query.status));
   }
   if (isLifecycleStatus(req.query.applicationStatus)) {
     filters.push(eq(applicationsTable.applicationStatus, req.query.applicationStatus));

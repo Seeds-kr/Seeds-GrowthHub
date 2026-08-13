@@ -11,24 +11,36 @@ import { format } from "date-fns";
 import { ApplicationStatus } from "@workspace/api-zod";
 import { EmptyState } from "@/components/EmptyState";
 
-const statusLabels: Record<string, string> = {
-  submitted: "제출 완료",
-  reviewing: "검토 중",
-  interview: "면접 대상",
-  accepted: "최종 합격",
-  rejected: "불합격",
-  waitlisted: "예비 후보",
+/**
+ * 목록 뱃지는 **결정이 났으면 결과를, 아니면 단계를** 보여준다.
+ *
+ * 전에는 레거시 `status` 하나로 그렸는데 그 열거형이 단계와 결과를 섞고 있었다.
+ * 최종 결정을 눌러도 `status` 는 그대로라, 합격자가 목록에서 "제출 완료" 로
+ * 남았다. 두 축을 따로 읽어 실제로 맞는 것을 보여준다.
+ */
+const lifecycleLabels: Record<string, string> = {
+  submitted: "접수",
+  document_review: "서류 검토 중",
+  document_review_completed: "서류 검토 완료",
+  interview: "면접 단계",
+  interview_scheduled: "면접 예정",
+  interview_completed: "면접 완료",
+  final_decision_made: "최종 결정",
   withdrawn: "지원 취소",
 };
 
-const statusColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  submitted: "secondary",
-  reviewing: "default",
-  interview: "default",
+const decisionLabels: Record<string, string> = {
+  accepted: "합격",
+  rejected: "불합격",
+  waitlisted: "예비",
+  withdrawn: "취소",
+};
+
+const decisionColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   accepted: "default",
   rejected: "destructive",
   waitlisted: "outline",
-  withdrawn: "outline",
+  withdrawn: "secondary",
 };
 
 function useDebounce<T>(value: T, delay: number): T {
@@ -49,7 +61,7 @@ export default function AdminApplications() {
 
   const params: any = {};
   if (debouncedQ) params.q = debouncedQ;
-  if (status !== "all") params.status = status;
+  if (status !== "all") params.applicationStatus = status;
 
   const { data, isLoading } = useListApplications(params);
 
@@ -80,11 +92,11 @@ export default function AdminApplications() {
         <div className="w-full md:w-64">
           <Select value={status} onValueChange={(v: any) => setStatus(v)}>
             <SelectTrigger className="">
-              <SelectValue placeholder="상태 필터" />
+              <SelectValue placeholder="단계 필터" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">전체 상태</SelectItem>
-              {Object.entries(statusLabels).map(([key, label]) => (
+              <SelectItem value="all">전체 단계</SelectItem>
+              {Object.entries(lifecycleLabels).map(([key, label]) => (
                 <SelectItem key={key} value={key}>{label}</SelectItem>
               ))}
             </SelectContent>
@@ -134,9 +146,18 @@ export default function AdminApplications() {
                   <TableCell>{app.grade}</TableCell>
                   <TableCell>{format(new Date(app.submittedAt), 'yyyy-MM-dd HH:mm')}</TableCell>
                   <TableCell>
-                    <Badge variant={statusColors[app.status] || "default"} className="font-normal">
-                      {statusLabels[app.status] || app.status}
-                    </Badge>
+                    {app.finalDecision && app.finalDecision !== "pending" ? (
+                      <Badge
+                        variant={decisionColors[app.finalDecision] ?? "default"}
+                        className="font-normal"
+                      >
+                        {decisionLabels[app.finalDecision] ?? app.finalDecision}
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="font-normal">
+                        {lifecycleLabels[app.applicationStatus] ?? app.applicationStatus}
+                      </Badge>
+                    )}
                   </TableCell>
                 </TableRow>
               ))

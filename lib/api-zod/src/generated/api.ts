@@ -126,17 +126,6 @@ export const AdminMeResponse = zod.object({
  */
 export const ListApplicationsQueryParams = zod.object({
   q: zod.coerce.string().optional(),
-  status: zod
-    .enum([
-      "submitted",
-      "reviewing",
-      "interview",
-      "accepted",
-      "rejected",
-      "waitlisted",
-      "withdrawn",
-    ])
-    .optional(),
   applicationStatus: zod
     .enum([
       "submitted",
@@ -216,15 +205,16 @@ export const ListApplicationsResponse = zod.object({
  */
 export const ApplicationStatsResponse = zod.object({
   total: zod.number(),
-  byStatus: zod.array(
+  byStage: zod.array(
     zod.object({
-      status: zod.enum([
+      stage: zod.enum([
         "submitted",
-        "reviewing",
+        "document_review",
+        "document_review_completed",
         "interview",
-        "accepted",
-        "rejected",
-        "waitlisted",
+        "interview_scheduled",
+        "interview_completed",
+        "final_decision_made",
         "withdrawn",
       ]),
       count: zod.number(),
@@ -239,15 +229,16 @@ export const AdminDashboardResponse = zod.object({
   generatedAt: zod.coerce.date(),
   applications: zod.object({
     total: zod.number(),
-    byStatus: zod.array(
+    byStage: zod.array(
       zod.object({
-        status: zod.enum([
+        stage: zod.enum([
           "submitted",
-          "reviewing",
+          "document_review",
+          "document_review_completed",
           "interview",
-          "accepted",
-          "rejected",
-          "waitlisted",
+          "interview_scheduled",
+          "interview_completed",
+          "final_decision_made",
           "withdrawn",
         ]),
         count: zod.number(),

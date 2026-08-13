@@ -9,14 +9,12 @@
  * OpenAPI spec version: 0.2.0
  */
 import type { ApplicationLifecycleStatus } from "./applicationLifecycleStatus";
-import type { ApplicationStatus } from "./applicationStatus";
 import type { FinalDecision } from "./finalDecision";
 import type { InterviewStatus } from "./interviewStatus";
 import type { ListApplicationsEvaluationCompletion } from "./listApplicationsEvaluationCompletion";
 
 export type ListApplicationsParams = {
   q?: string;
-  status?: ApplicationStatus;
   applicationStatus?: ApplicationLifecycleStatus;
   finalDecision?: FinalDecision;
   evaluationCompletion?: ListApplicationsEvaluationCompletion;

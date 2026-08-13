@@ -57,7 +57,12 @@ export const applicationsTable = pgTable("applications", {
   expectation: text("expectation").notNull(),
   privacyConsent: boolean("privacy_consent").notNull(),
   // Legacy MVP1 status (still used by /admin/applications PATCH).
-  status: text("status").notNull().default("submitted").$type<ApplicationStatus>(),
+  // `status` 컬럼은 2026-08-11 에 제거했다(이슈 #4).
+  //
+  // 단계(`applicationStatus`)와 결과(`finalDecision`)를 한 열거형에 섞고 있었다.
+  // `/final-decision` 이 결과만 갱신하고 이건 그대로 둬서, 합격 처리한 지원서가
+  // 목록·대시보드에서 계속 "제출 완료" 로 보였다. 두 축을 갈라 각각 쓰는 주체를
+  // 하나로 두는 것으로 대신한다.
   // MVP2 lifecycle status.
   applicationStatus: text("application_status")
     .notNull()
