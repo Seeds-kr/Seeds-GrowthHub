@@ -89,7 +89,11 @@ router.put(
       return;
     }
     const [app] = await db
-      .select({ id: applicationsTable.id })
+      .select({
+        id: applicationsTable.id,
+        // 최종 결정 뒤에는 단계를 되돌리지 않기 위해 함께 읽는다.
+        applicationStatus: applicationsTable.applicationStatus,
+      })
       .from(applicationsTable)
       .where(eq(applicationsTable.id, appId))
       .limit(1);
@@ -123,6 +127,31 @@ router.put(
         },
       })
       .returning();
+
+      // 면접 상태가 정해지면 지원서의 심사 단계도 함께 올린다.
+      //
+      // 전에는 면접을 잡아도 단계가 `submitted` 에 머물렀다. 운영진이 같은 사실을
+      // 두 번 적어야 했고(면접 폼 + 상태 드롭다운), 한쪽만 적히면 갈라졌다.
+      // 면접 기록이 곧 그 단계의 근거이므로 여기서 한 번만 쓴다.
+      //
+      // 최종 결정이 난 뒤에는 되돌리지 않는다 — 결정이 단계보다 뒤이고, 면접
+      // 메모를 나중에 고쳤다고 `면접 완료` 로 후퇴하면 안 된다.
+      const stage =
+        status === "scheduled"
+          ? "interview_scheduled"
+          : status === "completed"
+            ? "interview_completed"
+            : null;
+      if (
+        stage &&
+        app.applicationStatus !== "final_decision_made" &&
+        app.applicationStatus !== "withdrawn"
+      ) {
+        await db
+          .update(applicationsTable)
+          .set({ applicationStatus: stage, updatedAt: now })
+          .where(eq(applicationsTable.id, appId));
+      }
     res.json({
       id: row.id,
       applicationId: row.applicationId,
