@@ -27,7 +27,6 @@ router.post("/applications", async (req, res) => {
         problemAwareness: data.problemAwareness.trim(),
         expectation: data.expectation.trim(),
         privacyConsent: data.privacyConsent,
-        status: "submitted",
       })
       .returning({ id: applicationsTable.id });
     res.status(201).json({ id: row.id });

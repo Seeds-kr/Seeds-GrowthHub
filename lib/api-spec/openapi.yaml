@@ -678,8 +678,6 @@ components:
         problemAwareness: { type: string }
         expectation: { type: string }
         privacyConsent: { type: boolean }
-        status:
-          $ref: "#/components/schemas/ApplicationStatus"
         applicationStatus:
           $ref: "#/components/schemas/ApplicationLifecycleStatus"
         finalDecision:
@@ -703,7 +701,6 @@ components:
         - problemAwareness
         - expectation
         - privacyConsent
-        - status
         - applicationStatus
         - finalDecision
         - adminNote
@@ -719,8 +716,6 @@ components:
         school: { type: string }
         grade: { type: string }
         interestArea: { type: string }
-        status:
-          $ref: "#/components/schemas/ApplicationStatus"
         applicationStatus:
           $ref: "#/components/schemas/ApplicationLifecycleStatus"
         finalDecision:
@@ -740,7 +735,6 @@ components:
         - school
         - grade
         - interestArea
-        - status
         - applicationStatus
         - finalDecision
         - avgDocReviewScore
@@ -921,8 +915,6 @@ components:
     UpdateApplicationBody:
       type: object
       properties:
-        status:
-          $ref: "#/components/schemas/ApplicationStatus"
         applicationStatus:
           $ref: "#/components/schemas/ApplicationLifecycleStatus"
         adminNote:

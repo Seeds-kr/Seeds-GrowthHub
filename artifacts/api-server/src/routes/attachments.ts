@@ -1,5 +1,13 @@
-import { Router, type IRouter } from "express";
+import express, { Router, type IRouter } from "express";
 import { Readable } from "stream";
+import {
+  ALLOWED_IMAGE_TYPES,
+  MAX_IMAGE_BYTES,
+  deleteStored,
+  isAllowedImageType,
+  openStored,
+  storeImage,
+} from "../lib/fileStore";
 import { and, desc, eq, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import {
@@ -16,11 +24,9 @@ import {
   type LinkableType,
 } from "@workspace/db";
 import { requireAdmin } from "../lib/auth";
-import { ObjectStorageService, ObjectNotFoundError } from "../lib/objectStorage";
 import { audit } from "../lib/audit";
 
 const router: IRouter = Router();
-const objectStorage = new ObjectStorageService();
 
 /**
  * Attachments (docs/design/04 §5).
@@ -77,10 +83,68 @@ async function linkTargetExists(
 }
 
 /** Presigned PUT target for a direct browser upload. */
-router.post("/admin/attachments/upload-url", requireAdmin, async (_req, res) => {
-  const uploadUrl = await objectStorage.getObjectEntityUploadURL();
-  res.json({ uploadUrl });
-});
+/**
+ * 이미지 업로드 — 본문에 박히는 그림만 받는다.
+ *
+ * 전에는 서명된 URL 을 발급해 브라우저가 저장소로 직접 PUT 했다(Replit 사이드카
+ * 전제). 사이드카가 없는 곳에서는 그 발급이 500 이라 붙여넣기가 통째로 죽었다.
+ * 이제 바이트를 여기로 바로 받는다 — 외부 의존이 없다.
+ *
+ * 자료 파일(기획서·발표자료·영상)은 여기로 오지 않는다. 그건 구글 드라이브에
+ * 두고 `external_links` 로 주소만 붙인다(설계 06 ADR-010).
+ *
+ * 본문은 원시 바이트다(multipart 아님). 한 번에 한 장이고 파일명·타입은 헤더로
+ * 오므로 파서를 하나 더 들일 이유가 없다.
+ */
+router.post(
+  "/admin/attachments/upload",
+  requireAdmin,
+  // express.raw 가 한도를 넘기면 기본 오류 핸들러가 **HTML** 을 돌려준다.
+  // API 소비자는 JSON 을 기대하므로 여기서 잡아 우리 말로 바꾼다.
+  (req, res, next) => {
+    express.raw({ type: "image/*", limit: MAX_IMAGE_BYTES + 1024 })(
+      req,
+      res,
+      (err?: unknown) => {
+        if (!err) return next();
+        const code = (err as { status?: number }).status ?? 400;
+        if (code === 413) {
+          res.status(413).json({
+            error: `파일이 너무 큽니다. ${Math.floor(MAX_IMAGE_BYTES / 1024 / 1024)}MB 이하만 올릴 수 있습니다.`,
+          });
+          return;
+        }
+        res.status(400).json({ error: "업로드를 읽지 못했습니다." });
+      },
+    );
+  },
+  async (req, res) => {
+    const mime = (req.header("content-type") || "").split(";")[0].trim();
+    if (!isAllowedImageType(mime)) {
+      res.status(415).json({
+        error: `이미지 파일만 올릴 수 있습니다 (${ALLOWED_IMAGE_TYPES.join(", ")}).`,
+      });
+      return;
+    }
+    const body = req.body as Buffer;
+    if (!Buffer.isBuffer(body) || body.length === 0) {
+      res.status(400).json({ error: "빈 파일입니다." });
+      return;
+    }
+    if (body.length > MAX_IMAGE_BYTES) {
+      res.status(413).json({
+        error: `파일이 너무 큽니다. ${Math.floor(MAX_IMAGE_BYTES / 1024 / 1024)}MB 이하만 올릴 수 있습니다.`,
+      });
+      return;
+    }
+    try {
+      const stored = await storeImage(Readable.from(body), mime);
+      res.status(201).json(stored);
+    } catch (err) {
+      res.status(422).json({ error: (err as Error).message });
+    }
+  },
+);
 
 /** Register an uploaded object. Stamps the ACL private before recording it. */
 router.post("/admin/attachments", requireAdmin, async (req, res) => {
@@ -99,14 +163,10 @@ router.post("/admin/attachments", requireAdmin, async (req, res) => {
     return;
   }
 
-  // Force private ACL — this is what keeps the object out of the public path.
-  let objectPath: string;
-  try {
-    objectPath = await objectStorage.trySetObjectEntityAclPolicy(d.objectPath, {
-      owner: String(req.sessionUser!.id),
-      visibility: "private",
-    });
-  } catch {
+  // 저장된 파일이 실제로 있는지 확인한다. 경로만 받아 DB 에 적으면 존재하지
+  // 않는 파일을 가리키는 행이 생긴다.
+  const objectPath = d.objectPath;
+  if (!(await openStored(objectPath))) {
     res.status(422).json({ error: "업로드된 파일을 찾을 수 없습니다." });
     return;
   }
@@ -205,37 +265,27 @@ router.get("/attachments/:id/download", requireAdmin, async (req, res) => {
     return;
   }
 
-  try {
-    const file = await objectStorage.getObjectEntityFile(row.objectPath);
-    // downloadObject() RETURNS a web Response — it does not write to `res`.
-    // Dropping it on the floor (as this route used to) leaves the request
-    // hanging until the client gives up, and leaks the read stream it opened.
-    // cacheTtlSec=0: this file is permission-gated, so nothing may cache it.
-    const response = await objectStorage.downloadObject(file, 0);
-    res.status(response.status);
-    response.headers.forEach((value, key) => res.setHeader(key, value));
-    // `inline`, not `attachment` — MarkdownEditor embeds this same URL as an
-    // <img> src, and `attachment` would turn every pasted image into a
-    // download prompt. filename* is RFC 5987 so Korean names survive.
-    res.setHeader(
-      "Content-Disposition",
-      `inline; filename*=UTF-8''${encodeURIComponent(row.fileName)}`,
-    );
-    if (response.body) {
-      Readable.fromWeb(response.body as ReadableStream<Uint8Array>).pipe(res);
-    } else {
-      res.end();
-    }
-  } catch (err) {
-    if (err instanceof ObjectNotFoundError) {
-      res.status(404).json({ error: "File not found" });
-      return;
-    }
-    throw err;
+  const stored = await openStored(row.objectPath);
+  if (!stored) {
+    res.status(404).json({ error: "File not found" });
+    return;
   }
+  // 권한으로 막힌 파일이므로 어디에도 캐시되면 안 된다.
+  res.setHeader("Cache-Control", "private, max-age=0, no-store");
+  res.setHeader("Content-Type", row.mimeType || "application/octet-stream");
+  res.setHeader("Content-Length", String(stored.sizeBytes));
+  // `inline`, not `attachment` — MarkdownEditor 가 같은 주소를 <img> src 로
+  // 쓰므로 attachment 면 붙여넣은 이미지마다 다운로드 창이 뜬다.
+  // filename* 은 RFC 5987 이라 한글 이름이 살아남는다.
+  res.setHeader(
+    "Content-Disposition",
+    `inline; filename*=UTF-8''${encodeURIComponent(row.fileName)}`,
+  );
+  stored.stream.on("error", () => res.destroy());
+  stored.stream.pipe(res);
 });
 
-/** Metadata delete. The stored object is removed too, best-effort. */
+/** 메타데이터 삭제. 저장된 파일도 같이 지운다(실패해도 진행). */
 router.delete("/admin/attachments/:id", requireAdmin, async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) {
@@ -264,7 +314,7 @@ router.delete("/admin/attachments/:id", requireAdmin, async (req, res) => {
     res.status(404).json({ error: "Not found" });
     return;
   }
-  objectStorage.deleteObjectEntity(row.objectPath).catch(() => {});
+  deleteStored(row.objectPath).catch(() => {});
   audit({
     action: "visibility_change",
     req,

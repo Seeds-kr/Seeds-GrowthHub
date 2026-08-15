@@ -201,7 +201,6 @@ router.get("/admin/applications/export", requireRecruiting, async (req, res) => 
         r.problemAwareness,
         r.expectation,
         r.privacyConsent,
-        r.status,
         r.applicationStatus,
         r.finalDecision,
         r.adminNote ?? "",
@@ -330,7 +329,6 @@ router.get("/admin/applications", requireRecruiting, async (req, res) => {
       school: a.school,
       grade: a.grade,
       interestArea: a.interestArea,
-      status: a.status,
       applicationStatus: a.applicationStatus,
       finalDecision: a.finalDecision,
       avgDocReviewScore: ev?.avgScore ?? null,
@@ -498,7 +496,6 @@ router.patch("/admin/applications/:id", requireRecruiting, async (req, res) => {
     return;
   }
   const update: Record<string, unknown> = { updatedAt: new Date() };
-  if (parsed.data.status !== undefined) update.status = parsed.data.status;
   if (parsed.data.applicationStatus !== undefined)
     update.applicationStatus = parsed.data.applicationStatus;
   if (parsed.data.adminNote !== undefined) update.adminNote = parsed.data.adminNote;

@@ -447,27 +447,25 @@ console.log("\n── 운영진 ────────────────
     const target = (await docs.json()).items?.[0];
     if (!target) throw blocked("붙일 대상 문서가 없음");
 
-    const up = await api("/admin/attachments/upload-url", { method: "POST" });
-    if (!up.ok()) throw blocked(`업로드 URL 실패 (${up.status()}) — 오브젝트 스토리지 미설정?`);
-    const { uploadUrl } = await up.json();
-
     // 1x1 PNG. 내용이 그대로 돌아오는지 봐야 하므로 바이트를 기억해 둔다.
     const png = Buffer.from(
       "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
       "base64",
     );
-    const put = await p.request.fetch(uploadUrl, {
-      method: "PUT",
+    // 바이트를 API 로 바로 보낸다. 전에는 서명된 URL 을 받아 저장소로 PUT 했는데
+    // 그 경로가 Replit 사이드카에 묶여 있어 이 스토리는 늘 BLOCK 이었다.
+    const up = await api("/admin/attachments/upload", {
+      method: "POST",
       headers: { "content-type": "image/png" },
       data: png,
-      timeout: 20000,
     });
-    if (!put.ok()) throw new Error(`스토리지 PUT 실패 (${put.status()})`);
+    if (!up.ok()) throw new Error(`업로드 실패 (${up.status()})`);
+    const stored = await up.json();
 
     const reg = await api("/admin/attachments", {
       method: "POST",
       data: {
-        objectPath: new URL(uploadUrl).pathname,
+        objectPath: stored.relPath,
         fileName: "주행-1x1.png",   // 한글 파일명 — Content-Disposition 인코딩까지 같이 본다
         mimeType: "image/png",
         sizeBytes: png.length,

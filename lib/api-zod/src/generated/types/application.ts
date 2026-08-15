@@ -9,7 +9,6 @@
  * OpenAPI spec version: 0.2.0
  */
 import type { ApplicationLifecycleStatus } from "./applicationLifecycleStatus";
-import type { ApplicationStatus } from "./applicationStatus";
 import type { FinalDecision } from "./finalDecision";
 
 export interface Application {
@@ -26,7 +25,6 @@ export interface Application {
   problemAwareness: string;
   expectation: string;
   privacyConsent: boolean;
-  status: ApplicationStatus;
   applicationStatus: ApplicationLifecycleStatus;
   finalDecision: FinalDecision;
   adminNote: string | null;

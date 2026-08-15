@@ -190,7 +190,6 @@ export interface Application {
   problemAwareness: string;
   expectation: string;
   privacyConsent: boolean;
-  status: ApplicationStatus;
   applicationStatus: ApplicationLifecycleStatus;
   finalDecision: FinalDecision;
   adminNote: string | null;
@@ -205,7 +204,6 @@ export interface ApplicationListItem {
   school: string;
   grade: string;
   interestArea: string;
-  status: ApplicationStatus;
   applicationStatus: ApplicationLifecycleStatus;
   finalDecision: FinalDecision;
   avgDocReviewScore: number | null;
@@ -329,7 +327,6 @@ export interface AdminDashboard {
 }
 
 export interface UpdateApplicationBody {
-  status?: ApplicationStatus;
   applicationStatus?: ApplicationLifecycleStatus;
   /** @maxLength 5000 */
   adminNote?: string | null;

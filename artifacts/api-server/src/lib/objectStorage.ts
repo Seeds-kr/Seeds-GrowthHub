@@ -1,3 +1,15 @@
+/**
+ * ⚠️ 이 모듈은 **아바타 생성 경로에만** 남아 있다. 첨부(회의록 본문 이미지)는
+ * 2026-08-15 에 `lib/fileStore.ts`(서버 디스크)로 옮겼다.
+ *
+ * 여기 있는 인증·서명은 전부 Replit 사이드카(`127.0.0.1:1106`)를 전제한다.
+ * 이 서비스는 Replit 을 떠났으므로 **사이드카가 없는 곳에서는 동작하지 않는다.**
+ * `admin-people-avatars.ts` 의 AI 아바타 생성이 아직 이걸 쓰고 있어 남겨 뒀다.
+ *
+ * 아바타를 옮기려면 첨부와 다른 문제를 하나 더 풀어야 한다 — 아바타는 공개
+ * `/people` 페이지에 뜨므로 **인증 없이 서빙되는 경로**가 필요하다. 첨부는
+ * 권한 확인 뒤에만 내주므로 그 문제가 없었다.
+ */
 import { Storage, File } from "@google-cloud/storage";
 import { Readable } from "stream";
 import { randomUUID } from "crypto";

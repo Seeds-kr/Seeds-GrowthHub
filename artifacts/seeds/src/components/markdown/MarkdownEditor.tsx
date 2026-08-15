@@ -119,27 +119,22 @@ export function MarkdownEditor({
       setUploading(true);
       setUploadError(null);
       try {
-        const { uploadUrl } = await api<{ uploadUrl: string }>(
-          "/admin/attachments/upload-url",
-          { method: "POST" },
+        // 바이트를 우리 API 로 바로 보낸다. 전에는 서명된 URL 을 받아 브라우저가
+        // 저장소로 직접 PUT 했는데, 그 발급이 Replit 사이드카에 묶여 있어 밖에서는
+        // 500 이었다 — 붙여넣기가 통째로 죽어 있었다.
+        const stored = await api<{ relPath: string; sizeBytes: number }>(
+          "/admin/attachments/upload",
+          { method: "POST", body: file, headers: { "content-type": file.type } },
         );
-        const put = await fetch(uploadUrl, {
-          method: "PUT",
-          headers: { "content-type": file.type || "application/octet-stream" },
-          body: file,
-        });
-        if (!put.ok) throw new Error(`업로드 실패 (${put.status})`);
-
-        const objectPath = new URL(uploadUrl).pathname;
         const row = await api<{ id: number; fileName: string }>(
           "/admin/attachments",
           {
             method: "POST",
             body: {
-              objectPath,
+              objectPath: stored.relPath,
               fileName: file.name || "image.png",
               mimeType: file.type || null,
-              sizeBytes: file.size,
+              sizeBytes: stored.sizeBytes,
               ...uploadTarget,
             },
           },
