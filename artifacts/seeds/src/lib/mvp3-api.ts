@@ -16,11 +16,23 @@ export async function api<T = unknown>(path: string, init: ApiInit = {}): Promis
   const { body, headers, ...rest } = init;
   const opts: RequestInit = { ...rest, credentials: "include", headers };
   if (body !== undefined) {
-    opts.body = typeof body === "string" ? body : JSON.stringify(body);
-    opts.headers = {
-      "content-type": "application/json",
-      ...(headers as Record<string, string> | undefined),
-    };
+    // 이진 데이터는 그대로 흘린다. 예전엔 문자열이 아니면 무조건 JSON.stringify
+    // 했는데, 그러면 붙여넣은 이미지 File 이 `{}` 로 직렬화돼 빈 파일이 올라간다.
+    // content-type 도 덮지 않는다 — 서버가 그 헤더로 이미지 종류를 판단한다.
+    const isBinary =
+      body instanceof Blob ||
+      body instanceof ArrayBuffer ||
+      ArrayBuffer.isView(body as ArrayBufferView);
+    if (isBinary) {
+      opts.body = body as BodyInit;
+      opts.headers = { ...(headers as Record<string, string> | undefined) };
+    } else {
+      opts.body = typeof body === "string" ? body : JSON.stringify(body);
+      opts.headers = {
+        "content-type": "application/json",
+        ...(headers as Record<string, string> | undefined),
+      };
+    }
   }
   const res = await fetch(`${BASE}${path}`, opts);
   const text = await res.text();

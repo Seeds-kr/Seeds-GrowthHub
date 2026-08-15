@@ -158,15 +158,6 @@ export const ListApplicationsResponse = zod.object({
       school: zod.string(),
       grade: zod.string(),
       interestArea: zod.string(),
-      status: zod.enum([
-        "submitted",
-        "reviewing",
-        "interview",
-        "accepted",
-        "rejected",
-        "waitlisted",
-        "withdrawn",
-      ]),
       applicationStatus: zod.enum([
         "submitted",
         "document_review",
@@ -349,15 +340,6 @@ export const GetApplicationResponse = zod
     problemAwareness: zod.string(),
     expectation: zod.string(),
     privacyConsent: zod.boolean(),
-    status: zod.enum([
-      "submitted",
-      "reviewing",
-      "interview",
-      "accepted",
-      "rejected",
-      "waitlisted",
-      "withdrawn",
-    ]),
     applicationStatus: zod.enum([
       "submitted",
       "document_review",
@@ -477,17 +459,6 @@ export const UpdateApplicationParams = zod.object({
 export const updateApplicationBodyAdminNoteMax = 5000;
 
 export const UpdateApplicationBody = zod.object({
-  status: zod
-    .enum([
-      "submitted",
-      "reviewing",
-      "interview",
-      "accepted",
-      "rejected",
-      "waitlisted",
-      "withdrawn",
-    ])
-    .optional(),
   applicationStatus: zod
     .enum([
       "submitted",
@@ -517,15 +488,6 @@ export const UpdateApplicationResponse = zod.object({
   problemAwareness: zod.string(),
   expectation: zod.string(),
   privacyConsent: zod.boolean(),
-  status: zod.enum([
-    "submitted",
-    "reviewing",
-    "interview",
-    "accepted",
-    "rejected",
-    "waitlisted",
-    "withdrawn",
-  ]),
   applicationStatus: zod.enum([
     "submitted",
     "document_review",
@@ -782,15 +744,6 @@ export const SetFinalDecisionResponse = zod.object({
   problemAwareness: zod.string(),
   expectation: zod.string(),
   privacyConsent: zod.boolean(),
-  status: zod.enum([
-    "submitted",
-    "reviewing",
-    "interview",
-    "accepted",
-    "rejected",
-    "waitlisted",
-    "withdrawn",
-  ]),
   applicationStatus: zod.enum([
     "submitted",
     "document_review",
@@ -854,15 +807,6 @@ export const GetEvaluatorApplicationResponse = zod.object({
     problemAwareness: zod.string(),
     expectation: zod.string(),
     privacyConsent: zod.boolean(),
-    status: zod.enum([
-      "submitted",
-      "reviewing",
-      "interview",
-      "accepted",
-      "rejected",
-      "waitlisted",
-      "withdrawn",
-    ]),
     applicationStatus: zod.enum([
       "submitted",
       "document_review",

@@ -9,7 +9,6 @@
  * OpenAPI spec version: 0.2.0
  */
 import type { ApplicationLifecycleStatus } from "./applicationLifecycleStatus";
-import type { ApplicationStatus } from "./applicationStatus";
 import type { FinalDecision } from "./finalDecision";
 import type { InterviewStatus } from "./interviewStatus";
 
@@ -20,7 +19,6 @@ export interface ApplicationListItem {
   school: string;
   grade: string;
   interestArea: string;
-  status: ApplicationStatus;
   applicationStatus: ApplicationLifecycleStatus;
   finalDecision: FinalDecision;
   avgDocReviewScore: number | null;

@@ -9,10 +9,8 @@
  * OpenAPI spec version: 0.2.0
  */
 import type { ApplicationLifecycleStatus } from "./applicationLifecycleStatus";
-import type { ApplicationStatus } from "./applicationStatus";
 
 export interface UpdateApplicationBody {
-  status?: ApplicationStatus;
   applicationStatus?: ApplicationLifecycleStatus;
   /** @maxLength 5000 */
   adminNote?: string | null;
