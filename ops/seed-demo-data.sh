@@ -8,7 +8,10 @@
 #   - 직접 INSERT 하지 않는다. 제품의 실제 API 만 쓴다. 그래야 화면이 기대하는
 #     불변식(연결 행·기본값·감사 로그)이 같이 선다. 학생 계정을 `POST /admin/users`
 #     로 만들었다가 `students` 행이 없어 모든 화면이 비었던 전례가 있다.
-#   - 여러 번 돌려도 안전하다. 같은 제목이 이미 있으면 건너뛴다.
+#   - 여러 번 돌려도 안전하다. 같은 제목(피드백은 본문)이 이미 있으면 건너뛴다.
+#     2026-08-19 이전에는 이 줄이 **약속만 하고 지키지 않았다.** 여섯 번 돌린
+#     프리뷰에서 회의록·아티팩트·피드백이 전부 6배로 불어 있었고, 목록 화면이
+#     같은 줄로 도배돼 "데이터가 있을 때 어떻게 보이는지" 라는 목적이 흐려졌다.
 #   - 프로덕션에서 돌리지 않는다. 아래 가드를 보라.
 #
 # 채우지 못하는 것 하나
@@ -36,6 +39,125 @@ j() { python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('$1',''))" 
 post() { # post <경로> <본문> → 응답 본문
   curl -s -b "$JAR" -X POST "$API$1" -H 'content-type: application/json' -d "$2"
 }
+
+# 이미 같은 제목이 있으면 만들지 않는다.
+#
+# 머리말은 처음부터 "여러 번 돌려도 안전하다" 고 약속했지만 실제로는 어느 구간도
+# 확인하지 않았다. 여섯 번 돌린 프리뷰에서 회의록·아티팩트·피드백이 **전부 6배**로
+# 불어 있었다(2026-08-19 발견). 목록 화면이 같은 줄로 도배돼 "데이터가 있을 때
+# 어떻게 보이는지" 라는 이 스크립트의 목적 자체가 흐려진다.
+#
+# 제목으로 판정한다. 이 스크립트가 넣는 것은 모두 제목이 고유하게 설계돼 있고,
+# 서버가 돌려주는 id 를 추적하는 것보다 다시 돌렸을 때의 의미가 분명하다.
+#
+# 조회에 실패하면(엔드포인트 없음·권한 없음) **만드는 쪽으로 넘어간다.** 여기서
+# 멈추면 시드가 통째로 비고, 중복은 눈에 보이지만 빈 화면은 원인을 찾기 어렵다.
+has_title() { # has_title <목록경로> <제목>
+  curl -s -b "$JAR" "$API$1" 2>/dev/null | python3 -c "
+import sys, json
+want = sys.argv[1]
+try:
+    d = json.load(sys.stdin)
+except Exception:
+    sys.exit(1)          # 못 읽으면 '없다' 로 보고 만든다
+rows = d if isinstance(d, list) else d.get('items', [])
+sys.exit(0 if any((r or {}).get('title') == want for r in rows) else 1)
+" "$2"
+}
+
+post_once() { # post_once <목록경로> <제목> <생성경로> <본문>
+  if has_title "$1" "$2"; then
+    tally skipped
+    return 0
+  fi
+  post "$3" "$4" >/dev/null
+  tally created
+}
+
+# 피드백에는 제목이 없다. 같은 자리를 하는 것은 본문이다.
+has_content() { # has_content <목록경로> <본문>
+  curl -s -b "$JAR" "$API$1" 2>/dev/null | python3 -c "
+import sys, json
+want = sys.argv[1]
+try:
+    d = json.load(sys.stdin)
+except Exception:
+    sys.exit(1)
+rows = d if isinstance(d, list) else d.get('items', [])
+sys.exit(0 if any((r or {}).get('content') == want for r in rows) else 1)
+" "$2"
+}
+
+post_once_content() { # post_once_content <목록경로> <본문값> <생성경로> <본문>
+  if has_content "$1" "$2"; then
+    tally skipped
+    return 0
+  fi
+  post "$3" "$4" >/dev/null
+  tally created
+}
+
+# 마일스톤에는 목록 엔드포인트가 없다(POST 만 있다). 프로젝트 상세 응답 안에
+# 배열로 실려 오므로 거기서 찾는다. 이걸 모르고 없는 경로를 조회했더니 매번
+# 실패 → 매번 생성이 돼서 32건까지 불어 있었다(2026-08-19).
+has_title_in() { # has_title_in <상세경로> <필드명> <제목>
+  curl -s -b "$JAR" "$API$1" 2>/dev/null | python3 -c "
+import sys, json
+field, want = sys.argv[1], sys.argv[2]
+try:
+    d = json.load(sys.stdin)
+except Exception:
+    sys.exit(1)
+rows = (d or {}).get(field) or []
+sys.exit(0 if any((r or {}).get('title') == want for r in rows) else 1)
+" "$2" "$3"
+}
+
+post_once_nested() { # post_once_nested <상세경로> <필드명> <제목> <생성경로> <본문>
+  if has_title_in "$1" "$2" "$3"; then
+    tally skipped
+    return 0
+  fi
+  post "$4" "$5" >/dev/null
+  tally created
+}
+
+# 스터디·프로그램은 만든 뒤 **id 를 받아 쓴다.** 그래서 "건너뛰기" 로는 부족하고
+# 이미 있으면 그 id 를 도로 찾아와야 한다. 안 그러면 뒤 구간이 빈 id 를 물고
+# 통째로 실패한다.
+find_id() { # find_id <목록경로> <필드명> <값> → id 또는 빈 문자열
+  curl -s -b "$JAR" "$API$1" 2>/dev/null | python3 -c "
+import sys, json
+field, want = sys.argv[1], sys.argv[2]
+try:
+    d = json.load(sys.stdin)
+except Exception:
+    sys.exit(0)
+rows = d if isinstance(d, list) else d.get('items', [])
+for r in rows:
+    if (r or {}).get(field) == want:
+        print(r.get('id', '')); break
+" "$2" "$3"
+}
+
+id_once() { # id_once <목록경로> <필드명> <값> <생성경로> <본문> → id
+  local found
+  found="$(find_id "$1" "$2" "$3")"
+  if [ -n "$found" ]; then
+    tally skipped; printf '%s' "$found"; return 0
+  fi
+  tally created
+  post "$4" "$5" | j id
+}
+
+# 카운터는 **파일**에 센다. `id_once` 는 `$( )` 안에서 돌아 서브셸이므로 변수
+# 증가가 부모로 올라오지 않는다 — 그렇게 뒀더니 실제 삽입이 0인데 "2건 만들었다"
+# 고 보고했다. 틀린 계기판은 없느니만 못하다.
+TALLY="$(mktemp -d)"
+trap 'rm -f "$JAR"; rm -rf "$TALLY"' EXIT
+: >"$TALLY/created"; : >"$TALLY/skipped"
+tally() { echo x >>"$TALLY/$1"; }
+count_of() { wc -l <"$TALLY/$1" | tr -d " "; }
 say() { printf '  %-22s %s\n' "$1" "$2"; }
 
 echo "로그인"
@@ -51,7 +173,7 @@ echo "학생 [$STUDENTS] · 코호트 $COHORT"
 
 echo
 echo "프로그램"
-PROG="$(post /admin/programs "{\"cohortId\":$COHORT,\"name\":\"2026 정규 프로그램\",\"description\":\"2월 팀빌딩부터 11월 공유회까지, 열 달 과정.\",\"status\":\"active\"}" | j id)"
+PROG="$(id_once /admin/programs name "2026 정규 프로그램" /admin/programs "{\"cohortId\":$COHORT,\"name\":\"2026 정규 프로그램\",\"description\":\"2월 팀빌딩부터 11월 공유회까지, 열 달 과정.\",\"status\":\"active\"}")"
 say "programs" "id=$PROG"
 
 echo
@@ -64,9 +186,9 @@ say "student_programs" "$(echo "$STUDENTS" | wc -w)명"
 
 echo
 echo "스터디 · 스터디원"
-ST="$(post /admin/studies "{\"cohortId\":$COHORT,\"programId\":$PROG,\"title\":\"타입스크립트 기초\",\"topic\":\"언어\",\"description\":\"타입 시스템을 처음부터. 매주 한 챕터씩 읽고 각자 예제를 만들어 옵니다.\",\"leaderStudentId\":$S1,\"status\":\"active\",\"weeklyPlanMd\":\"1주 타입 기본\\n2주 제네릭\\n3주 유틸리티 타입\\n4주 선언 파일\"}" | j id)"
+ST="$(id_once /admin/studies title "타입스크립트 기초" /admin/studies "{\"cohortId\":$COHORT,\"programId\":$PROG,\"title\":\"타입스크립트 기초\",\"topic\":\"언어\",\"description\":\"타입 시스템을 처음부터. 매주 한 챕터씩 읽고 각자 예제를 만들어 옵니다.\",\"leaderStudentId\":$S1,\"status\":\"active\",\"weeklyPlanMd\":\"1주 타입 기본\\n2주 제네릭\\n3주 유틸리티 타입\\n4주 선언 파일\"}" | j id)"
 say "studies" "id=$ST 타입스크립트 기초"
-ST2="$(post /admin/studies "{\"cohortId\":$COHORT,\"title\":\"코드 리뷰 읽기 모임\",\"topic\":\"협업\",\"description\":\"공개된 오픈소스 PR 을 하나씩 같이 읽습니다.\",\"status\":\"planned\"}" | j id)"
+ST2="$(id_once /admin/studies title "코드 리뷰 읽기 모임" /admin/studies "{\"cohortId\":$COHORT,\"title\":\"코드 리뷰 읽기 모임\",\"topic\":\"협업\",\"description\":\"공개된 오픈소스 PR 을 하나씩 같이 읽습니다.\",\"status\":\"planned\"}")"
 say "studies" "id=$ST2 코드 리뷰 읽기 모임"
 for s in $STUDENTS; do
   post "/admin/studies/$ST/members" "{\"studentId\":$s,\"role\":\"member\"}" >/dev/null
@@ -76,23 +198,23 @@ say "study_members" "$(echo "$STUDENTS" | wc -w)명"
 echo
 echo "회의록"
 # 가시성은 admin_only / mentor_visible 둘뿐이다(학생에게는 안 보인다).
-post /admin/meetings "{\"title\":\"8월 운영 회의\",\"meetingType\":\"ops\",\"meetingDate\":\"2026-08-04T19:00:00.000Z\",\"participants\":[\"운영진 전원\"],\"bodyMd\":\"모집 일정과 9월 세미나 주제를 정했습니다.\",\"decisionsMd\":\"- 정기모집 12월 유지\\n- 9월 세미나: 배포 자동화\",\"visibility\":\"admin_only\"}" >/dev/null
-post /admin/meetings "{\"title\":\"멘토 정기 싱크\",\"meetingType\":\"general\",\"meetingDate\":\"2026-07-28T12:00:00.000Z\",\"participants\":[\"멘토진\",\"운영진\"],\"bodyMd\":\"팀별 진행 상황을 공유했습니다.\",\"visibility\":\"mentor_visible\"}" >/dev/null
+post_once /admin/meetings "8월 운영 회의" /admin/meetings "{\"title\":\"8월 운영 회의\",\"meetingType\":\"ops\",\"meetingDate\":\"2026-08-04T19:00:00.000Z\",\"participants\":[\"운영진 전원\"],\"bodyMd\":\"모집 일정과 9월 세미나 주제를 정했습니다.\",\"decisionsMd\":\"- 정기모집 12월 유지\\n- 9월 세미나: 배포 자동화\",\"visibility\":\"admin_only\"}"
+post_once /admin/meetings "멘토 정기 싱크" /admin/meetings "{\"title\":\"멘토 정기 싱크\",\"meetingType\":\"general\",\"meetingDate\":\"2026-07-28T12:00:00.000Z\",\"participants\":[\"멘토진\",\"운영진\"],\"bodyMd\":\"팀별 진행 상황을 공유했습니다.\",\"visibility\":\"mentor_visible\"}"
 say "meetings" "2건"
 
 echo
 echo "마일스톤"
 for p in 1 2; do
-  post "/admin/projects/$p/milestones" "{\"title\":\"MVP 배포\",\"description\":\"첫 사용자가 실제로 써볼 수 있는 상태.\",\"dueAt\":\"2026-09-30T15:00:00.000Z\",\"status\":\"in_progress\",\"sortOrder\":0}" >/dev/null
-  post "/admin/projects/$p/milestones" "{\"title\":\"사용자 테스트\",\"description\":\"바깥 사람 5명에게 붙여보고 고칩니다.\",\"dueAt\":\"2026-10-31T15:00:00.000Z\",\"status\":\"planned\",\"sortOrder\":1}" >/dev/null
+  post_once_nested "/admin/projects/$p" milestones "MVP 배포" "/admin/projects/$p/milestones" "{\"title\":\"MVP 배포\",\"description\":\"첫 사용자가 실제로 써볼 수 있는 상태.\",\"dueAt\":\"2026-09-30T15:00:00.000Z\",\"status\":\"in_progress\",\"sortOrder\":0}"
+  post_once_nested "/admin/projects/$p" milestones "사용자 테스트" "/admin/projects/$p/milestones" "{\"title\":\"사용자 테스트\",\"description\":\"바깥 사람 5명에게 붙여보고 고칩니다.\",\"dueAt\":\"2026-10-31T15:00:00.000Z\",\"status\":\"planned\",\"sortOrder\":1}"
 done
 say "project_milestones" "4건"
 
 echo
 echo "아티팩트"
-post /admin/artifacts "{\"projectId\":1,\"title\":\"Team Alpha 기획서\",\"description\":\"문제 정의와 초기 화면 흐름.\",\"artifactType\":\"document\",\"url\":\"https://example.com/alpha-plan\",\"visibility\":\"cohort_visible\"}" >/dev/null
-post /admin/artifacts "{\"projectId\":2,\"title\":\"Team Beta 데모 영상\",\"description\":\"3분 시연.\",\"artifactType\":\"video\",\"url\":\"https://example.com/beta-demo\",\"visibility\":\"cohort_visible\"}" >/dev/null
-post /admin/artifacts "{\"studentId\":$S1,\"studyId\":$ST,\"title\":\"타입 정리 노트\",\"artifactType\":\"link\",\"url\":\"https://example.com/ts-notes\",\"visibility\":\"student_visible\"}" >/dev/null
+post_once /admin/artifacts "Team Alpha 기획서" /admin/artifacts "{\"projectId\":1,\"title\":\"Team Alpha 기획서\",\"description\":\"문제 정의와 초기 화면 흐름.\",\"artifactType\":\"document\",\"url\":\"https://example.com/alpha-plan\",\"visibility\":\"cohort_visible\"}"
+post_once /admin/artifacts "Team Beta 데모 영상" /admin/artifacts "{\"projectId\":2,\"title\":\"Team Beta 데모 영상\",\"description\":\"3분 시연.\",\"artifactType\":\"video\",\"url\":\"https://example.com/beta-demo\",\"visibility\":\"cohort_visible\"}"
+post_once /admin/artifacts "타입 정리 노트" /admin/artifacts "{\"studentId\":$S1,\"studyId\":$ST,\"title\":\"타입 정리 노트\",\"artifactType\":\"link\",\"url\":\"https://example.com/ts-notes\",\"visibility\":\"student_visible\"}"
 say "artifacts" "3건"
 
 echo
@@ -100,10 +222,10 @@ echo "피드백"
 # 한 학생에게만 주면 다른 계정으로 로그인했을 때 화면이 빈다(처음에 그렇게 만들어
 # /student/feedback 이 계속 비어 있었다). 학생 전원에게 하나씩 준다.
 for s in $STUDENTS; do
-  post /admin/feedback "{\"targetType\":\"student\",\"targetId\":$s,\"studentId\":$s,\"feedbackType\":\"strength\",\"content\":\"문제 정의가 또렷합니다. 사용자를 좁게 잡은 게 특히 좋았어요.\",\"visibility\":\"student_visible\"}" >/dev/null
+  post_once_content /admin/feedback "문제 정의가 또렷합니다. 사용자를 좁게 잡은 게 특히 좋았어요." /admin/feedback "{\"targetType\":\"student\",\"targetId\":$s,\"studentId\":$s,\"feedbackType\":\"strength\",\"content\":\"문제 정의가 또렷합니다. 사용자를 좁게 잡은 게 특히 좋았어요.\",\"visibility\":\"student_visible\"}"
 done
-post /admin/feedback "{\"targetType\":\"project\",\"targetId\":2,\"studentId\":$S2,\"feedbackType\":\"improvement\",\"content\":\"배포를 뒤로 미루지 마세요. 지금 상태로 한 번 올려두면 남은 일정이 훨씬 편합니다.\",\"visibility\":\"student_visible\"}" >/dev/null
-post /admin/feedback "{\"targetType\":\"student\",\"targetId\":$S1,\"studentId\":$S1,\"feedbackType\":\"review\",\"content\":\"운영진 내부 메모입니다.\",\"visibility\":\"admin_only\"}" >/dev/null
+post_once_content /admin/feedback "배포를 뒤로 미루지 마세요. 지금 상태로 한 번 올려두면 남은 일정이 훨씬 편합니다." /admin/feedback "{\"targetType\":\"project\",\"targetId\":2,\"studentId\":$S2,\"feedbackType\":\"improvement\",\"content\":\"배포를 뒤로 미루지 마세요. 지금 상태로 한 번 올려두면 남은 일정이 훨씬 편합니다.\",\"visibility\":\"student_visible\"}"
+post_once_content /admin/feedback "운영진 내부 메모입니다." /admin/feedback "{\"targetType\":\"student\",\"targetId\":$S1,\"studentId\":$S1,\"feedbackType\":\"review\",\"content\":\"운영진 내부 메모입니다.\",\"visibility\":\"admin_only\"}"
 say "feedback" "학생당 1건 + 프로젝트 1 + 내부 1"
 
 # /mentor/feedback 은 "내가 남긴 것"만 보여준다. 운영진이 쓴 건 안 뜬다 —
@@ -122,9 +244,9 @@ fi
 
 echo
 echo "활동 기록"
-post /admin/activity-records "{\"studentId\":$S1,\"cohortId\":$COHORT,\"programId\":$PROG,\"sourceType\":\"project\",\"sourceId\":1,\"title\":\"Team Alpha 중간 발표\",\"description\":\"기획과 초기 구현을 공유했습니다.\",\"activityDate\":\"2026-07-15\",\"visibility\":\"student_visible\"}" >/dev/null
-post /admin/activity-records "{\"studentId\":$S2,\"cohortId\":$COHORT,\"programId\":$PROG,\"sourceType\":\"session\",\"title\":\"1주차 모임 참석\",\"activityDate\":\"2026-07-10\",\"visibility\":\"student_visible\"}" >/dev/null
-post /admin/activity-records "{\"studentId\":$S2,\"cohortId\":$COHORT,\"sourceType\":\"feedback\",\"title\":\"멘토 피드백 반영\",\"description\":\"배포 파이프라인을 먼저 세웠습니다.\",\"activityDate\":\"2026-08-01\",\"visibility\":\"student_visible\"}" >/dev/null
+post_once /admin/activity-records "Team Alpha 중간 발표" /admin/activity-records "{\"studentId\":$S1,\"cohortId\":$COHORT,\"programId\":$PROG,\"sourceType\":\"project\",\"sourceId\":1,\"title\":\"Team Alpha 중간 발표\",\"description\":\"기획과 초기 구현을 공유했습니다.\",\"activityDate\":\"2026-07-15\",\"visibility\":\"student_visible\"}"
+post_once /admin/activity-records "1주차 모임 참석" /admin/activity-records "{\"studentId\":$S2,\"cohortId\":$COHORT,\"programId\":$PROG,\"sourceType\":\"session\",\"title\":\"1주차 모임 참석\",\"activityDate\":\"2026-07-10\",\"visibility\":\"student_visible\"}"
+post_once /admin/activity-records "멘토 피드백 반영" /admin/activity-records "{\"studentId\":$S2,\"cohortId\":$COHORT,\"sourceType\":\"feedback\",\"title\":\"멘토 피드백 반영\",\"description\":\"배포 파이프라인을 먼저 세웠습니다.\",\"activityDate\":\"2026-08-01\",\"visibility\":\"student_visible\"}"
 say "activity_records" "3건"
 
 echo
@@ -165,8 +287,13 @@ import sys,json;d=json.load(sys.stdin);r=d if isinstance(d,list) else d.get('ite
     # 명단 밖 id 를 넣으면 서버가 422 로 거부하므로 지어내면 안 된다.
     ROSTER="$(curl -s -b "$SJAR" "$API/student/team-meetings/meta?ownerType=project&ownerId=$MYPROJ" | python3 -c "
 import sys,json;d=json.load(sys.stdin);print(','.join(str(r['id']) for r in d.get('roster',[])))")"
-    post_s /student/team-meetings "{\"ownerType\":\"project\",\"ownerId\":$MYPROJ,\"title\":\"8월 2주차 팀 회의\",\"contentMd\":\"## 정한 것\\n- 배포 파이프라인을 먼저 세운다\\n- 다음 주까지 롤백을 한 번 연습한다\\n\\n## 막힌 것\\n- 오브젝트 스토리지 설정 권한이 없다\",\"tags\":[\"배포\",\"주간\"],\"participantUserIds\":[$ROSTER]}"
-    post_s /student/team-meetings "{\"ownerType\":\"project\",\"ownerId\":$MYPROJ,\"title\":\"8월 1주차 팀 회의\",\"contentMd\":\"## 정한 것\\n- 화면 흐름을 셋으로 줄인다\\n- 각자 맡을 화면을 나눴다\",\"tags\":[\"기획\"]}"
+    # 학생 세션($SJAR)으로 자기 팀 회의록을 먼저 본다. 어드민 목록과 경로가 다르다.
+    HAVE="$(curl -s -b "$SJAR" "$API/student/team-meetings" 2>/dev/null || true)"
+    case "$HAVE" in
+      *"8월 2주차 팀 회의"*) tally skipped; tally skipped; MYPROJ="" ;;
+    esac
+    [ -n "$MYPROJ" ] && post_s /student/team-meetings "{\"ownerType\":\"project\",\"ownerId\":$MYPROJ,\"title\":\"8월 2주차 팀 회의\",\"contentMd\":\"## 정한 것\\n- 배포 파이프라인을 먼저 세운다\\n- 다음 주까지 롤백을 한 번 연습한다\\n\\n## 막힌 것\\n- 오브젝트 스토리지 설정 권한이 없다\",\"tags\":[\"배포\",\"주간\"],\"participantUserIds\":[$ROSTER]}"
+    [ -n "$MYPROJ" ] && post_s /student/team-meetings "{\"ownerType\":\"project\",\"ownerId\":$MYPROJ,\"title\":\"8월 1주차 팀 회의\",\"contentMd\":\"## 정한 것\\n- 화면 흐름을 셋으로 줄인다\\n- 각자 맡을 화면을 나눴다\",\"tags\":[\"기획\"]}"
     say "team_meetings" "프로젝트 $MYPROJ · 2건"
   else
     say "team_meetings" "건너뜀 — 이 학생의 프로젝트가 없다"
@@ -191,5 +318,10 @@ if [ -n "$FIRST_TAG" ]; then
   say "tag_mappings" "2건"
 fi
 
+echo
+echo
+# 두 번째 실행부터는 만든 것이 0이어야 한다. 아니면 어딘가 판정이 새고 있다.
+printf '  %-22s %s\n' "새로 만든 것" "$(count_of created)건"
+printf '  %-22s %s\n' "이미 있어 건너뜀" "$(count_of skipped)건"
 echo
 echo "끝. 남은 빈 테이블은 엔드포인트가 없어서다 — 위 주석 참고."

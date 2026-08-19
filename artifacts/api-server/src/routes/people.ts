@@ -109,8 +109,9 @@ router.get("/people/:kind/:id", optionalAuth, async (req, res) => {
   res.json(publicView(row, includeContact));
 });
 
-// Allow http(s) URLs or internal storage paths (/api/storage/objects/... or
-// /objects/...). Blocks javascript:/data: vectors.
+// 바깥 http(s) 주소 또는 우리가 보관하는 사진 경로(/api/uploads/public/...).
+// 허용 목록이라 `javascript:` · `data:` 는 자동으로 막힌다 — 이 값이 그대로
+// `<img src>` 에 들어가므로 거부 목록으로 두면 변형에 계속 뚫린다.
 const PhotoUrl = z
   .string()
   .trim()

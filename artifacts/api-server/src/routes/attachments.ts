@@ -31,10 +31,10 @@ const router: IRouter = Router();
 /**
  * Attachments (docs/design/04 §5).
  *
- * Objects are stored with ACL `visibility=private`, so they are NOT reachable
- * through the unauthenticated `GET /api/storage/objects/*` route that serves
- * avatars. Downloads must come through `/api/attachments/:id/download`, which
- * re-checks the row and the caller.
+ * 파일은 업로드 루트의 **비공개 영역**에 있다. 무인증으로 열리는 곳은
+ * `uploads/public/` 뿐이고 거기엔 프로필 사진만 들어간다(ADR-017). 그래서
+ * 본문 이미지는 주소를 알아도 그냥 열리지 않는다 — 반드시
+ * `/api/attachments/:id/download` 를 거치고, 그 라우트가 행과 호출자를 다시 본다.
  *
  * Receipts (linked to a finance_record) additionally require the `finance` ops
  * role — `admin_only` alone would expose them to every admin.

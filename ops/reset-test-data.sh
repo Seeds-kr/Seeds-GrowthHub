@@ -14,7 +14,7 @@
 #   - 테스트 픽스처 계정과 거기 딸린 것
 #     `smoke-*` `legacy-*` `mentor-z@` `student-z@` `mentor-kwangsun*` `mentor-test*` `*test*`
 #     (`mentor-z` 는 지우는데 `student-z` 는 남기는 식으로 갈리지 않게 명시했다)
-#   - 주행이 만든 지원서(`story…@example.com`), 공지·과제·회고·상태체크·평가
+#   - 주행이 만든 지원서(`story…@example.com`), 공지·과제·회고·상태체크·평가·팀 회의록
 #
 # 되돌릴 수 없다. 먼저 백업하고, 무엇이 지워지는지 보여준 뒤 확인을 받는다.
 set -euo pipefail
@@ -43,6 +43,7 @@ SELECT '테스트 계정', count(*)::text FROM users
      AND email NOT IN (VALUES ${KEEP_SQL});
 SELECT '주행 지원서', count(*)::text FROM applications WHERE email LIKE 'story%@example.com';
 SELECT '주행 공지', count(*)::text FROM announcements WHERE title LIKE '주행%';
+SELECT '주행 팀 회의록', count(*)::text FROM team_meetings WHERE title LIKE '주행%';
 SELECT '주행 과제', count(*)::text FROM assignments WHERE title LIKE '주행%' OR title LIKE '초안 예시%';
 SELECT '주행 회고', count(*)::text FROM reflections WHERE content_md LIKE '주행%';
 SELECT '주행 상태체크', count(*)::text FROM project_status_checks WHERE comment LIKE '주행%';
@@ -75,6 +76,11 @@ DELETE FROM assignment_submissions WHERE assignment_id IN
   (SELECT id FROM assignments WHERE title LIKE '주행%' OR title LIKE '초안 예시%');
 DELETE FROM assignments            WHERE title LIKE '주행%' OR title LIKE '초안 예시%';
 DELETE FROM announcements          WHERE title LIKE '주행%';
+-- 주행이 만드는 팀 회의록. 규칙에서 빠져 있어 돌릴 때마다 쌓이고 있었다
+-- (2026-08-19 발견). 참석자 행이 물려 있으므로 먼저 끊는다.
+DELETE FROM team_meeting_participants WHERE team_meeting_id IN
+  (SELECT id FROM team_meetings WHERE title LIKE '주행%');
+DELETE FROM team_meetings          WHERE title LIKE '주행%';
 
 -- 지원서는 평가 배정이 물려 있을 수 있다.
 DELETE FROM evaluation_assignments WHERE application_id IN
