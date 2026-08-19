@@ -3,10 +3,14 @@
 #
 # 논리 덤프(pg_dump)를 쓴다. 파일 단위 복사보다 느리지만 버전이 달라도 복원되고,
 # 무엇이 들어 있는지 사람이 읽을 수 있다.
+#
+# **업로드 파일도 함께 뜬다.** 프로필 사진과 회의록 본문 이미지는 디스크에 있고
+# DB 에는 경로만 있다. 덤프만 복원하면 주소는 살아나는데 그림이 전부 깨진다.
 set -euo pipefail
 
 DIR=/home/harvester/seeds-preview/backups
 CONTAINER=seeds_growthhub_pg
+UPLOADS=${UPLOAD_DIR:-/home/harvester/seeds-preview/uploads}
 KEEP_DAYS=30
 
 mkdir -p "$DIR"; chmod 700 "$DIR"
@@ -28,6 +32,19 @@ fi
 mv "$OUT.part" "$OUT"
 chmod 600 "$OUT"
 echo "백업 완료: $OUT ($SIZE B)"
+
+# 업로드 파일. 비어 있으면 tar 를 만들지 않는다 — 0 바이트 아카이브가 쌓이면
+# "백업이 있다"는 착각을 준다.
+FILES="$DIR/uploads-$TS.tar.gz"
+if [ -d "$UPLOADS" ] && [ -n "$(find "$UPLOADS" -type f -print -quit)" ]; then
+  tar -czf "$FILES.part" -C "$UPLOADS" .
+  gzip -t "$FILES.part"
+  mv "$FILES.part" "$FILES"
+  chmod 600 "$FILES"
+  echo "업로드 백업: $FILES ($(stat -c%s "$FILES") B, $(find "$UPLOADS" -type f | wc -l)개)"
+else
+  echo "업로드 파일이 없어 파일 백업은 건너뛴다."
+fi
 
 # 외부로 보낼 사본은 암호화해 둔다. 지금은 같은 디스크에 남지만, 이 디스크가
 # 통째로 죽으면 백업도 같이 죽는다 — 밖으로 내보내는 것이 다음 단계이고,
@@ -57,4 +74,5 @@ COUNT=$(ls -1 "$DIR"/growthhub-*.sql.gz 2>/dev/null | wc -l)
 if [ "$COUNT" -gt 3 ]; then
   find "$DIR" -name 'growthhub-*.sql.gz' -mtime "+$KEEP_DAYS" -print -delete
   find "$DIR" -name 'growthhub-*.sql.gz.gpg' -mtime "+$KEEP_DAYS" -print -delete
+  find "$DIR" -name 'uploads-*.tar.gz' -mtime "+$KEEP_DAYS" -print -delete
 fi

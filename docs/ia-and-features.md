@@ -84,7 +84,7 @@
 | `/admin/assignments` | 과제 목록 |
 | `/admin/assignments/:id` | 과제 상세 — 제출 검토 |
 | `/admin/announcements` | 공지사항 |
-| `/admin/people` | 사람들 (멘토/운영진/회원 프로필 CRUD + AI 아바타 생성) |
+| `/admin/people` | 사람들 (멘토/운영진/회원 프로필 CRUD + 프로필 사진 업로드) |
 | `/admin/site-content` | 공개 사이트 콘텐츠 편집 |
 | `/admin/activity-records` | 활동 기록 (MVP4) |
 | `/admin/projects` · `/admin/projects/:id` | 프로젝트 관리 (멤버/산출물/피드백/태그) |
@@ -126,7 +126,7 @@
 - `kind ∈ mentor|staff|member` 프로필 CRUD.
 - 항목: 이름, 직함, 소속, 소개, 사진URL, **전화번호 (로그인 회원에게만 노출)**, 태그, 표시순서, 공개여부.
 - `user_id`/`student_id` 유일 — 중복 시 409.
-- **AI 아바타 생성**: Gemini로 미니멀 일러스트 자동 생성 → 오브젝트 스토리지 저장 (mint+white, 얼굴 디테일 없음).
+- **프로필 사진 업로드**: 본인(학생·멘토) 또는 어드민이 파일을 올린다. 서버 디스크의 공개 영역에 저장하고 `/api/uploads/public/...` 로 무인증 서빙한다 — 공개 `/people` 목록에 그대로 뜬다. 주소 직접 입력도 함께 지원한다(ADR-017).
 
 #### 사이트 콘텐츠 운영
 - 공개 페이지 5개 키의 JSON 편집. 빈 키도 항상 응답에 포함.

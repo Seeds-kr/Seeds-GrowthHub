@@ -116,12 +116,12 @@ const PhotoUrl = z
   .trim()
   .max(2000)
   .refine(
-    (s) =>
-      s === "" ||
-      /^https?:\/\//i.test(s) ||
-      s.startsWith("/api/storage/") ||
-      s.startsWith("/objects/"),
-    { message: "photoUrl must be http(s) or an internal storage path" },
+    // 우리가 보관하는 사진은 `/api/uploads/public/...`(profile-photo.ts)이고,
+    // 그 밖에는 바깥 주소를 직접 넣는 경우다. 예전의 `/api/storage/`·`/objects/`
+    // 는 Replit 사이드카 경로였고 그 라우트가 사라졌으므로 더는 받지 않는다 —
+    // 받아 두면 저장은 되고 화면에서는 깨지는 주소가 된다.
+    (s) => s === "" || /^https?:\/\//i.test(s) || s.startsWith("/api/uploads/"),
+    { message: "photoUrl must be http(s) or an uploaded photo path" },
   )
   .nullable()
   .optional();

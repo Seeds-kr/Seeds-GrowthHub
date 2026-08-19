@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { PhotoField } from "@/components/PhotoField";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, UserRoundX } from "lucide-react";
@@ -178,16 +179,13 @@ export default function MentorProfile() {
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
               />
             </div>
-            <div>
-              <Label className="text-xs">사진 URL</Label>
-              <Input
-                className=""
-                placeholder="https://..."
-                value={form.photoUrl}
-                onChange={(e) => setForm({ ...form, photoUrl: e.target.value })}
-              />
-            </div>
-            <div>
+            <PhotoField
+              value={form.photoUrl}
+              name={form.name}
+              uploadPath="/mentor/profile/photo"
+              onChange={(photoUrl) => setForm({ ...form, photoUrl })}
+            />
+<div>
               <Label className="text-xs">소개</Label>
               <Textarea
                 className="min-h-[120px]"

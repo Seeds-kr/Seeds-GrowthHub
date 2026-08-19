@@ -159,7 +159,7 @@ visibility-policy ─────┬─→ 02 Mentor Workspace ──→ 03 상�
 | `getEffectiveRoles` | API 표면 변경 금지. `ops_roles`는 별도 함수로 |
 | 기존 visibility enum | `artifacts` 4 / `feedback` 2 / `activity_records` 3 값 추가·변경 금지.<br/>`attachments`는 W7에서 `team_visible`을 **의도적으로 제거**했다(읽는 쪽이 없었다) — 되살릴 때는 읽기 경로와 같은 변경에서 |
 | `decision_logs` | append-only 유지. `audit_logs`가 흡수하지 않음 |
-| 아바타 서빙 | `visibility=public` 비인증 경로 유지 (attachments와 분리) |
+| 프로필 사진 | 서버 디스크 `uploads/public/` · `/api/uploads/` 비인증 서빙 (attachments와 분리) |
 | 명명 | `ops_tasks`(운영) vs `assignments`(학생 과제), `mvp4ArtifactsTable` 컨벤션 유지 |
 | ~~이중 상태~~ 해소(2026-08-15) | legacy `applications.status` 제거. 단계 `application_status` · 결과 `final_decision` 두 축만 남는다 |
 

@@ -194,7 +194,7 @@ Replit 사이드카(`127.0.0.1:1106`)에 묶여 있어 **Replit 밖에서는 동
 ```text
 자료 파일(기획서·발표자료·영상)  구글 드라이브 → external_links 로 주소만
 본문 이미지(회의록 스크린샷)      서버 디스크(lib/fileStore.ts) → 인증 게이트 라우트
-아바타                            아직 오브젝트 스토리지(= 동작 안 함, 이슈 #33)
+프로필 사진                       서버 디스크 공개 영역 · 무인증 서빙(ADR-017)
 ```
 
 본문 이미지만 안으로 들이는 이유: 마크다운 `![](주소)` 가 그림으로 뜨려면 그 주소가
@@ -254,7 +254,7 @@ export const communicationLogsTable = pgTable("communication_logs", {
 - [ ] 삭제된 대상을 참조하는 링크 조회 시 500이 아니라 대상 없음 표시로 처리된다.
 - [ ] `attachments` 파일이 비인증 `GET /api/storage/objects/*`로 열리지 않는다 (404).
 - [ ] 회계 증빙 attachment가 `finance` 기능 역할 없이 다운로드되지 않는다.
-- [ ] 아바타 서빙(`visibility=public`)이 회귀 없이 동작한다.
+- [x] 프로필 사진이 무인증으로 서빙되고 공개 `/people` 목록에 뜬다.
 - [ ] `communication_logs`에 본문 컬럼이 없다.
 - [ ] `finance_records`의 기존 `linked_object_type` 값이 마이그레이션 없이 계속 유효하다.
 

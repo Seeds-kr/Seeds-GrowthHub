@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { PhotoField } from "@/components/PhotoField";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
 
@@ -130,18 +131,13 @@ export default function StudentProfilePage() {
                 />
               </div>
             </div>
-            <div>
-              <Label className="text-xs">사진 URL</Label>
-              <Input
-                className=""
-                placeholder="https://..."
-                value={form.photoUrl}
-                onChange={(e) =>
-                  setForm({ ...form, photoUrl: e.target.value })
-                }
-              />
-            </div>
-            <div>
+            <PhotoField
+              value={form.photoUrl}
+              name={form.name}
+              uploadPath="/student/profile/photo"
+              onChange={(photoUrl) => setForm({ ...form, photoUrl })}
+            />
+<div>
               <Label className="text-xs">한 줄 소개 / 자기소개</Label>
               <Textarea
                 className="min-h-[140px]"

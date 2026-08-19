@@ -58,7 +58,7 @@
 | **MVP4** 성장증거 | activity_records, projects(+members·mentors·milestones·status_checks), artifacts, feedback, studies(+members), reflections, skill_tags+tag_mappings | Growth v3 정렬됨 |
 | **사이트 콘텐츠** | site_contents (key whitelist 5), 부트스트랩, 레거시 마이그레이션 | Content 영역 정렬됨 |
 | **API 계약** | OpenAPI 3.1 → orval(React Query) + Zod codegen | 아키텍처 자산으로 유지 |
-| **Object Storage** | ACL 기반 (`visibility=public` 게이팅), 아바타 AI 생성(Gemini) | Core v2 파일 저장 전략과 정렬 |
+| **파일 저장** | 서버 디스크. 자료는 구글 드라이브 링크(ADR-010), 본문 이미지·프로필 사진만 보관 | 오브젝트 스토리지·AI 아바타는 제거됨(ADR-017) |
 
 ### 1.2 구조적 누락 (Baseline 대비)
 
