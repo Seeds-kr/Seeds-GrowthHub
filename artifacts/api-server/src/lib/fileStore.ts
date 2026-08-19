@@ -18,8 +18,9 @@ import { pipeline } from "stream/promises";
  * HTML 을 돌려주므로 본문에 박히지 않는다. 두 용도는 다른 것이다.
  *
  * DB(bytea)가 아니라 디스크인 이유: 백업이 `pg_dump | gzip` 한 덩어리다. 지금
- * 29KB 인 그 파일에 스크린샷이 들어가면 매일 수십 MB 씩 쌓이고 복구도 느려진다.
- * 디렉터리는 백업 스크립트에 한 줄 더하면 된다.
+ * 34KB 인 그 파일에 스크린샷이 들어가면 매일 수십 MB 씩 쌓이고 복구도 느려진다.
+ * 대신 `ops/backup.sh` 가 이 디렉터리를 `uploads-*.tar.gz` 로 따로 뜬다 — DB 에는
+ * 경로만 있으므로 덤프만 복원하면 주소는 살아나고 그림은 전부 깨진다.
  *
  * 경로는 **우리가 만든다.** 업로드한 파일 이름을 경로에 쓰지 않는다 —
  * `../../etc/passwd` 같은 이름이 그대로 경로가 되면 디렉터리를 벗어난다.
@@ -55,12 +56,33 @@ const EXT: Record<string, string> = {
   "image/webp": ".webp",
 };
 
-/** 저장 경로는 `YYYY/MM/uuid.ext`. 한 폴더에 수천 개가 쌓이지 않게 월별로 나눈다. */
-function newRelPath(mime: string): string {
+/**
+ * 저장 경로는 `[public/]YYYY/MM/uuid.ext`. 한 폴더에 수천 개가 쌓이지 않게
+ * 월별로 나눈다.
+ *
+ * `public/` 아래는 **인증 없이 서빙된다.** 프로필 사진이 그렇다 — 공개 `/people`
+ * 디렉터리에 뜨므로 비로그인 방문자도 봐야 한다. 회의록 본문 이미지는 그 반대라
+ * 권한을 확인한 뒤에만 내준다.
+ *
+ * 공개라도 파일명은 UUID 라 주소를 모르면 못 찾는다. 다만 **한 번 알려진 주소는
+ * 계속 열린다** — 공개 프로필 사진에는 그게 맞는 성질이다.
+ */
+export const PUBLIC_PREFIX = "public";
+
+function newRelPath(mime: string, isPublic = false): string {
   const now = new Date();
   const yyyy = String(now.getFullYear());
   const mm = String(now.getMonth() + 1).padStart(2, "0");
-  return path.join(yyyy, mm, `${randomUUID()}${EXT[mime] ?? ".bin"}`);
+  const name = `${randomUUID()}${EXT[mime] ?? ".bin"}`;
+  return isPublic
+    ? path.join(PUBLIC_PREFIX, yyyy, mm, name)
+    : path.join(yyyy, mm, name);
+}
+
+/** 이 경로가 공개 영역에 있는가. 비인증 서빙 라우트가 이걸로 거른다. */
+export function isPublicPath(relPath: string): boolean {
+  const norm = path.normalize(relPath);
+  return norm === PUBLIC_PREFIX || norm.startsWith(PUBLIC_PREFIX + path.sep);
 }
 
 /** 루트 밖으로 나가는 경로를 막는다. DB 값이 손상돼도 여기서 걸린다. */
@@ -88,11 +110,12 @@ export type StoredFile = {
 export async function storeImage(
   input: Readable,
   mimeType: string,
+  opts: { public?: boolean } = {},
 ): Promise<StoredFile> {
   if (!isAllowedImageType(mimeType)) {
     throw new Error("이미지 파일만 올릴 수 있습니다.");
   }
-  const relPath = newRelPath(mimeType.toLowerCase());
+  const relPath = newRelPath(mimeType.toLowerCase(), opts.public === true);
   const abs = resolveInsideRoot(relPath);
   await mkdir(path.dirname(abs), { recursive: true });
 
