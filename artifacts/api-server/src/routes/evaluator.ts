@@ -1,10 +1,11 @@
 import { Router, type IRouter } from "express";
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { SubmitEvaluationBody } from "@workspace/api-zod";
 import {
   db,
   applicationsTable,
   evaluationAssignmentsTable,
+  EVALUATION_STAGES,
   evaluationsTable,
   usersTable,
 } from "@workspace/db";
@@ -85,6 +86,20 @@ async function getMyAssignments(evaluatorId: number, appId: number) {
         eq(evaluationAssignmentsTable.applicationId, appId),
         eq(evaluationAssignmentsTable.evaluatorId, evaluatorId),
       ),
+    )
+    // 심사 순서로 고정한다. 정렬이 없으면 Postgres 가 아무 순서로 돌려주고,
+    // 화면은 이 목록의 **첫 항목을 기본 단계로** 잡는다(application-detail.tsx).
+    // 그래서 순서가 흔들리면 같은 지원서를 열 때마다 다른 탭이 펼쳐지고, 방금
+    // 쓴 의견이 안 보인다 — 2026-08-19 에 실제로 그렇게 재현됐다.
+    //
+    // 알파벳순이 우연히 맞지만(document_review < interview) 거기 기대지 않는다.
+    // 나중에 단계가 하나 끼면 그 우연이 깨진다. `EVALUATION_STAGES` 의 순서가
+    // 정본이므로 그걸 그대로 쓴다.
+    .orderBy(
+      sql`array_position(${sql.raw(
+        `ARRAY[${EVALUATION_STAGES.map((v) => `'${v}'`).join(",")}]::text[]`,
+      )}, ${evaluationAssignmentsTable.stage})`,
+      asc(evaluationAssignmentsTable.id),
     );
 }
 
