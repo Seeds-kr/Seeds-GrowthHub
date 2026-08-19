@@ -307,4 +307,4 @@ export type ReflectionVisibility = (typeof REFLECTION_VISIBILITIES)[number];
 | `cohort_visible` 회고를 알럼나이가 볼 수 있는가 | 열림 | 알럼나이 기능 검토 시 |
 | 졸업/기수 종료 후 가시성이 바뀌는가 (아카이브 정책) | 열림 | Phase 4 |
 | 학생이 자기 `artifacts`를 외부 공개(포트폴리오)할 수 있는가 | 열림 | 성장모델 정렬(Parallel B) 이후 |
-| `attachments`의 서명 URL 만료 정책 | 열림 | Object Storage 확장 시 |
+| ~~`attachments`의 서명 URL 만료 정책~~ | **해당 없음(2026-08-15)** | 서명 URL 을 쓰지 않는다. 서버 디스크에 두고 매 요청마다 권한을 확인한다 |

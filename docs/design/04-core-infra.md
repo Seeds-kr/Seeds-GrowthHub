@@ -183,14 +183,23 @@ export const attachmentsTable = pgTable("attachments", {
 }));
 ```
 
-**Object Storage ACL과의 관계**
+**저장 위치 (2026-08-15 변경)**
 
-현재 `GET /api/storage/objects/*`는 **인증 없이** `visibility=public` 오브젝트만 서빙한다(아바타용). `attachments`는 그 경로를 쓰지 않는다.
+`attachments` 는 더 이상 오브젝트 스토리지를 쓰지 않는다. 인증과 서명이 전부
+Replit 사이드카(`127.0.0.1:1106`)에 묶여 있어 **Replit 밖에서는 동작하지 않았다** —
+회의록에 붙여넣은 이미지가 통째로 깨져 있었다.
+
+파일을 두 종류로 나눈다(설계 06 ADR-010 이 이미 "Drive(파일)는 밖에 있다"고 정했다).
 
 ```text
-아바타          → ACL visibility=public  → 비인증 서빙 (현행 유지)
-attachments     → ACL visibility=private → 인증 게이트 라우트로만 서빙
+자료 파일(기획서·발표자료·영상)  구글 드라이브 → external_links 로 주소만
+본문 이미지(회의록 스크린샷)      서버 디스크(lib/fileStore.ts) → 인증 게이트 라우트
+아바타                            아직 오브젝트 스토리지(= 동작 안 함, 이슈 #33)
 ```
+
+본문 이미지만 안으로 들이는 이유: 마크다운 `![](주소)` 가 그림으로 뜨려면 그 주소가
+**이미지 바이트 자체**를 돌려줘야 한다. 드라이브 공유 링크는 미리보기 HTML 을
+돌려주므로 본문에 박히지 않는다.
 
 신규 라우트 `GET /api/attachments/:id/download`가 DB의 `visibility` + scope를 확인한 뒤 스트리밍한다. **영수증 URL이 인증 없이 열리는 경로를 절대 만들지 않는다.**
 
@@ -272,4 +281,4 @@ export const communicationLogsTable = pgTable("communication_logs", {
 - 링크 유효성 자동 검사 / 크롤링
 - `calendar_events` — §1 참조
 - 전체 요청 감사 로그 (민감 액션만)
-- 파일 바이러스 검사·만료 URL — Object Storage 확장 시
+- 파일 바이러스 검사 — 지금은 이미지 형식·크기(5MB)만 막는다

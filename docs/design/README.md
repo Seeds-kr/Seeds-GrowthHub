@@ -161,7 +161,7 @@ visibility-policy ─────┬─→ 02 Mentor Workspace ──→ 03 상�
 | `decision_logs` | append-only 유지. `audit_logs`가 흡수하지 않음 |
 | 아바타 서빙 | `visibility=public` 비인증 경로 유지 (attachments와 분리) |
 | 명명 | `ops_tasks`(운영) vs `assignments`(학생 과제), `mvp4ArtifactsTable` 컨벤션 유지 |
-| 이중 상태 | `applications.status`(legacy) + `application_status` 동시 갱신 |
+| ~~이중 상태~~ 해소(2026-08-15) | legacy `applications.status` 제거. 단계 `application_status` · 결과 `final_decision` 두 축만 남는다 |
 
 ---
 

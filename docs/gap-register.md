@@ -215,7 +215,7 @@ Ops 객체 구현 과정에서 `admin_only | mentor_visible` 2단계가 새로 �
 | **Role 변경** | `role_assignments` 도입은 미들웨어 전반 영향. **현재 보류 (P3)** | `getEffectiveRoles` API 표면을 깨지 않는 어댑터 패턴으로만 진행 |
 | **finance 권한** | admin-only로 시작해도 회계담당자 분리 시 권한 재설계 필요. 영수증 URL은 ACL 필수 | object storage `visibility=private` + 인증 게이트 라우트 사용 |
 | **mvp4ArtifactsTable 명명** | DB 테이블명 `artifacts` vs 모노레포 `artifacts/` 디렉터리 vs 신규 `external_links`/`attachments` | 기존 컨벤션(`mvp4ArtifactsTable`) 준수. 신규 객체도 prefix/suffix로 디렉터리명 충돌 회피 |
-| **이중 상태 (applications)** | legacy `status` + `application_status` 동시 유지 — 신규 화면이 한쪽만 업데이트 시 정합성 깨짐 | 변경 시 두 컬럼 동시 set하는 헬퍼 함수 도입 검토 |
+| ~~**이중 상태 (applications)**~~ **해소됨(2026-08-15)** | legacy `status` 를 제거했다. 단계는 `application_status`, 결과는 `final_decision` 으로 축이 갈렸고 각각 쓰는 주체가 하나다. 우려대로 실제 정합성이 깨져 있었다 — 합격 처리한 지원서가 대시보드에서 `submitted` 로 잡혔다 | 이슈 #4 · PR #31 |
 
 ---
 

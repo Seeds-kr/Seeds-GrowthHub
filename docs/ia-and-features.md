@@ -506,7 +506,7 @@
 
 ### 7.9 설계 메모
 
-- **이중 status (applications)**: MVP1 → MVP2 전환을 비파괴적으로 하기 위해 legacy `status`를 보존. 향후 MVP1 호환이 필요 없어지면 단일 컬럼으로 축소 가능.
+- ~~**이중 status (applications)**~~ **2026-08-15 해소.** legacy `status` 를 제거했다. 두 축(단계 `application_status` / 결과 `final_decision`)만 남고 각각 쓰는 주체가 하나다. 보존해 둔 대가가 실제로 나타났었다 — `/final-decision` 이 `status` 를 갱신하지 않아 합격자가 목록·대시보드에서 `submitted` 로 남았다(이슈 #4).
 - **Polymorphic id**: `feedback`, `tag_mappings`, `activity_records.source_id`는 FK 없이 `(target_type, target_id)` 페어로 다형성. DB-레벨 무결성 대신 어플리케이션 레벨에서 강제 (성능·유연성 ↔ 정합성 트레이드오프).
 - **Visibility 단계화**: 4단계(artifact) vs 2단계(feedback) — 산출물은 코호트 단위 가시성이 의미 있지만, 피드백은 본인/관리자 외 공개 의미가 없어 단순화.
 - **`canViewMemberContacts` 중앙화**: alumni·정지 등 정책 변경 시 한 곳만 수정.
