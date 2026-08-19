@@ -33,15 +33,27 @@ mv "$OUT.part" "$OUT"
 chmod 600 "$OUT"
 echo "백업 완료: $OUT ($SIZE B)"
 
-# 업로드 파일. 비어 있으면 tar 를 만들지 않는다 — 0 바이트 아카이브가 쌓이면
-# "백업이 있다"는 착각을 준다.
-FILES="$DIR/uploads-$TS.tar.gz"
-if [ -d "$UPLOADS" ] && [ -n "$(find "$UPLOADS" -type f -print -quit)" ]; then
-  tar -czf "$FILES.part" -C "$UPLOADS" .
-  gzip -t "$FILES.part"
-  mv "$FILES.part" "$FILES"
-  chmod 600 "$FILES"
-  echo "업로드 백업: $FILES ($(stat -c%s "$FILES") B, $(find "$UPLOADS" -type f | wc -l)개)"
+# ── 업로드 파일 ──────────────────────────────────────────────────────────────
+# 회의록 본문 이미지와 프로필 사진은 DB 가 아니라 디스크에 있다(ADR-010·ADR-017:
+# 자료 파일은 드라이브, 본문 이미지·사진만 우리 쪽). pg_dump 만 뜨면 경로는
+# 살아나고 그림이 전부 깨진 백업이 된다.
+#
+# 이름을 덤프와 같은 타임스탬프로 맞춘다 — 목록에서 어느 덤프와 짝인지 한눈에
+# 보이고, 보관 정리 규칙도 하나로 끝난다.
+#
+# 파일이 하나도 없으면 tar 를 만들지 않는다 — 빈 아카이브가 매일 쌓일 이유가 없다.
+UP_OUT="${OUT%.sql.gz}-uploads.tar.gz"
+if [ -d "$UPLOADS" ] && [ -n "$(find "$UPLOADS" -type f -print -quit 2>/dev/null)" ]; then
+  tar -czf "$UP_OUT.part" -C "$(dirname "$UPLOADS")" "$(basename "$UPLOADS")"
+  if gzip -t "$UP_OUT.part"; then
+    mv "$UP_OUT.part" "$UP_OUT"
+    # 덤프와 같은 600. 사람 얼굴 사진이 들어 있으므로 덤프보다 느슨할 이유가 없다.
+    chmod 600 "$UP_OUT"
+    echo "업로드 백업: $UP_OUT ($(stat -c%s "$UP_OUT") B, $(find "$UPLOADS" -type f | wc -l)개)"
+  else
+    rm -f "$UP_OUT.part"
+    echo "업로드 백업 실패" >&2
+  fi
 else
   echo "업로드 파일이 없어 파일 백업은 건너뛴다."
 fi
@@ -74,5 +86,6 @@ COUNT=$(ls -1 "$DIR"/growthhub-*.sql.gz 2>/dev/null | wc -l)
 if [ "$COUNT" -gt 3 ]; then
   find "$DIR" -name 'growthhub-*.sql.gz' -mtime "+$KEEP_DAYS" -print -delete
   find "$DIR" -name 'growthhub-*.sql.gz.gpg' -mtime "+$KEEP_DAYS" -print -delete
-  find "$DIR" -name 'uploads-*.tar.gz' -mtime "+$KEEP_DAYS" -print -delete
+  # 업로드 tar 도 함께 지운다. 빠져 있어 8-15 이후 것이 그대로 쌓여 있었다.
+  find "$DIR" -name 'growthhub-*-uploads.tar.gz' -mtime "+$KEEP_DAYS" -print -delete
 fi
