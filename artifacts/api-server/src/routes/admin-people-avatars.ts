@@ -174,6 +174,26 @@ function buildPrompt(
 }
 
 // PUT raw bytes to the presigned URL returned by the sidecar.
+/**
+ * AI 아바타 생성이 이 배포에서 쓸 수 있는 상태인가.
+ *
+ * 이 기능은 **두 가지 Replit 전용 설비**에 얹혀 있다.
+ *   ① 이미지 생성 — `AI_INTEGRATIONS_GEMINI_*` (Replit 이 붙여주던 Gemini 프록시)
+ *   ② 저장 — `lib/objectStorage.ts` 의 사이드카(`127.0.0.1:1106`)
+ * Replit 을 떠난 뒤로 둘 다 없다. 즉 이 라우트는 **어차피 성공할 수 없다.**
+ *
+ * 그런데 실패 문구가 `Image generation failed` 한 줄이라, 운영진 입장에서는
+ * 일시 장애인지 아예 안 되는 건지 알 수 없었다. 설정이 없는 것은 장애가 아니라
+ * 상태이므로 502(상류 실패)가 아니라 503 으로, 우리 말로 알린다.
+ */
+function avatarUnavailableReason(): string | null {
+  const missing: string[] = [];
+  if (!process.env.AI_INTEGRATIONS_GEMINI_BASE_URL) missing.push("이미지 생성 API");
+  if (!process.env.AI_INTEGRATIONS_GEMINI_API_KEY) missing.push("이미지 생성 키");
+  if (missing.length === 0) return null;
+  return `AI 아바타 생성이 이 서버에 설정돼 있지 않습니다 (${missing.join(", ")}). 프로필 사진은 '사진 URL' 칸에 주소를 직접 넣어 설정할 수 있습니다.`;
+}
+
 async function uploadPng(signedUrl: string, bytes: Buffer): Promise<void> {
   const res = await fetch(signedUrl, {
     method: "PUT",
@@ -241,6 +261,12 @@ router.post(
       .limit(1);
     if (!profile) {
       res.status(404).json({ error: "Not found" });
+      return;
+    }
+
+    const unavailable = avatarUnavailableReason();
+    if (unavailable) {
+      res.status(503).json({ error: unavailable });
       return;
     }
 
