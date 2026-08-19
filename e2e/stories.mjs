@@ -901,6 +901,56 @@ console.log("\n── 학생 ─────────────────
     return bounced ? "자기 대시보드로 되돌림 (자료 노출 없음)" : "404";
   });
 
+  await story("S9", "프로필 사진을 올리고, 내려도 남지 않는다", async () => {
+    need();
+    // ADR-017. 사진은 **공개 영역**에 저장돼 비로그인 방문자에게도 서빙된다 —
+    // `/people` 이 공개 라우트라 그래야 그림이 뜬다. 그래서 이 스토리의 절반은
+    // "무인증으로 열리는가"이고, 나머지 절반은 "내리면 실제로 사라지는가"다.
+    // 후자를 안 보면 지우기가 화면에서만 지워지는 것을 놓친다.
+    const call = async (path, init = {}) => {
+      const r = await p.request.fetch(BASE + path, init);
+      return { status: r.status(), body: await r.text() };
+    };
+    // 1x1 PNG. 내용은 상관없고 실제 이미지 바이트이기만 하면 된다.
+    const png = Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+      "base64",
+    );
+
+    const up = await call("/api/student/profile/photo", {
+      method: "POST", headers: { "content-type": "image/png" }, data: png,
+    });
+    if (up.status !== 200) throw new Error(`업로드 ${up.status}: ${up.body.slice(0, 120)}`);
+    const url = JSON.parse(up.body).photoUrl;
+    if (!url || !url.startsWith("/api/uploads/public/")) throw new Error(`주소가 이상함: ${url}`);
+
+    // 무인증 열람. 세션 쿠키가 없는 새 컨텍스트로 받아야 진짜 공개인지 알 수 있다.
+    const anon = await b.newContext();
+    const got = await anon.request.get(BASE + url);
+    const bytes = await got.body();
+    await anon.close();
+    if (got.status() !== 200) throw new Error(`무인증 열람 ${got.status()}`);
+    if (!bytes.equals(png)) throw new Error(`바이트가 다름 (${bytes.length}B)`);
+
+    // 권한 밖. 학생이 남의 프로필 사진을 바꿀 수 없어야 한다.
+    const other = await call("/api/admin/people/1/photo", {
+      method: "POST", headers: { "content-type": "image/png" }, data: png,
+    });
+    if (other.status !== 403) throw new Error(`남의 프로필이 ${other.status} (403 이어야 함)`);
+
+    // 이미지가 아닌 것.
+    const txt = await call("/api/student/profile/photo", {
+      method: "POST", headers: { "content-type": "text/plain" }, data: "hello",
+    });
+    if (txt.status !== 415) throw new Error(`텍스트가 ${txt.status} (415 여야 함)`);
+
+    const del = await call("/api/student/profile/photo", { method: "DELETE" });
+    if (del.status !== 200) throw new Error(`지우기 ${del.status}`);
+    if (JSON.parse(del.body).photoUrl) throw new Error("지웠는데 주소가 남음");
+
+    return `업로드→무인증 열람(${bytes.length}B 동일)→403/415→지우기 확인`;
+  });
+
   await c.close();
 }
 
