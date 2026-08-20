@@ -32,10 +32,10 @@ export type AttachmentVisibility = (typeof ATTACHMENT_VISIBILITIES)[number];
 /**
  * Uploaded file metadata (docs/design/04 §5).
  *
- * The object itself is stored with ACL `visibility=private`, so it is NOT
- * reachable through the unauthenticated `GET /api/storage/objects/*` path that
- * serves avatars. Downloads go through `GET /api/attachments/:id/download`,
- * which re-checks this row's visibility and the caller's scope.
+ * 파일은 업로드 루트의 **비공개 영역**에 있다. 무인증으로 열리는 곳은
+ * `uploads/public/`(프로필 사진 전용, ADR-017) 뿐이므로 주소를 알아도 그냥
+ * 열리지 않는다. 내려받기는 `GET /api/attachments/:id/download` 를 거치고,
+ * 그 라우트가 이 행의 visibility 와 호출자의 범위를 다시 확인한다.
  *
  * Receipts attached to a finance_record are additionally gated on the
  * `finance` ops role — the default `admin_only` alone is not enough for them.
