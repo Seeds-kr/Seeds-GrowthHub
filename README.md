@@ -13,11 +13,13 @@ Scope:
 - **Monorepo**: pnpm workspaces (`pnpm-workspace.yaml`)
 - **Frontend**: Vite + React + TS + Tailwind + shadcn/ui (`artifacts/seeds`)
 - **Backend**: Express 5 + TS (`artifacts/api-server`)
-- **DB**: Replit Postgres via Drizzle ORM (`lib/db`)
+- **DB**: PostgreSQL 16 (도커 `seeds_growthhub_pg`, `127.0.0.1:5434`) via Drizzle ORM (`lib/db`)
 - **API contract**: OpenAPI 3.1 → orval React Query hooks + Zod (`lib/api-spec`, `lib/api-client-react`, `lib/api-zod`)
 - **Auth**: HMAC-signed session cookie (`seeds_admin`, no DB session table)
 
-Shared proxy at `localhost:80` routes `/api/*` → API server, everything else → Vite.
+`ops/../seeds-preview/router.mjs`(`127.0.0.1:8088`)가 `/api/*` 는 API 서버(`:8087`)로,
+나머지는 `artifacts/seeds/dist/public` 의 정적 파일로 보낸다. 공개 주소
+`seeds.harvester.kr` 는 Cloudflare 터널로만 나간다 — 서비스 포트는 전부 루프백이다.
 
 ## Routes (web)
 
@@ -38,12 +40,12 @@ Each role layout admits any user whose effective roles include its role and show
 Public: `GET /healthz`, `POST /applications`, `POST /admin/login`, `POST /admin/logout`, `GET /admin/me`, `GET /api/site-content[/:key]`, `GET /api/people/:kind` (kind ∈ `mentor|staff|member`, only `is_public=true`, sorted `display_order asc, id asc`; uses `optionalAuth` — `phone` field is `null` for anonymous viewers, populated for any logged-in member per `canViewMemberContacts`), `GET|POST /api/activation/:token`.
 
 Admin (`requireAdmin`):
-- Applications: `GET /admin/applications` (filters `q,status,applicationStatus,finalDecision,interviewStatus,evaluationCompletion`), `/stats`, `/export` (CSV w/ formula-injection guard), `GET|PATCH /admin/applications/:id`, `POST|DELETE /admin/applications/:id/assignments[/:assignmentId]`, `PUT /admin/applications/:id/interview` (one per app), `PATCH /admin/applications/:id/final-decision` (writes `decision_logs`).
+- Applications: `GET /admin/applications` (filters `q,applicationStatus,finalDecision,interviewStatus,evaluationCompletion`), `/stats`, `/export` (CSV w/ formula-injection guard), `GET|PATCH /admin/applications/:id`, `POST|DELETE /admin/applications/:id/assignments[/:assignmentId]`, `PUT /admin/applications/:id/interview` (one per app), `PATCH /admin/applications/:id/final-decision` (writes `decision_logs`).
 - Users: `GET /admin/users?role=`, `POST /admin/users`, `PATCH /admin/users/:id` (incl. `extraRoles`).
 - MVP3: full CRUD `/admin/{cohorts,programs,students,sessions,assignments,announcements}`; `/admin/students/:id/cohorts[/:cohortId]` and `/programs[/:programId]`; `/admin/sessions/:id/attendance` (bulk PUT); `PATCH /admin/submissions/:id`; `GET /admin/applications-accepted-pending`; `POST /admin/applications/:id/convert-to-student` (`{password?}` — omitted = create inactive user + issue activation token, response `{activationToken, activationPath, expiresAt}`); `POST /admin/users/:id/activation-token` (re-issue; marks prior unused tokens used, latest-wins).
 - MVP4: full CRUD `/admin/{activity-records,projects,artifacts,feedback,tags,tag-mappings}`. `GET /admin/projects/:id` returns project + members + artifacts + feedback + tags. `POST|DELETE /admin/projects/:id/members[/:memberId]` (unique `(project,student)`). `GET /admin/students/:id/{timeline,report}`. `GET /admin/cohorts/:id/summary`.
-- People: `GET /admin/people[?kind=]`, `POST`, `PATCH`, `DELETE`. `user_id`/`student_id` unique → 409. `POST /admin/people/:id/generate-avatar` — Gemini-generated minimalist illustration avatar (no text, mint+white palette, abstract head silhouette, no facial features). Saves PNG to object storage with ACL `visibility=public`, stores `photoUrl = /api/storage/objects/uploads/<uuid>`. Deletes prior avatar object on replacement; cleans up uploaded object on later failure.
-- Storage: unauthenticated `GET /api/storage/objects/*` serves only objects stamped `visibility=public` via `objectAcl.canAccessObject` (private objects → 404). All other storage uploads go through admin-gated routes.
+- People: `GET /admin/people[?kind=]`, `POST`, `PATCH`, `DELETE`. `user_id`/`student_id` unique → 409. 프로필 사진은 **본인 업로드**다(ADR-017) — `POST|DELETE /{student,mentor}/profile/photo`(본인), `POST|DELETE /admin/people/:id/photo`(어드민). 서버 디스크의 공개 영역에 저장하고 `photoUrl` 은 `/api/uploads/public/<yyyy>/<mm>/<uuid>.<ext>`. 교체하면 옛 파일을 지운다.
+- Uploads: 무인증 `GET /api/uploads/public/*` 는 **프로필 사진만** 내준다 — 공개 `/people` 이 비로그인 라우트라 브라우저가 그냥 받아야 한다. 회의록 본문 이미지는 같은 디스크의 **비공개 영역**에 있고 `GET /api/attachments/:id/download` 로만 나가며, 그 라우트가 행과 호출자를 다시 확인한다.
 - Site content: `GET /admin/site-content` (always returns all known keys, blanks included), `PUT /admin/site-content/:key`.
 
 Evaluator surface (`requireAdminOrMentor`): `GET /evaluator/assignments`, `GET /evaluator/applications/:id` (only if assigned), `POST /evaluator/applications/:id/evaluations` (upsert per `(app,evaluator,stage)`, auto-marks assignment `completed`). The route handler additionally enforces per-application assignment ownership — having admin/mentor role alone is not enough.
@@ -60,7 +62,7 @@ Naming notes:
 ## Database schema
 
 Core (MVP1/2):
-- `applications` — MVP1 cols + `application_status` (submitted → document_review → interview → final_decision_made / withdrawn) + `final_decision` (pending|accepted|rejected|waitlisted|withdrawn). Legacy `status` enum preserved.
+- `applications` — MVP1 cols + `application_status` (submitted → document_review → interview_scheduled → interview_completed → final_decision_made / withdrawn) + `final_decision` (pending|accepted|rejected|waitlisted|withdrawn). 옛 `status` 컬럼은 **제거됐다**(마이그레이션 `0004`) — 두 벌을 따로 갱신하다 어긋나던 자리였다.
 - `users` — email unique, name, password_hash (bcrypt), role primary (`admin|mentor|student`), `extra_roles text[] not null default '{}'` (multi-role), `is_active`, timestamps. Bootstrapped from `ADMIN_EMAIL`/`ADMIN_PASSWORD` on startup. Effective roles = unique union of `[role, ...extraRoles]`; helpers `getEffectiveRoles(user)` and `canViewMemberContacts(user)` from `@workspace/db`. Session payload `{userId, role, roles, exp}`; `verifySessionToken` falls back to `[role]` for older tokens. `/admin/login` and `/admin/me` return `{...user, role, roles, opsRoles}`. Admins toggle extra roles from `/admin/students/:id` via `PATCH /admin/users/:id { extraRoles }`. The legacy `evaluator` role was removed — evaluation work is performed by users with `admin` or `mentor` in their effective roles, assigned per-application via `/admin/evaluators`.
   - **`ops_roles text[] not null default '{}'`** (ADR-002) — functional ops roles, ORTHOGONAL to `role`/`extra_roles`. Values: `program_lead|ops|recruiting|finance|growth|community|system`. `getOpsRoles(user)` returns `[]` unless effective roles include `admin`, so a mentor/student cannot gain capability from this column. `hasOpsRole(user, code)` is satisfied by `program_lead` (superuser). Edited at `/admin/users` via `PATCH /admin/users/:id { opsRoles }` (needs `system`); the last active `program_lead` cannot be removed or deactivated (409). **Not carried in the session cookie** — every gate re-reads the DB, so revocation is immediate. `backfillOpsRolesOnce()` runs at startup BEFORE `bootstrapAdminFromEnv()` and grants `program_lead` to all existing admins; it self-disables once any user holds any ops role.
 - `evaluation_assignments` — `(application_id, evaluator_id, stage)` unique; status `assigned|in_progress|completed`.
@@ -174,7 +176,7 @@ Deploy: `suggest_deploy`. Proxy auto-routes `/api/*` to API server in production
 - `diffFields()` reduces before/after to **only the keys that actually changed** and drops a denylist of free-text fields (`content`, `contentMd`, `bodyMd`, `decisionsMd`, `comment`, `blocker`, `nextFocus`, `opsSupportNote`, `description`, `passwordHash`, `receiptUrl`). Enforced in the helper, not trusted to call sites — the audit trail must not itself become a leak. Reflections are never audited (ADR-001).
 - Write sites: `role_change` (PATCH /admin/users/:id), `finance_status` (status transitions only), `data_export` (applications CSV — row count only), `account_activation` (token re-issue — never the token), `permission_denied` (every `requireOpsRole` 403; repeated hits usually mean a mis-assigned role).
 - IP is stored as a truncated HMAC keyed on `SESSION_SECRET`, never raw.
-- `attachments` — stores **`objectPath`, not a URL**. Objects get ACL `visibility=private` at registration, so they are unreachable via the unauthenticated `GET /api/storage/objects/*` path that serves avatars. The only read path is `GET /api/attachments/:id/download` (`requireAdmin`, streams after the check, never redirects). Receipts (`linkedObjectType='finance_record'`) additionally require the `finance` ops role and are force-set to `admin_only` regardless of what the client sends.
+- `attachments` — stores **`objectPath`, not a URL**. 파일은 업로드 루트의 **비공개 영역**에 있다 — 무인증으로 열리는 곳은 프로필 사진 전용 `uploads/public/` 뿐이라 주소를 알아도 그냥 열리지 않는다. The only read path is `GET /api/attachments/:id/download` (`requireAdmin`, streams after the check, never redirects). Receipts (`linkedObjectType='finance_record'`) additionally require the `finance` ops role and are force-set to `admin_only` regardless of what the client sends.
 - Link targets are validated on write (422 if the target row is missing); `linkedObjectType` is constrained by the shared `LINKABLE_TYPES` whitelist in `lib/db/src/schema/_linkable.ts`.
 - Markdown image paste/drop uploads through this pipeline, inserting `![name](/api/attachments/:id/download)` — an authenticated URL, not a storage path.
 
