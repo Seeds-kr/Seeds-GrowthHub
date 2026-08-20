@@ -1,0 +1,12 @@
+[Unit]
+Description=Seeds GrowthHub restore verification
+
+[Timer]
+# 일요일 새벽. 백업(04:30)과 검증(05:15)이 끝난 뒤라 최신 백업을 대상으로 잡는다.
+# 매일 돌리지 않는 이유: 사본 DB 를 두 개 만들었다 지우므로 백업보다 무겁고,
+# "복원이 되는가" 는 매일 바뀌는 성질이 아니다. 주 1회면 회귀를 한 주 안에 잡는다.
+OnCalendar=Sun *-*-* 06:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

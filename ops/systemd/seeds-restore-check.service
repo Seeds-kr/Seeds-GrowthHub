@@ -1,0 +1,12 @@
+[Unit]
+Description=Seeds GrowthHub restore verification
+# 백업 서비스가 아니라 docker 만 기다린다. 최신 백업이 무엇이든 그걸 검증한다.
+After=docker.service
+
+[Service]
+Type=oneshot
+User=harvester
+Group=harvester
+ExecStart=/home/harvester/Seeds-GrowthHub/ops/verify-restore.sh
+StandardOutput=append:/home/harvester/seeds-preview/restore-check.log
+StandardError=append:/home/harvester/seeds-preview/restore-check.log
