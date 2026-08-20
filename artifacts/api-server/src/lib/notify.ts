@@ -36,12 +36,26 @@ export type NotifyInput = {
   relatedObjectId?: number;
 };
 
+/**
+ * 채널별 웹훅을 먼저 보고, 없으면 공용 웹훅으로 떨어진다.
+ *
+ * 채널을 나누는 것이 원래 설계다(운영 소식과 멘토 넛지는 받는 사람이 다르다).
+ * 다만 지금 Seeds 는 채널 하나로 운영하기로 했으므로, 둘 다 안 넣고
+ * `SEEDS_DISCORD_WEBHOOK_URL` 하나만 넣으면 두 알림이 같은 곳으로 간다.
+ *
+ * 나중에 나누고 싶으면 채널별 변수를 넣기만 하면 된다 — 그쪽이 먼저이므로
+ * 공용 설정을 지우지 않아도 즉시 갈린다. 코드를 되돌릴 필요가 없다.
+ */
 function webhookUrlFor(channel: NotifyChannel): string | undefined {
   const key =
     channel === "mentor"
       ? "SEEDS_DISCORD_MENTOR_WEBHOOK_URL"
       : "SEEDS_DISCORD_OPS_WEBHOOK_URL";
-  return process.env[key]?.trim() || undefined;
+  return (
+    process.env[key]?.trim() ||
+    process.env.SEEDS_DISCORD_WEBHOOK_URL?.trim() ||
+    undefined
+  );
 }
 
 function appBaseUrl(): string {
