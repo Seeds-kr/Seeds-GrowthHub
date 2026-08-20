@@ -37,7 +37,23 @@ set -a; . "$HOME/.secrets/seeds-preview.env"; set +a
 
 j() { python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('$1',''))" 2>/dev/null; }
 post() { # post <경로> <본문> → 응답 본문
-  curl -s -b "$JAR" -X POST "$API$1" -H 'content-type: application/json' -d "$2"
+  # 상태 코드를 본다. 전에는 그냥 버려서, 본문이 깨져 400 이 나도 조용히 넘어갔다
+  # — 활동기록 2건과 피드백 1건이 몇 달간 만들어지지 않고 있었는데 아무 표시가
+  # 없었다(2026-08-20 발견). 시드가 "채웠다" 고 말하면 실제로 채워져야 한다.
+  local out code
+  out="$(curl -s -w '\n%{http_code}' -b "$JAR" -X POST "$API$1" \
+         -H 'content-type: application/json' -d "$2")"
+  code="${out##*$'\n'}"
+  out="${out%$'\n'*}"
+  case "$code" in
+    2*) printf '%s' "$out" ;;
+    # 409 는 서버가 스스로 중복을 막은 것이다(태그 이름·태그 연결·프로그램 등록).
+    # 실패로 세면 재실행 때마다 경고가 뜨면서 진짜 실패가 묻힌다.
+    409) tally skipped ;;
+    *)  echo "  ⚠ 실패 $code  POST $1" >&2
+        echo "    응답: $(printf '%s' "$out" | head -c 160)" >&2
+        tally failed ;;
+  esac
 }
 
 # 이미 같은 제목이 있으면 만들지 않는다.
@@ -155,7 +171,7 @@ id_once() { # id_once <목록경로> <필드명> <값> <생성경로> <본문> �
 # 고 보고했다. 틀린 계기판은 없느니만 못하다.
 TALLY="$(mktemp -d)"
 trap 'rm -f "$JAR"; rm -rf "$TALLY"' EXIT
-: >"$TALLY/created"; : >"$TALLY/skipped"
+: >"$TALLY/created"; : >"$TALLY/skipped"; : >"$TALLY/failed"
 tally() { echo x >>"$TALLY/$1"; }
 count_of() { wc -l <"$TALLY/$1" | tr -d " "; }
 say() { printf '  %-22s %s\n' "$1" "$2"; }
@@ -169,6 +185,23 @@ STUDENTS="$(curl -s -b "$JAR" "$API/admin/students" \
   | python3 -c "import sys,json;d=json.load(sys.stdin);print(' '.join(str(s['id']) for s in (d if isinstance(d,list) else d.get('items',[]))))")"
 S1="$(echo "$STUDENTS" | awk '{print $1}')"
 S2="$(echo "$STUDENTS" | awk '{print $2}')"
+
+# 학생이 하나뿐이면 S2 가 빈 문자열이 되고, 그걸 그대로 넣은 본문은
+# `"studentId":,` 가 돼 JSON 파서에서 400 이 난다. 예전에는 그 실패를 버려서
+# 활동기록 2건·피드백 1건이 조용히 안 만들어졌다.
+#
+# 둘째 학생 몫을 첫째에게 몰아준다. "두 사람에게 갈렸을 때 어떻게 보이는지" 는
+# 못 보지만, 아무것도 없는 것보다는 낫다. 갈린 모습을 보려면 학생을 하나 더
+# 만들고 다시 돌리면 된다.
+if [ -z "$S2" ]; then
+  echo "  ⚠ 학생이 1명뿐이라 둘째 몫을 첫째($S1)에게 몰아넣는다." >&2
+  echo "    두 사람으로 갈린 화면을 보려면 학생을 하나 더 만들고 다시 돌려라." >&2
+  S2="$S1"
+fi
+if [ -z "$S1" ]; then
+  echo "학생이 없다. 지원서→합격→학생 전환을 먼저 해야 한다." >&2
+  exit 1
+fi
 echo "학생 [$STUDENTS] · 코호트 $COHORT"
 
 echo
@@ -186,7 +219,7 @@ say "student_programs" "$(echo "$STUDENTS" | wc -w)명"
 
 echo
 echo "스터디 · 스터디원"
-ST="$(id_once /admin/studies title "타입스크립트 기초" /admin/studies "{\"cohortId\":$COHORT,\"programId\":$PROG,\"title\":\"타입스크립트 기초\",\"topic\":\"언어\",\"description\":\"타입 시스템을 처음부터. 매주 한 챕터씩 읽고 각자 예제를 만들어 옵니다.\",\"leaderStudentId\":$S1,\"status\":\"active\",\"weeklyPlanMd\":\"1주 타입 기본\\n2주 제네릭\\n3주 유틸리티 타입\\n4주 선언 파일\"}" | j id)"
+ST="$(id_once /admin/studies title "타입스크립트 기초" /admin/studies "{\"cohortId\":$COHORT,\"programId\":$PROG,\"title\":\"타입스크립트 기초\",\"topic\":\"언어\",\"description\":\"타입 시스템을 처음부터. 매주 한 챕터씩 읽고 각자 예제를 만들어 옵니다.\",\"leaderStudentId\":$S1,\"status\":\"active\",\"weeklyPlanMd\":\"1주 타입 기본\\n2주 제네릭\\n3주 유틸리티 타입\\n4주 선언 파일\"}")"
 say "studies" "id=$ST 타입스크립트 기초"
 ST2="$(id_once /admin/studies title "코드 리뷰 읽기 모임" /admin/studies "{\"cohortId\":$COHORT,\"title\":\"코드 리뷰 읽기 모임\",\"topic\":\"협업\",\"description\":\"공개된 오픈소스 PR 을 하나씩 같이 읽습니다.\",\"status\":\"planned\"}")"
 say "studies" "id=$ST2 코드 리뷰 읽기 모임"
@@ -259,9 +292,11 @@ if [ -n "$SESSION" ]; then
   # 활동 기록에 결석을 안 남기는 것과 같은 이유(설계 07 ADR-013).
   RECS=""; i=0
   for s in $STUDENTS; do
-    case $((i % 3)) in 0) ST=present;; 1) ST=late;; *) ST=excused;; esac
+    # `ST` 를 쓰면 안 된다 — 위에서 스터디 id 를 담은 변수다(덮어쓰면
+    # 이후 스터디 경로가 //members 로 깨진다).
+    case $((i % 3)) in 0) ATT=present;; 1) ATT=late;; *) ATT=excused;; esac
     [ -n "$RECS" ] && RECS="$RECS,"
-    RECS="$RECS{\"studentId\":$s,\"status\":\"$ST\"}"
+    RECS="$RECS{\"studentId\":$s,\"status\":\"$ATT\"}"
     i=$((i+1))
   done
   curl -s -b "$JAR" -X PUT "$API/admin/sessions/$SESSION/attendance" \
@@ -323,5 +358,9 @@ echo
 # 두 번째 실행부터는 만든 것이 0이어야 한다. 아니면 어딘가 판정이 새고 있다.
 printf '  %-22s %s\n' "새로 만든 것" "$(count_of created)건"
 printf '  %-22s %s\n' "이미 있어 건너뜀" "$(count_of skipped)건"
+FAILED="$(count_of failed)"
+if [ "$FAILED" != "0" ]; then
+  printf '  %-22s %s\n' "실패" "${FAILED}건  ← 위 ⚠ 를 보라"
+fi
 echo
 echo "끝. 남은 빈 테이블은 엔드포인트가 없어서다 — 위 주석 참고."
