@@ -419,14 +419,30 @@ C 섹션의 진입 버튼(문서 `편집`, 회의록 `편집`)은 `lg` 미만에
 - [x] `decisionsMd`가 유지되어 결정사항 추출 쿼리가 회귀 없이 동작한다.
       → `meetings.decisions_md` 컬럼 존치 확인.
 - [ ] 멘토가 `needsOpsSupport` 상태체크를 올리면 운영진 Discord 채널에 즉시 뜬다.
-- [ ] Discord 페이로드에 학생 이름·평가·회고·블로커 원문이 **없다**.
+      → **구현돼 있지 않다.** `notifyDiscord` 호출부는 `internal-cron.ts` 의 정기
+      다이제스트 두 곳뿐이고, 상태체크를 저장하는 라우트에는 없다. 그 건수는
+      **다음 날 09:00 요약에 개수로만** 들어간다. 즉시 알림이 필요하면 따로 만들어야
+      한다 — 웹훅을 넣어도 오지 않는다.
+- [x] Discord 페이로드에 학생 이름·평가·회고·블로커 원문이 **없다**.
+      → 2026-08-20 실측. 실제로 나가는 JSON 을 받아서 확인했다.
+      ```json
+      {"content":"오늘의 운영 요약 — 🔴 팀 지원 요청 1건",
+       "embeds":[{"description":"GrowthHub 운영 대시보드에서 자세히 확인하세요.",
+                  "url":"https://seeds.harvester.kr/admin/ops-dashboard"}]}
+      ```
+      개수와 링크뿐이다. 링크도 로그인해야 열린다.
 - [x] 웹훅 URL 미설정 상태에서 모든 기능이 정상 동작한다.
       → `notifyDiscord` 가 URL 없으면 debug 로그만 남기고 `false` 를 돌려준다.
       전체 검증 33/33 통과가 이 상태에서 나온 결과다.
-- [ ] Discord 발송이 `communication_logs`에 남고, 실패 시 `failureReason`이 기록된다.
+- [x] Discord 발송이 `communication_logs`에 남고, 실패 시 `failureReason`이 기록된다.
+      → 2026-08-20 양쪽 다 실측. 성공은 `sent`, 실패는 `failed` + `HTTP 500`.
+      **실패 행은 `sent_at` 이 `null`** 이므로 `sent_at` 으로 거르면 안 보인다 —
+      처음에 그렇게 조회해서 "기록이 안 된다" 고 오판했다. 조회는 `created_at` 으로.
 
-> Discord 3건은 **사용자 결정으로 보류**다(웹훅 미설정). 타이머는 이미 깔려 있고
-> 설정 전까지 무해하게 아무 일도 하지 않는다.
+> **설정 완료(2026-08-20).** 운영·멘토 채널을 나누지 않고 공용 웹훅 하나로 받는다.
+> `SEEDS_DISCORD_WEBHOOK_URL` 과 `CRON_SECRET` 은 `~/.secrets/seeds-preview.env`
+> (600, git 미추적)에 있다. 채널을 나누려면 `SEEDS_DISCORD_OPS_WEBHOOK_URL` /
+> `_MENTOR_` 를 넣으면 되고 그쪽이 먼저 적용된다.
 - [ ] 학생 개인에게 가는 알림이 **없다**.
 - [x] A 등급 화면이 375px에서 가로 스크롤 없이 읽힌다.
       → **브라우저 실측 완료** (Playwright Chromium, 2026-08-03).
