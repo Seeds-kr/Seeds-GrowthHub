@@ -219,12 +219,27 @@ Mentor
 ## 7. 수용 기준
 
 - [ ] 담당 프로젝트가 없는 멘토가 `/mentor/teams`에서 빈 목록 + 안내 문구를 본다 (에러 아님).
-- [ ] 담당하지 않는 프로젝트 id로 `/mentor/projects/:id` 요청 시 **404**를 받는다.
-- [ ] 담당 팀의 `admin_note` 피드백이 멘토에게 보인다 (ADR-004).
-- [ ] 담당 팀 학생의 `private` 산출물은 멘토에게 **보이지 않는다**.
+      → **확인 못 함.** 지금 테스트 멘토는 담당 팀이 1개라 빈 목록 경로를 밟지 못한다.
+      담당 없는 멘토 계정을 따로 만들어야 볼 수 있다.
+- [x] 담당하지 않는 프로젝트 id로 `/mentor/projects/:id` 요청 시 **404**를 받는다.
+      → 2026-08-24 실측. 담당 목록에 없는 project 1 로 요청 → 404.
+- [x] 담당 팀의 `admin_note` 피드백이 멘토에게 보인다 (ADR-004).
+      → 2026-08-24 실측. `admin_note`(가시성 `admin_only`)를 담당 프로젝트에 남기고
+      멘토로 `GET /mentor/projects/2` → 피드백 4건 중 그 항목이 포함됐다.
+      **읽는 경로를 헷갈리지 말 것** — `/mentor/feedback` 은 `authorId = me`,
+      즉 *내가 쓴* 피드백 목록이다. ADR-004 가 말하는 것은 프로젝트 상세다.
+      처음에 목록을 보고 "멘토가 못 본다" 고 오판했다.
+- [x] 담당 팀 학생의 `private` 산출물은 멘토에게 **보이지 않는다**.
+      → 같은 응답의 산출물이 `cohort_visible` 뿐이었다. 쿼리도
+      `ne(artifacts.visibility, "private")` 로 DB 단에서 거른다.
 - [ ] `status='ended'` 처리 즉시 해당 프로젝트 접근이 404가 된다.
-- [ ] 상태체크를 상태 버튼 1개 + 제출로 작성할 수 있다 (다른 필드 미입력).
-- [ ] `needsOpsSupport=true` 상태체크가 운영 대시보드에 나타난다.
+- [x] 상태체크를 상태 버튼 1개 + 제출로 작성할 수 있다 (다른 필드 미입력).
+      → `POST /mentor/projects/:id/status-checks` 에 `{teamStatus:"good"}` 만
+      보내 **201**.
+- [x] `needsOpsSupport=true` 상태체크가 운영 대시보드에 나타난다.
+      → `GET /admin/ops-dashboard/summary` 의 `teamSupport.openCount = 1`.
+      **`teamSupport` 는 배열이 아니라 `{openCount, items}` 다** — 배열로 기대하면
+      값이 있는데도 없다고 읽는다(2026-08-24에 그렇게 오판했다).
 - [ ] 한 프로젝트에 멘토 2명 배정이 가능하고, 양쪽 모두 접근된다.
 - [ ] 학생 라우트 회귀 없음 — [visibility-policy §6](../visibility-policy.md) 체크리스트 통과.
 - [ ] `admin`이면서 `mentor`인 사용자가 두 workspace를 오갈 때 각각의 규칙이 독립 적용된다.
