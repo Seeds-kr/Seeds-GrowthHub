@@ -133,5 +133,5 @@ DB 푸시 후 앱을 기동하고, docs/visibility-policy.md §6 체크리스트
 - 멘토가 담당 아닌 프로젝트에 404 를 받는가 (403 아님)
 - finance 역할만 가진 admin 이 /admin/applications 에 403 을 받는가
 - 회고 private 이 어떤 경로로도 새지 않는가
-- attachments 가 비인증 /api/storage/objects/* 로 안 열리는가
+- attachments 가 비인증으로 안 열리는가 (무인증은 프로필 사진 전용 /api/uploads/public/* 뿐)
 ```

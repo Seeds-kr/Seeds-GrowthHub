@@ -133,7 +133,7 @@ Ops 객체 구현 과정에서 `admin_only | mentor_visible` 2단계가 새로 �
 | # | 현재 | Baseline 요구 | Gap | P | 구현 접근 | Risk | 관련 파일 |
 |---|---|---|---|---|---|---|---|
 | OD1 | 없음. `site_contents`만 존재(공개 페이지 JSON) | `documents(title, doc_type, body_md, owner_id, linked_object_*, visibility, is_template, status)` + `document_versions` | 전무 | **P1** | 신규 테이블 2개. 클라이언트는 react-markdown + 간단 textarea 시작 (rich editor는 후행). 버전은 update 시 prior body snapshot insert 패턴. | 중간 (visibility 정책 신규) | 신규 `lib/db/src/schema/documents.ts` |
-| OD2 | — | 템플릿 라이브러리, 체크리스트 문서 | OD1 의존 | **P1** | `is_template=true` 플래그 + 복제 API (`POST /admin/documents/:id/duplicate`) | 낮음 | 동일 |
+| OD2 | — | 템플릿 라이브러리, 체크리스트 문서 | OD1 의존 | **P1** | `is_template=true` 플래그 + 복제 API (`POST /admin/documents/:id/clone`) | 낮음 | 동일 |
 
 ### 2.7 Events / Sessions / Checklists
 
