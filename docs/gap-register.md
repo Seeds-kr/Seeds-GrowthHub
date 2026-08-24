@@ -208,7 +208,7 @@ Ops 객체 구현 과정에서 `admin_only | mentor_visible` 2단계가 새로 �
 
 | 영역 | 리스크 | 가드레일 |
 |---|---|---|
-| **학생 visibility 규칙** | reflections/documents 등 신규 객체 도입 시 학생 측 필터링 정합성 깨지면 사적 정보 노출 위험 | 신규 객체마다 student 라우트 통합 테스트 필수. `replit.md` 가시성 매트릭스 + 신규 visibility-policy.md를 단일 진실로. |
+| **학생 visibility 규칙** | reflections/documents 등 신규 객체 도입 시 학생 측 필터링 정합성 깨지면 사적 정보 노출 위험 | 신규 객체마다 student 라우트 통합 테스트 필수. `README.md` 가시성 매트릭스 + 신규 visibility-policy.md를 단일 진실로. |
 | **Evaluator Surface 소유권 재확인** | 미들웨어 통과 후 핸들러에서 `evaluation_assignments` 재확인 패턴이 신규 평가 관련 변경 시 누락될 수 있음 | 기존 패턴 보존, 평가 관련 PR은 evaluator surface 회귀 체크리스트 적용 |
 | **Tasks 명명 충돌** | 운영 `tasks`와 학생 `assignments`(MVP3 homework)가 둘 다 "과제/작업" 의미. 코드 베이스에 이미 `admin-tasks.ts`가 MVP3 assignments용으로 존재 가능 | 신규 운영 tasks 파일/라우트는 `admin-ops-tasks.ts` / `/admin/ops/tasks` 등 prefix 분리 또는 기존 파일 rename 검토 |
 | **Visibility 확장** | reflections의 `mentor_visible`/`team_visible` 신규 단계는 기존 enum과 충돌 가능 | Wave 5 진입 전 V1 정책 합의. enum은 객체별 독립 유지 권장 (전역 통합 금지) |

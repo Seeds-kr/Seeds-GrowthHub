@@ -20,7 +20,7 @@ Seeds GrowthHub 작업을 이어받는다. 이전 세션이 설계 문서 세트
 2. docs/design/00-target-state.md   완성 형상. 전경이 잡힌다.
 3. docs/visibility-policy.md        가시성 정책. 누가 무엇을 보는가의 단일 진실.
 4. docs/design/README.md            ADR 8건 + Wave 계획 + 회귀 금지선.
-5. replit.md                        런타임·스키마 구현 노트.
+5. README.md                        런타임·스키마 구현 노트.
 
 세부 명세가 필요할 때만 docs/design/01~05 를 펼친다.
 docs/baseline/ 11종은 Seeds가 준 원본 기준본이다 — 설계 근거를 따질 때만 본다.

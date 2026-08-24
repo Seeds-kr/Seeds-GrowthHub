@@ -250,6 +250,10 @@ export function requireOpsRole(code: OpsRole): RequestHandler {
 - [x] `mentor`/`student`는 `ops_roles`가 무엇이든 admin 라우트에서 403을 받는다.
       → 멘토 403 · 학생 403.
 - [ ] 마이그레이션 후 기존 관리자 전원이 이전과 동일하게 동작한다 (회귀 0).
+      → **일회성 이행 확인이라 지금은 재현할 수 없다.** 그 마이그레이션은 이미 지났고,
+      현재 활성 어드민은 `admin@seeds.local`(`program_lead`) 하나뿐이라 "전원" 을 볼
+      모집단 자체가 없다. 매일 도는 검증 33/33 이 그 계정으로 통과하는 것이 지금
+      확인 가능한 전부다. 실기수에서 어드민이 여럿 생기면 그때 다시 본다.
 - [x] 마지막 `program_lead` 제거 시도가 409로 거부된다.
       → 2026-08-24 실측. 409 + "마지막 총괄(program_lead) 권한은 해제할 수 없습니다".
 - [x] 배정받은 멘토가 `/evaluator/*`에서 평가를 계속 수행할 수 있다 (`recruiting` 없이도).
