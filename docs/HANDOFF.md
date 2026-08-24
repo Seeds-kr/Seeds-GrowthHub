@@ -392,6 +392,6 @@ W6 구현 후 5개 독립 렌즈로 감사를 돌렸더니 **6건이 나왔고 �
 
 이 세션의 작업은 브랜치 하나로 올라간다. 상세는 커밋 메시지 참조.
 
-포함: `docs/` 전체(baseline 11종 + design 6종 + visibility-policy + 이 문서), `lib/db` 스키마 9종 신규 + 4종 확장, `lib/api-spec`·생성 코드, `artifacts/api-server` 라우트·lib, `artifacts/seeds` 화면·컴포넌트, `replit.md`.
+포함: `docs/` 전체(baseline 11종 + design 6종 + visibility-policy + 이 문서), `lib/db` 스키마 9종 신규 + 4종 확장, `lib/api-spec`·생성 코드, `artifacts/api-server` 라우트·lib, `artifacts/seeds` 화면·컴포넌트, `README.md`.
 
 제외: `attached_assets` (§5.3).

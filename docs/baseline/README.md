@@ -128,7 +128,7 @@ users.role (primary) + users.extra_roles[] → effective roles
 | [`../gap-register.md`](../gap-register.md) | 현재 구현 ↔ 이 baseline 대조 감사, Gap 목록 |
 | [`../visibility-policy.md`](../visibility-policy.md) | 가시성 정책 표준 — 누가 무엇을 보는가의 단일 진실 |
 | [`../design/`](../design/) | **세부 설계.** 스키마·API·수용 기준까지의 구현 명세 |
-| [`../../replit.md`](../../replit.md) | 런타임/스키마 등 구현 노트 |
+| [`../../README.md`](../../README.md) | 런타임/스키마 등 구현 노트 |
 
 **관계**
 

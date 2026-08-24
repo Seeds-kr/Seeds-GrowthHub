@@ -257,16 +257,17 @@ export const communicationLogsTable = pgTable("communication_logs", {
 - [x] `system` 기능 역할이 없는 admin이 `/admin/audit-logs`에서 403을 받는다.
       → `finance` 만 가진 계정으로 403.
 - [x] 존재하지 않는 `linked_object_id`로 링크/첨부 생성 시 422를 받는다. → 422.
-- [ ] 삭제된 대상을 참조하는 링크 조회 시 500이 아니라 대상 없음 표시로 처리된다.
+- [x] 삭제된 대상을 참조하는 링크 조회 시 500이 아니라 대상 없음 표시로 처리된다.
+      → 2026-08-24 실측. 회의록에 링크를 걸고 그 회의록을 지운 뒤 조회 → **200**,
+      링크 행이 그대로 나온다. 전체 목록도 200.
 - [x] `attachments` 파일이 비인증으로 열리지 않는다 (404).
       → 그 경로는 **없어졌다**(ADR-017). 지금 무인증으로 열리는 곳은 프로필 사진
       전용 `GET /api/uploads/public/*` 뿐이고, 본문 이미지가 있는 비공개 영역
       (`/api/uploads/2026/...`)은 404 를 돌려준다.
-- [ ] 회계 증빙 attachment가 `finance` 기능 역할 없이 다운로드되지 않는다.
-      → **코드로만 확인.** `attachments.ts` 의 다운로드 라우트가
-      `linkedObjectType === "finance_record" && !hasOpsRole(user, "finance")` 를
-      403 으로 막는다. 다만 지금 DB 에 영수증 첨부가 **0건**이라 실호출로는 재현하지
-      못했다. 실데이터가 생기면 그때 확인한다.
+- [x] 회계 증빙 attachment가 `finance` 기능 역할 없이 다운로드되지 않는다.
+      → 2026-08-24 실측. 회계 행에 영수증을 붙이고 `recruiting` 만 가진 임시 어드민으로
+      받아 보니 **403**, `program_lead` 는 200. 확인 뒤 첨부와 계정을 정리했다.
+      등록할 때 가시성은 클라이언트가 뭘 보내든 `admin_only` 로 강제된다.
 - [x] 프로필 사진이 무인증으로 서빙되고 공개 `/people` 목록에 뜬다.
 - [x] `communication_logs`에 본문 컬럼이 없다.
       → 컬럼 14개 중 본문에 해당하는 것 없음(`subject` 는 제목이다).
