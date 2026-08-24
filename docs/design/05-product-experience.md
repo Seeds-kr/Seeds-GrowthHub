@@ -443,7 +443,9 @@ C 섹션의 진입 버튼(문서 `편집`, 회의록 `편집`)은 `lg` 미만에
 > `SEEDS_DISCORD_WEBHOOK_URL` 과 `CRON_SECRET` 은 `~/.secrets/seeds-preview.env`
 > (600, git 미추적)에 있다. 채널을 나누려면 `SEEDS_DISCORD_OPS_WEBHOOK_URL` /
 > `_MENTOR_` 를 넣으면 되고 그쪽이 먼저 적용된다.
-- [ ] 학생 개인에게 가는 알림이 **없다**.
+- [x] 학생 개인에게 가는 알림이 **없다**.
+      → 2026-08-24 실측. `notifyDiscord` 호출부 2곳 모두 채널 대상이고,
+      `/student/notifications` 는 404(그런 경로가 없다).
 - [x] A 등급 화면이 375px에서 가로 스크롤 없이 읽힌다.
       → **브라우저 실측 완료** (Playwright Chromium, 2026-08-03).
       공개 6개(`/`·`/about`·`/program`·`/people`·`/recruit`·`/faq`)와

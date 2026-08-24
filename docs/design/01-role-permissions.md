@@ -239,15 +239,27 @@ export function requireOpsRole(code: OpsRole): RequestHandler {
 
 ## 5. 수용 기준
 
-- [ ] `finance` 기능 역할만 가진 admin이 `/admin/finance`에 접근 가능하다.
-- [ ] 같은 사용자가 `GET /admin/applications`에 **403**을 받는다.
-- [ ] `program_lead`는 모든 admin 라우트에 접근 가능하다.
-- [ ] `mentor`/`student`는 `ops_roles`가 무엇이든 admin 라우트에서 403을 받는다 (`getOpsRoles`가 빈 배열 반환).
+2026-08-24 실측. `finance` 기능 역할만 가진 임시 계정을 만들어 확인한 뒤 비활성화했다.
+
+- [x] `finance` 기능 역할만 가진 admin이 `/admin/finance`에 접근 가능하다.
+      → `GET /admin/finance-records` **200**. (경로는 `/admin/finance` 가 아니라
+      `/admin/finance-records` 다 — 문서의 옛 표기를 그대로 믿으면 404 를 본다.)
+- [x] 같은 사용자가 `GET /admin/applications`에 **403**을 받는다. → 403
+- [x] `program_lead`는 모든 admin 라우트에 접근 가능하다.
+      → applications · students · finance-records · audit-logs · people 전부 200.
+- [x] `mentor`/`student`는 `ops_roles`가 무엇이든 admin 라우트에서 403을 받는다.
+      → 멘토 403 · 학생 403.
 - [ ] 마이그레이션 후 기존 관리자 전원이 이전과 동일하게 동작한다 (회귀 0).
-- [ ] 마지막 `program_lead` 제거 시도가 409로 거부된다.
-- [ ] 배정받은 멘토가 `/evaluator/*`에서 평가를 계속 수행할 수 있다 (`recruiting` 없이도).
-- [ ] 구 세션 토큰(`opsRoles` 없음)으로 요청 시 500이 아니라 정상 폴백된다.
-- [ ] `pnpm --filter @workspace/db run push` 및 typecheck 통과.
+- [x] 마지막 `program_lead` 제거 시도가 409로 거부된다.
+      → 2026-08-24 실측. 409 + "마지막 총괄(program_lead) 권한은 해제할 수 없습니다".
+- [x] 배정받은 멘토가 `/evaluator/*`에서 평가를 계속 수행할 수 있다 (`recruiting` 없이도).
+      → 스토리 E1~E4 가 매 검증에서 통과한다(멘토 계정으로 배정 조회·평가 작성·
+      배정 밖 404). 라우트는 `/evaluator/assignments` 다 — `/evaluator/applications`
+      가 아니다.
+- [x] 구 세션 토큰(`opsRoles` 없음)으로 요청 시 500이 아니라 정상 폴백된다.
+      → `GET /admin/me` 가 `opsRoles: ["program_lead"]` 를 정상 반환.
+- [x] typecheck 통과. → `artifacts/api-server`·`artifacts/seeds` 양쪽 `tsc --noEmit` 0건.
+      스키마는 `db push` 가 아니라 **마이그레이션 파일**로 관리한다(infrastructure.md).
 
 ## 6. 비목표
 
