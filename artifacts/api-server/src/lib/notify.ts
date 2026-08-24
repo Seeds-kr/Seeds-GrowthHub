@@ -90,7 +90,37 @@ async function record(
  * Fire-and-forget. Resolves false when nothing was sent (no webhook
  * configured, or the request failed) — callers should ignore the result.
  */
+/**
+ * 끄고 싶은 알림을 templateId 로 나열한다. 쉼표로 구분.
+ *
+ *   SEEDS_NOTIFY_DISABLED=team_support,weekly_mentor_nudge
+ *
+ * 웹훅을 통째로 빼는 것과 다르다 — **하나만** 시끄러울 때 그것만 끈다. 알림은
+ * 켜는 것보다 끄는 게 급한 쪽이라(시끄러우면 사람들이 채널을 음소거해 버리고
+ * 그러면 중요한 것도 같이 묻힌다) 코드 배포 없이 되돌릴 수 있어야 한다.
+ *
+ * 끈 것도 `communication_logs` 에 남긴다 — 안 보내기로 한 것과 보내려다 실패한
+ * 것은 다른 사건이고, 나중에 "왜 안 왔지" 를 답할 수 있어야 한다.
+ */
+function isDisabled(templateId: string): boolean {
+  const raw = process.env.SEEDS_NOTIFY_DISABLED?.trim();
+  if (!raw) return false;
+  return raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .includes(templateId);
+}
+
 export async function notifyDiscord(input: NotifyInput): Promise<boolean> {
+  if (isDisabled(input.templateId)) {
+    await record(input, "failed", "disabled by SEEDS_NOTIFY_DISABLED");
+    logger.info(
+      { templateId: input.templateId },
+      "notification disabled by config — not sent",
+    );
+    return false;
+  }
   const url = webhookUrlFor(input.channel);
   if (!url) {
     logger.debug(

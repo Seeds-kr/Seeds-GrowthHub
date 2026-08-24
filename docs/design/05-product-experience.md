@@ -418,11 +418,15 @@ C 섹션의 진입 버튼(문서 `편집`, 회의록 `편집`)은 `lg` 미만에
       이 기준은 검증되지 않은 채로 둔다 — 빈 것을 보고 통과로 적으면 거짓이 된다.
 - [x] `decisionsMd`가 유지되어 결정사항 추출 쿼리가 회귀 없이 동작한다.
       → `meetings.decisions_md` 컬럼 존치 확인.
-- [ ] 멘토가 `needsOpsSupport` 상태체크를 올리면 운영진 Discord 채널에 즉시 뜬다.
-      → **구현돼 있지 않다.** `notifyDiscord` 호출부는 `internal-cron.ts` 의 정기
-      다이제스트 두 곳뿐이고, 상태체크를 저장하는 라우트에는 없다. 그 건수는
-      **다음 날 09:00 요약에 개수로만** 들어간다. 즉시 알림이 필요하면 따로 만들어야
-      한다 — 웹훅을 넣어도 오지 않는다.
+- [x] 멘토가 `needsOpsSupport` 상태체크를 올리면 운영진 Discord 채널에 즉시 뜬다.
+      → 2026-08-24 실측. 멘토로 `needsOpsSupport:true` 를 올리니 곧바로
+      `🔴 팀 지원 요청 · Team Beta` 가 나갔고 `communication_logs` 에
+      `team_support | sent` 로 남았다. 페이로드는 **프로젝트 제목과 링크뿐** —
+      블로커 원문은 넣지 않는다.
+      >
+      > **정정.** 2026-08-24 앞선 조사에서 이 항목을 "구현돼 있지 않다" 고 적고
+      > 그대로 머지했다. 틀렸다. `notifyDiscord(` 로만 찾아서 `mentor-teams.ts` 의
+      > `notifySafely(` 래퍼를 놓쳤다. **호출부를 셀 때는 래퍼까지 따라가야 한다.**
 - [x] Discord 페이로드에 학생 이름·평가·회고·블로커 원문이 **없다**.
       → 2026-08-20 실측. 실제로 나가는 JSON 을 받아서 확인했다.
       ```json
@@ -439,6 +443,13 @@ C 섹션의 진입 버튼(문서 `편집`, 회의록 `편집`)은 `lg` 미만에
       **실패 행은 `sent_at` 이 `null`** 이므로 `sent_at` 으로 거르면 안 보인다 —
       처음에 그렇게 조회해서 "기록이 안 된다" 고 오판했다. 조회는 `created_at` 으로.
 
+> **끄는 법.** `SEEDS_NOTIFY_DISABLED` 에 templateId 를 쉼표로 나열하면 그 알림만
+> 나가지 않는다(`daily_digest` · `weekly_mentor_nudge` · `team_support`). 웹훅을
+> 통째로 빼는 것과 다르다 — 하나만 시끄러울 때 그것만 끈다. 시끄러우면 사람들이
+> 채널을 음소거해 버리고 그러면 중요한 것도 같이 묻히므로, 되돌리기가 코드 배포보다
+> 가벼워야 한다. 끈 것도 `communication_logs` 에 사유와 함께 남는다 — "안 보내기로
+> 한 것" 과 "보내려다 실패한 것" 은 다른 사건이다.
+>
 > **설정 완료(2026-08-20).** 운영·멘토 채널을 나누지 않고 공용 웹훅 하나로 받는다.
 > `SEEDS_DISCORD_WEBHOOK_URL` 과 `CRON_SECRET` 은 `~/.secrets/seeds-preview.env`
 > (600, git 미추적)에 있다. 채널을 나누려면 `SEEDS_DISCORD_OPS_WEBHOOK_URL` /
