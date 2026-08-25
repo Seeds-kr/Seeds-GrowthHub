@@ -9,6 +9,8 @@ import { RoleSwitcher, effectiveRoles, pickRedirectFor } from "./RoleSwitcher";
 import { MobileNav } from "./MobileNav";
 import { BrandMark } from "@/components/BrandMark";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { motion, useReducedMotion } from "framer-motion";
+import { isActive } from "./nav-active";
 
 /** 데스크톱 헤더와 모바일 드로어가 같은 목록을 쓴다. */
 const MENTOR_NAV = [
@@ -26,7 +28,8 @@ const MENTOR_NAV = [
 // 쪽에는 돌아올 길을 따로 만들었다(EvaluatorLayout · PublicLayout).
 
 export function MentorLayout({ children }: { children: ReactNode }) {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
+  const reduce = useReducedMotion();
   const queryClient = useQueryClient();
   const { data: me, isLoading, isError } = useAdminMe({
     query: { retry: false, queryKey: getAdminMeQueryKey() },
@@ -74,15 +77,30 @@ export function MentorLayout({ children }: { children: ReactNode }) {
                 스위처+이메일+로그아웃이 한 줄에 안 들어가 헤더가 두 줄이 된다.
                 실측 필요 폭이 ~1100px 이라 그 사이는 MobileNav 가 맡는다. */}
             <nav className="hidden lg:flex items-center gap-6">
-              {MENTOR_NAV.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="text-sm font-medium text-muted-foreground hover:text-primary"
-                >
-                  {item.label}
-                </Link>
-              ))}
+              {MENTOR_NAV.map((item) => {
+                const on = isActive(location, item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    aria-current={on ? "page" : undefined}
+                    className={`relative py-1 text-sm font-medium transition-colors ${
+                      on ? "text-primary" : "text-muted-foreground hover:text-primary"
+                    }`}
+                  >
+                    {item.label}
+                    {/* 현재 항목의 밑줄이 항목 사이를 미끄러진다 — 공개 화면과 같은
+                        방식이다. 어디에서 어디로 옮겨왔는지가 보인다. */}
+                    {on ? (
+                      <motion.span
+                        layoutId="mentor-nav-underline"
+                        className="absolute -bottom-0.5 left-0 right-0 h-0.5 rounded-full bg-primary"
+                        transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                      />
+                    ) : null}
+                  </Link>
+                );
+              })}
             </nav>
           </div>
           <div className="flex items-center gap-4">
@@ -124,7 +142,15 @@ export function MentorLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
       </header>
-      <main className="flex-1 container mx-auto px-4 py-8">{children}</main>
+      <motion.main
+        key={location}
+        className="flex-1 container mx-auto px-4 py-8"
+        initial={reduce ? false : { opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+      >
+        {children}
+      </motion.main>
     </div>
   );
 }

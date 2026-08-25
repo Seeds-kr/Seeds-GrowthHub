@@ -8,9 +8,12 @@ import { Loader2 } from "lucide-react";
 import { RoleSwitcher, effectiveRoles, pickRedirectFor } from "./RoleSwitcher";
 import { BrandMark } from "@/components/BrandMark";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { motion, useReducedMotion } from "framer-motion";
+import { isActive } from "./nav-active";
 
 export function EvaluatorLayout({ children }: { children: ReactNode }) {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
+  const reduce = useReducedMotion();
   const queryClient = useQueryClient();
   const { data: me, isLoading, isError } = useAdminMe({
     query: { retry: false, queryKey: getAdminMeQueryKey() },
@@ -62,7 +65,20 @@ export function EvaluatorLayout({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-8">
             <Link href="/evaluator" className="flex items-center gap-2 font-serif text-lg font-bold text-primary"><BrandMark size={24} />Seeds 평가</Link>
             <nav className="hidden md:flex items-center gap-6">
-              <Link href="/evaluator" className="text-sm font-medium text-muted-foreground hover:text-primary">내 배정 목록</Link>
+              {/* 메뉴가 하나뿐이라 미끄러지는 밑줄은 의미가 없다(옮겨갈 자리가
+                  없다). 대신 지금 그 화면이라는 것만 표시한다. 아래 두 링크는
+                  이 표면을 **나가는** 것이라 활성 대상이 아니다. */}
+              <Link
+                href="/evaluator"
+                aria-current={isActive(location, "/evaluator") ? "page" : undefined}
+                className={`text-sm font-medium transition-colors ${
+                  isActive(location, "/evaluator")
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-primary"
+                }`}
+              >
+                내 배정 목록
+              </Link>
               {/* 평가는 역할이 아니라 배정 기반 표면이라(설계 00 §3.5) 여기 온
                   사람은 원래 멘토이거나 운영진이다. 그런데 이 헤더에는 원래
                   자리로 돌아갈 링크가 없어서, 멘토가 대시보드 카드로 들어오면
@@ -90,7 +106,15 @@ export function EvaluatorLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
       </header>
-      <main className="flex-1 container mx-auto px-4 py-8">{children}</main>
+      <motion.main
+        key={location}
+        className="flex-1 container mx-auto px-4 py-8"
+        initial={reduce ? false : { opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+      >
+        {children}
+      </motion.main>
     </div>
   );
 }
