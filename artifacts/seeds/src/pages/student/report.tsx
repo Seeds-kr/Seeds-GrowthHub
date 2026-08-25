@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { ResourceMissing } from "@/components/ResourceMissing";
+import { submissionStatusLabels } from "@/lib/seeds-labels";
 
 export default function StudentReportPage() {
   const { data, isLoading } = useQuery({
@@ -59,7 +60,7 @@ export default function StudentReportPage() {
             : data.submissions.map((s) => (
               <div key={s.id} className="flex justify-between border-b border-border py-1">
                 <span>{s.title}</span>
-                <span><Badge variant="outline" className="">{s.status}</Badge></span>
+                <span><Badge variant="outline" className="font-normal">{submissionStatusLabels[s.status] ?? s.status}</Badge></span>
               </div>
             ))}
           </CardContent>

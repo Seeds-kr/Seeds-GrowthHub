@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import { format } from "date-fns";
 import { EmptyState } from "@/components/EmptyState";
+import { taskStatusLabels, submissionStatusLabels } from "@/lib/seeds-labels";
 
 type Item = {
   id: number; title: string; description: string | null; dueAt: string | null; status: string;
@@ -37,8 +38,29 @@ export default function StudentAssignments() {
                   {a.title}
                 </TableCell>
                 <TableCell>{a.dueAt ? format(new Date(a.dueAt), "yyyy-MM-dd HH:mm") : "-"}</TableCell>
-                <TableCell><Badge className="">{a.status}</Badge></TableCell>
-                <TableCell>{a.mySubmission ? <Badge className="">{a.mySubmission.status}</Badge> : <Badge variant="outline" className="">미제출</Badge>}</TableCell>
+                {/* 학생에게 오는 값은 published·closed 둘뿐이다(서버가 그렇게
+                    거른다). 마감됐는지는 학생에게 의미가 있으므로 남긴다.
+                    다만 진행 중인 것은 조용히, 마감된 것만 눈에 띄게 한다 —
+                    전부 같은 배지면 아무것도 두드러지지 않는다. */}
+                <TableCell>
+                  <Badge
+                    variant={a.status === "closed" ? "outline" : "secondary"}
+                    className="font-normal"
+                  >
+                    {taskStatusLabels[a.status] ?? a.status}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  {a.mySubmission ? (
+                    <Badge className="font-normal">
+                      {submissionStatusLabels[a.mySubmission.status] ?? a.mySubmission.status}
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="font-normal text-destructive border-destructive/40">
+                      미제출
+                    </Badge>
+                  )}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

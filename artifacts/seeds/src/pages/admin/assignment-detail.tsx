@@ -10,6 +10,7 @@ import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 import { ResourceMissing } from "@/components/ResourceMissing";
+import { submissionStatusLabels } from "@/lib/seeds-labels";
 
 type Detail = {
   assignment: { id: number; title: string; description: string | null; dueAt: string | null; status: string; cohortId: number; programId: number | null };
@@ -65,7 +66,7 @@ export default function AdminAssignmentDetail() {
           {data.submissions.map((sub) => (
             <Card key={sub.id} className="">
               <CardHeader className="flex flex-row items-center justify-between"><CardTitle className="text-base">{sub.studentName}</CardTitle>
-                <div><Badge className="mr-2">{sub.status}</Badge>{sub.submittedAt ? format(new Date(sub.submittedAt), "yyyy-MM-dd HH:mm") : "-"}</div>
+                <div><Badge className="mr-2 font-normal">{submissionStatusLabels[sub.status] ?? sub.status}</Badge>{sub.submittedAt ? format(new Date(sub.submittedAt), "yyyy-MM-dd HH:mm") : "-"}</div>
               </CardHeader>
               <CardContent className="space-y-3">
                 {sub.content && <div className="whitespace-pre-wrap text-sm border p-3 bg-muted/20">{sub.content}</div>}

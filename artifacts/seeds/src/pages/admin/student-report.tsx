@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { ResourceMissing } from "@/components/ResourceMissing";
+import { submissionStatusLabels } from "@/lib/seeds-labels";
 
 export default function AdminStudentReport() {
   const [, params] = useRoute("/admin/students/:id/report");
@@ -74,7 +75,7 @@ export default function AdminStudentReport() {
             : data.submissions.map((s) => (
               <div key={s.id} className="flex justify-between border-b border-border py-1">
                 <span>{s.title}</span>
-                <span><Badge variant="outline" className="">{s.status}</Badge> {s.submittedAt ? format(new Date(s.submittedAt), "MM-dd HH:mm") : ""}</span>
+                <span><Badge variant="outline" className="font-normal">{submissionStatusLabels[s.status] ?? s.status}</Badge> {s.submittedAt ? format(new Date(s.submittedAt), "MM-dd HH:mm") : ""}</span>
               </div>
             ))}
           </CardContent>
