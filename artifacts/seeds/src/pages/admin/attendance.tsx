@@ -70,7 +70,7 @@ export default function AdminAttendancePage() {
       <div className="mb-6">
         <h1 className="text-3xl font-serif font-bold flex items-center gap-2">
           <ClipboardList className="w-7 h-7 text-primary" />
-          출석(Attendance)
+          출석 집계
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
           기수 단위 집계입니다. 출석 입력은 모임 상세 화면에서 합니다.

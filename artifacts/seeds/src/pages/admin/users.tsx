@@ -222,7 +222,7 @@ export default function AdminUsers() {
           <div>
             <h1 className="flex items-center gap-2 text-2xl font-bold">
               <UserCog className="h-6 w-6 text-primary" />
-              사용자(Users)
+              사용자
             </h1>
             <p className="text-sm text-muted-foreground">
               플랫폼 계정 단위 사용자 목록 — 기본 역할, 추가 역할(extra_roles), 활성 상태를 한눈에 확인합니다.

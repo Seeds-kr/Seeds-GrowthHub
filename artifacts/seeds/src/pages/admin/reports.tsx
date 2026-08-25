@@ -40,7 +40,7 @@ export default function AdminReportsPage() {
       <div className="mb-6">
         <h1 className="text-3xl font-serif font-bold flex items-center gap-2">
           <BarChart3 className="w-7 h-7 text-primary" />
-          리포트(Reports)
+          리포트
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
           학생 활동 리포트와 기수 요약으로 가는 입구입니다.

@@ -284,7 +284,7 @@ export default function AdminStudies() {
           <div>
             <h1 className="flex items-center gap-2 text-2xl font-bold">
               <BookOpen className="h-6 w-6 text-primary" />
-              스터디(Studies)
+              스터디
             </h1>
             <p className="text-sm text-muted-foreground">
               학생 주도 스터디입니다. 기수 내 공개이며 별도 공개범위 설정이 없습니다 —
