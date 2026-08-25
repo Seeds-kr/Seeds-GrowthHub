@@ -250,12 +250,22 @@ router.get("/admin/applications", requireRecruiting, async (req, res) => {
   }
   const where = filters.length > 0 ? and(...filters) : undefined;
 
+  // 상한선이 있다는 사실을 응답에 담는다. 전에는 500 에서 조용히 잘렸고
+  // 화면은 그걸 모른 채 "전체 N건" 이라고 말했다 — 501번째 지원서부터는
+  // 사라지는데 아무 표시가 없었다. 잘린 것을 모르는 것이 잘리는 것보다 나쁘다.
+  const LIST_CAP = 500;
+
+  const [{ total }] = await db
+    .select({ total: sql<number>`count(*)::int` })
+    .from(applicationsTable)
+    .where(where);
+
   const apps = await db
     .select()
     .from(applicationsTable)
     .where(where)
     .orderBy(desc(applicationsTable.submittedAt))
-    .limit(500);
+    .limit(LIST_CAP);
 
   const ids = apps.map((a) => a.id);
   const docStage = "document_review" as const;
@@ -357,7 +367,9 @@ router.get("/admin/applications", requireRecruiting, async (req, res) => {
     items = items.filter((i) => i.interviewStatus === req.query.interviewStatus);
   }
 
-  res.json({ items, total: items.length });
+  // `total` 은 조건에 맞는 **전체** 개수다. `items` 는 상한선까지만 담긴다.
+  // 둘이 다르면 화면이 "N건 중 M건 표시" 라고 말할 수 있다.
+  res.json({ items, total, cap: LIST_CAP, truncated: total > items.length });
 });
 
 async function loadApplicationDetail(id: number) {

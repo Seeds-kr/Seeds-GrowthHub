@@ -215,7 +215,12 @@ export interface ApplicationListItem {
 
 export interface ApplicationList {
   items: ApplicationListItem[];
+  /** 조건에 맞는 전체 개수. `items` 는 `cap` 까지만 담긴다. */
   total: number;
+  /** 한 번에 돌려주는 최대 개수. */
+  cap?: number;
+  /** 전체가 상한선을 넘어 잘렸는가. 화면이 그 사실을 알려야 한다. */
+  truncated?: boolean;
 }
 
 export interface ApplicationStageCount {
