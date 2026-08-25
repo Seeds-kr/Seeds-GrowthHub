@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { toast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { AttendanceGrid } from "@/components/session/AttendanceGrid";
+import { DOC_TYPE_LABEL } from "@/lib/documents-api";
 
 type DocItem = { id: number; title: string; docType: string; isTemplate: boolean; archivedAt: string | null };
 type UserLite = { id: number; name: string; email: string };
@@ -145,7 +146,7 @@ export default function AdminSessionDetail() {
                 <div>
                   <Link href={`/admin/documents/${data.checklist.id}`} className="font-medium hover:underline">{data.checklist.title}</Link>
                   {data.checklist.archivedAt && <Badge variant="outline" className="ml-2 bg-amber-50 text-amber-700 border-amber-200">보관됨</Badge>}
-                  <div className="text-xs text-muted-foreground mt-1">유형: {data.checklist.docType}</div>
+                  <div className="text-xs text-muted-foreground mt-1">유형: {DOC_TYPE_LABEL[data.checklist.docType as keyof typeof DOC_TYPE_LABEL] ?? data.checklist.docType}</div>
                 </div>
                 <Button variant="outline" size="sm" onClick={() => patch.mutate({ checklistDocumentId: null })}>연결 해제</Button>
               </div>
