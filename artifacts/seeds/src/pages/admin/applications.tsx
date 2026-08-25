@@ -79,7 +79,15 @@ export default function AdminApplications() {
             {!isLoading && data ? (
               <p className="mt-2 text-sm text-muted-foreground" data-testid="text-result-count">
                 {debouncedQ || status !== "all" ? "조건에 맞는 지원서 " : "전체 "}
-                <strong className="text-foreground">{data.items.length}</strong>건
+                <strong className="text-foreground">{data.total}</strong>건
+                {/* 서버가 상한선까지만 돌려준다. 그 사실을 말하지 않으면 화면은
+                    "전체 500건" 이라고 자신 있게 거짓말한다 — 501번째부터는
+                    사라지는데 아무도 모른다. */}
+                {data.truncated ? (
+                  <span className="ml-1 text-amber-700 dark:text-amber-400">
+                    (최근 {data.items.length}건만 표시 — 검색이나 단계 필터로 좁혀 주세요)
+                  </span>
+                ) : null}
               </p>
             ) : null}
           </div>
