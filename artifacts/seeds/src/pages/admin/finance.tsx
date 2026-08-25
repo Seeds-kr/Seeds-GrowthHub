@@ -167,7 +167,7 @@ export default function AdminFinancePage() {
         <div>
           <h1 className="text-3xl font-serif font-bold flex items-center gap-2">
             <Wallet className="w-7 h-7 text-primary" />
-            재정(Finance)
+            재정
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             동아리 수입·지출·환급 기록과 승인/지급 흐름을 관리합니다. 운영진(admin) 전용.
@@ -189,8 +189,10 @@ export default function AdminFinancePage() {
             <div className="text-2xl font-bold mt-1">
               {summary.hooks.awaitingApproval}
             </div>
+              {/* 카드 부제는 "이 숫자가 무엇을 세는가" 를 말해야 한다. DB 값을
+                  그대로 적으면 그 값을 아는 사람에게만 뜻이 통한다. */}
             <div className="text-[11px] text-muted-foreground mt-1">
-              requested · under_review
+              요청됨 · 검토중
             </div>
           </div>
           <div className="border border-border rounded p-4">
@@ -199,7 +201,7 @@ export default function AdminFinancePage() {
               {summary.hooks.approvedUnpaid}
             </div>
             <div className="text-[11px] text-muted-foreground mt-1">
-              approved (paid 전)
+              승인됐지만 아직 지급 전
             </div>
           </div>
           <div className="border border-border rounded p-4">
@@ -208,7 +210,7 @@ export default function AdminFinancePage() {
               {summary.hooks.pendingReimbursements}
             </div>
             <div className="text-[11px] text-muted-foreground mt-1">
-              reimbursement · 검토 단계
+              환급 요청 중 검토 단계
             </div>
           </div>
         </div>

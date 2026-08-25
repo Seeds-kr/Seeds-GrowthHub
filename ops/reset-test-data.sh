@@ -12,7 +12,8 @@
 #
 # 지우는 것:
 #   - 테스트 픽스처 계정과 거기 딸린 것
-#     `smoke-*` `legacy-*` `mentor-z@` `student-z@` `mentor-kwangsun*` `mentor-test*` `*test*`
+#     `smoke-*` `legacy-*` `mentor-z@` `student-z@` `mentor-kwangsun*` `mentor-test*`
+#     `verify-*` `*test*`
 #     (`mentor-z` 는 지우는데 `student-z` 는 남기는 식으로 갈리지 않게 명시했다)
 #   - 주행이 만든 지원서(`story…@example.com`), 공지·과제·회고·상태체크·평가·팀 회의록
 #
@@ -39,6 +40,11 @@ SELECT '테스트 계정', count(*)::text FROM users
   WHERE (email ~ '^(smoke|legacy)-'           -- 스모크 테스트 픽스처
           OR email ~ '^(mentor|student)-z@'   -- 이전 세션의 픽스처
           OR email ~ '^mentor-(kwangsun|test)' -- 계정 생성 흐름 검증용
+          -- 수용 기준을 실호출로 확인하려고 만든 계정(2026-08-24~25). 역할
+          -- 분리·겸직·영수증 게이트는 전용 계정 없이는 확인할 수 없어서 만들고
+          -- 비활성화했는데, 사용자 삭제 라우트가 없어(감사 추적 때문) 목록에
+          -- 남는다. 실제 기수가 시작되면 혼란스러우므로 여기서 치운다.
+          OR email ~ '^verify-'
           OR email LIKE '%test%')
      AND email NOT IN (VALUES ${KEEP_SQL});
 SELECT '주행 지원서', count(*)::text FROM applications WHERE email LIKE 'story%@example.com';

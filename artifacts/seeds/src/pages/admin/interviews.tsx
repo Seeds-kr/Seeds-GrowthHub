@@ -91,7 +91,7 @@ export default function AdminInterviewsPage() {
       <div className="mb-6">
         <h1 className="text-3xl font-serif font-bold flex items-center gap-2">
           <Mic className="w-7 h-7 text-primary" />
-          면접(Interviews)
+          면접
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
           일정 전체 보기입니다. 결과 입력은 지원서 상세에서 합니다.
