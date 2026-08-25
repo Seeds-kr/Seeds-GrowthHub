@@ -16,12 +16,8 @@ import { RoleSwitcher, effectiveRoles, pickRedirectFor } from "./RoleSwitcher";
 import { visibleNavSections, type NavSection } from "@/lib/admin-nav";
 import { motion, useReducedMotion } from "framer-motion";
 import { BrandMark } from "@/components/BrandMark";
+import { isActive } from "./nav-active";
 import { ThemeToggle } from "@/components/ThemeToggle";
-
-function isActive(currentPath: string, href: string): boolean {
-  if (href === "/admin") return currentPath === "/admin";
-  return currentPath === href || currentPath.startsWith(href + "/");
-}
 
 function sectionHasActive(section: NavSection, currentPath: string): boolean {
   return section.items.some((item) => isActive(currentPath, item.href));
