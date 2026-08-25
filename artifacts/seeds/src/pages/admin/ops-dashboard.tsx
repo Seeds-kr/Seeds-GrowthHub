@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { api } from "@/lib/mvp3-api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DOC_TYPE_LABEL } from "@/lib/documents-api";
 import {
   AlertTriangle,
   Ban,
@@ -546,7 +547,7 @@ export default function AdminOpsDashboard() {
                           <div className="min-w-0 flex-1">
                             <p className="truncate font-medium">{d.title}</p>
                             <p className="text-xs text-muted-foreground">
-                              {d.docType} · {formatDate(d.updatedAt)}
+                              {DOC_TYPE_LABEL[d.docType as keyof typeof DOC_TYPE_LABEL] ?? d.docType} · {formatDate(d.updatedAt)}
                             </p>
                           </div>
                         </span>
@@ -576,7 +577,7 @@ export default function AdminOpsDashboard() {
                           <div className="min-w-0 flex-1">
                             <p className="truncate font-medium">{d.title}</p>
                             <p className="text-xs text-muted-foreground">
-                              {d.docType} · {daysSince(d.updatedAt)}일 전 수정
+                              {DOC_TYPE_LABEL[d.docType as keyof typeof DOC_TYPE_LABEL] ?? d.docType} · {daysSince(d.updatedAt)}일 전 수정
                             </p>
                           </div>
                         </span>

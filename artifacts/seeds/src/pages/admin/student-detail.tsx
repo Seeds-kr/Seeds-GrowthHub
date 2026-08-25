@@ -11,7 +11,7 @@ import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 import { Copy, Check, KeyRound } from "lucide-react";
 import { ResourceMissing } from "@/components/ResourceMissing";
-import { attendanceLabels } from "@/lib/seeds-labels";
+import { ATTENDANCE_STATUS_LABEL } from "@/lib/admin-labels";
 
 type Detail = {
   student: {
@@ -133,7 +133,7 @@ export default function AdminStudentDetail() {
       <Card className="mb-6"><CardHeader><CardTitle>출석 내역</CardTitle></CardHeader><CardContent>
         {data.attendance.length === 0 ? <div className="text-sm text-muted-foreground">출석 기록이 없습니다.</div>
         : <ul className="text-sm space-y-2">{data.attendance.map((a) => (
-            <li key={a.id} className="flex justify-between border-b pb-2"><span>{a.sessionTitle}</span><span><Badge className="mr-2 font-normal">{attendanceLabels[a.status] ?? a.status}</Badge>{format(new Date(a.scheduledAt), "yyyy-MM-dd HH:mm")}</span></li>
+            <li key={a.id} className="flex justify-between border-b pb-2"><span>{a.sessionTitle}</span><span><Badge className="mr-2 font-normal">{ATTENDANCE_STATUS_LABEL[a.status as keyof typeof ATTENDANCE_STATUS_LABEL] ?? a.status}</Badge>{format(new Date(a.scheduledAt), "yyyy-MM-dd HH:mm")}</span></li>
           ))}</ul>}
       </CardContent></Card>
 

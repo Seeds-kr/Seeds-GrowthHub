@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import { format } from "date-fns";
 import { EmptyState } from "@/components/EmptyState";
-import { taskStatusLabels, submissionStatusLabels } from "@/lib/seeds-labels";
+import { submissionStatusLabels } from "@/lib/seeds-labels";
+import { TASK_STATUS_LABEL } from "@/lib/admin-labels";
 
 type Item = {
   id: number; title: string; description: string | null; dueAt: string | null; status: string;
@@ -47,7 +48,7 @@ export default function StudentAssignments() {
                     variant={a.status === "closed" ? "outline" : "secondary"}
                     className="font-normal"
                   >
-                    {taskStatusLabels[a.status] ?? a.status}
+                    {TASK_STATUS_LABEL[a.status as keyof typeof TASK_STATUS_LABEL] ?? a.status}
                   </Badge>
                 </TableCell>
                 <TableCell>
