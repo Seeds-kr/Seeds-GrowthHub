@@ -44,6 +44,18 @@ export type OpsRoleCode =
   | "community"
   | "system";
 
+/**
+ * 사이드바 라벨은 **한국어만** 쓴다.
+ *
+ * 전에는 `발송 이력(Communications)` 처럼 영어를 괄호로 병기했다. 사이드바
+ * 내용 폭이 ~180px 인데 그렇게 하면 29~34자가 되어 잘린다 — 실제로
+ * `발송 이력(Communicatio...)` 과 `행사 / 모임(Events / Sess...)` 은 **읽을 수가
+ * 없었다**(2026-08-25 확인). 잘린 라벨은 없는 라벨과 같다.
+ *
+ * 영어를 뗀 근거: 문서도 이 화면들을 한국어로 부르고(`발송 이력`, `활동 기록`),
+ * 제품 화면 전체가 한국어다. 영어는 설계 문서에서 넘어온 흔적이지 사용자가
+ * 찾는 이름이 아니었다.
+ */
 export const OPS_ROLE_LABELS: Record<OpsRoleCode, string> = {
   program_lead: "총괄",
   ops: "운영",
@@ -119,11 +131,11 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
     title: "Core · 코어",
     key: "core",
     items: [
-      { href: "/admin/users", label: "사용자(Users)", icon: UserCog },
+      { href: "/admin/users", label: "사용자", icon: UserCog },
       { href: "/admin/people", label: "사람들 프로필", icon: UserSquare2 },
       { href: "/admin/roles", label: "역할 & 권한", icon: ShieldCheck },
-      { href: "/admin/cohorts", label: "기수(Cohorts)", icon: Users },
-      { href: "/admin/programs", label: "프로그램(Programs)", icon: FolderKanban },
+      { href: "/admin/cohorts", label: "기수", icon: Users },
+      { href: "/admin/programs", label: "프로그램", icon: FolderKanban },
       // W8 — `/admin/members` 제거. IA v2 트리에 Members 항목이 있으나, §7.2 매핑표는
       // `/admin/students`를 "Growth > Students 또는 Core > Members"로 적고 우선순위를
       // "위치 정리 필요"로 남겼다. 즉 요구는 신규 화면이 아니라 **중복 해소**였다.
@@ -136,26 +148,26 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
     title: "Ops · 운영",
     key: "ops",
     items: [
-      { href: "/admin/meetings", label: "회의(Meetings)", icon: CalendarCheck },
-      { href: "/admin/tasks", label: "작업(Tasks / Action Items)", icon: CheckSquare, badgeKey: "tasks" },
+      { href: "/admin/meetings", label: "회의", icon: CalendarCheck },
+      { href: "/admin/tasks", label: "작업", icon: CheckSquare, badgeKey: "tasks" },
       { href: "/admin/documents", label: "문서 & 템플릿", icon: FileStack },
-      { href: "/admin/applications", label: "모집(Recruitment)", icon: FileText, requiredOpsRole: "recruiting" },
+      { href: "/admin/applications", label: "모집", icon: FileText, requiredOpsRole: "recruiting" },
       // Read-wide on purpose: this page lists mentor ACCOUNTS, not applicants.
       // Its mutations (create/update user) are gated on `system`, and the
       // per-application assignment routes on `recruiting`.
-      { href: "/admin/evaluators", label: "평가 담당자(Evaluations)", icon: UserCheck },
-      { href: "/admin/interviews", label: "면접(Interviews)", icon: Mic, requiredOpsRole: "recruiting" },
-      { href: "/admin/sessions", label: "행사 / 모임(Events / Sessions)", icon: CalendarDays },
+      { href: "/admin/evaluators", label: "평가 담당자", icon: UserCheck },
+      { href: "/admin/interviews", label: "면접", icon: Mic, requiredOpsRole: "recruiting" },
+      { href: "/admin/sessions", label: "행사 / 모임", icon: CalendarDays },
       // "출석"이 아니라 "출석 집계"다. 출석 입력은 모임 상세 안으로 들어갔고,
       // 이 화면은 기수 단위 집계 — 특정 모임에 속하지 않는 질문("3기 출석률은
       // 어떤가")에 답한다. 이름이 그냥 "출석"이면 모임과 별개 기능처럼 읽혀서
       // 입력하러 여기 들어왔다가 되돌아 나가게 된다.
-      { href: "/admin/attendance", label: "출석 집계(Attendance)", icon: ClipboardList },
-      { href: "/admin/assignments", label: "과제(Assignments)", icon: ClipboardList },
-      { href: "/admin/announcements", label: "공지(Announcements)", icon: Megaphone },
+      { href: "/admin/attendance", label: "출석 집계", icon: ClipboardList },
+      { href: "/admin/assignments", label: "과제", icon: ClipboardList },
+      { href: "/admin/announcements", label: "공지", icon: Megaphone },
       // 공지 바로 아래. 무엇을 보냈는지 확인하는 자리라 보내는 화면 옆이 맞다.
-      { href: "/admin/communications", label: "발송 이력(Communications)", icon: Send, requiredAnyOpsRole: ["recruiting", "community"] },
-      { href: "/admin/finance", label: "재정(Finance)", icon: Wallet, requiredOpsRole: "finance", badgeKey: "finance" },
+      { href: "/admin/communications", label: "발송 이력", icon: Send, requiredAnyOpsRole: ["recruiting", "community"] },
+      { href: "/admin/finance", label: "재정", icon: Wallet, requiredOpsRole: "finance", badgeKey: "finance" },
       { href: "/admin/ops-dashboard", label: "운영 대시보드", icon: Gauge, badgeKey: "teamSupport" },
     ],
   },
@@ -163,15 +175,15 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
     title: "Growth · 성장",
     key: "growth",
     items: [
-      { href: "/admin/students", label: "학생(Students)", icon: GraduationCap },
-      { href: "/admin/projects", label: "프로젝트(Projects)", icon: FolderKanban },
-      { href: "/admin/studies", label: "스터디(Studies)", icon: BookOpen },
+      { href: "/admin/students", label: "학생", icon: GraduationCap },
+      { href: "/admin/projects", label: "프로젝트", icon: FolderKanban },
+      { href: "/admin/studies", label: "스터디", icon: BookOpen },
       { href: "/admin/team-status", label: "팀 상태 보드", icon: LayoutGrid },
-      { href: "/admin/activity-records", label: "활동 기록(Activity Records)", icon: Activity },
-      { href: "/admin/artifacts", label: "산출물(Artifacts)", icon: Package },
-      { href: "/admin/feedback", label: "피드백(Feedback)", icon: MessageSquare },
-      { href: "/admin/tags", label: "태그(Tags)", icon: Tags },
-      { href: "/admin/reports", label: "리포트(Reports)", icon: BarChart3 },
+      { href: "/admin/activity-records", label: "활동 기록", icon: Activity },
+      { href: "/admin/artifacts", label: "산출물", icon: Package },
+      { href: "/admin/feedback", label: "피드백", icon: MessageSquare },
+      { href: "/admin/tags", label: "태그", icon: Tags },
+      { href: "/admin/reports", label: "리포트", icon: BarChart3 },
     ],
   },
   {
@@ -199,7 +211,7 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
       // 링크 기반 연동의 실체는 `external_links`이고 화면은 `/admin/media`에 있다.
       {
         href: "/admin/audit-logs",
-        label: "감사 로그(Audit Logs)",
+        label: "감사 로그",
         icon: ScrollText,
         requiredOpsRole: "system",
       },

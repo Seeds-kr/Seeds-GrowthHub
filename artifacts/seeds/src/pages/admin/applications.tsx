@@ -72,7 +72,17 @@ export default function AdminApplications() {
   return (
     <>
       <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <h1 className="text-3xl font-serif font-bold">지원서 관리</h1>
+        <div>
+            <h1 className="text-3xl font-serif font-bold">지원서 관리</h1>
+            {/* 몇 건인지 없으면 검색·필터를 걸고도 "걸렸나 안 걸렸나" 를 표로
+                세어야 한다. 특히 좁혔을 때 0건과 로딩 중이 구분되지 않는다. */}
+            {!isLoading && data ? (
+              <p className="mt-2 text-sm text-muted-foreground" data-testid="text-result-count">
+                {debouncedQ || status !== "all" ? "조건에 맞는 지원서 " : "전체 "}
+                <strong className="text-foreground">{data.items.length}</strong>건
+              </p>
+            ) : null}
+          </div>
         <Button onClick={handleExport} variant="outline" className="">
           <Download className="w-4 h-4 mr-2" />
           CSV 내보내기
