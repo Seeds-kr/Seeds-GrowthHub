@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import {
   db,
@@ -89,28 +89,46 @@ router.get("/admin/activity-records", requireAdmin, async (req, res) => {
     filters.push(inArray(activityRecordsTable.id, taggedIds));
   }
 
-  const rows = await db
-    .select({
-      r: activityRecordsTable,
-      studentName: studentsTable.name,
-      cohortName: cohortsTable.name,
-      programName: programsTable.name,
-    })
-    .from(activityRecordsTable)
-    .leftJoin(studentsTable, eq(activityRecordsTable.studentId, studentsTable.id))
-    .leftJoin(cohortsTable, eq(activityRecordsTable.cohortId, cohortsTable.id))
-    .leftJoin(programsTable, eq(activityRecordsTable.programId, programsTable.id))
-    .where(filters.length ? and(...filters) : undefined)
-    .orderBy(desc(activityRecordsTable.activityDate));
-  res.json({
-    items: rows.map((row) => ({
-      ...toIso(row.r),
-      studentName: row.studentName,
-      cohortName: row.cohortName,
-      programName: row.programName,
-    })),
-    total: rows.length,
-  });
+    // 활동 기록은 **학생의 행동마다 한 줄씩** 쌓인다. 다른 목록(공지·과제·
+    // 사람들)은 운영진이 만드는 만큼만 늘어 한 기수에 수십~수백 건이지만,
+    // 여기는 학생 수 × 활동 수로 자란다 — 학생 1명 기준으로 이미 118건이었다.
+    // 실제 기수 서른 명이면 수천 건이 한 번에 내려간다.
+    //
+    // 상한을 두되 **잘렸다는 사실을 반드시 함께 보낸다.** 조용히 자르면 화면은
+    // 그걸 모른 채 "전체 N건" 이라고 말한다 — #53 에서 지원서가 그랬다.
+    const LIST_CAP = 500;
+    const where = filters.length ? and(...filters) : undefined;
+
+    const [{ total }] = await db
+      .select({ total: sql<number>`count(*)::int` })
+      .from(activityRecordsTable)
+      .where(where);
+
+    const rows = await db
+      .select({
+        r: activityRecordsTable,
+        studentName: studentsTable.name,
+        cohortName: cohortsTable.name,
+        programName: programsTable.name,
+      })
+      .from(activityRecordsTable)
+      .leftJoin(studentsTable, eq(activityRecordsTable.studentId, studentsTable.id))
+      .leftJoin(cohortsTable, eq(activityRecordsTable.cohortId, cohortsTable.id))
+      .leftJoin(programsTable, eq(activityRecordsTable.programId, programsTable.id))
+      .where(where)
+      .orderBy(desc(activityRecordsTable.activityDate))
+      .limit(LIST_CAP);
+    res.json({
+      items: rows.map((row) => ({
+        ...toIso(row.r),
+        studentName: row.studentName,
+        cohortName: row.cohortName,
+        programName: row.programName,
+      })),
+      total,
+      cap: LIST_CAP,
+      truncated: total > rows.length,
+    });
 });
 
 router.post("/admin/activity-records", requireAdmin, async (req, res) => {

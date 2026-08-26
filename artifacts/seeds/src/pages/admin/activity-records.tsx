@@ -33,7 +33,10 @@ export default function AdminActivityRecords() {
   const qs = new URLSearchParams(Object.entries(filters).filter(([, v]) => v) as [string, string][]).toString();
   const { data, isLoading } = useQuery({
     queryKey: ["admin-activity-records", filters],
-    queryFn: () => api<{ items: ActivityRecord[] }>(`/admin/activity-records${qs ? `?${qs}` : ""}`),
+    queryFn: () =>
+        api<{ items: ActivityRecord[]; total: number; truncated: boolean }>(
+          `/admin/activity-records${qs ? `?${qs}` : ""}`,
+        ),
   });
   const { data: students } = useQuery({ queryKey: ["admin-students"], queryFn: () => api<{ items: Student[] }>("/admin/students") });
   const { data: cohorts } = useQuery({ queryKey: ["admin-cohorts"], queryFn: () => api<{ items: Cohort[] }>("/admin/cohorts") });
@@ -66,7 +69,21 @@ export default function AdminActivityRecords() {
   return (
     <>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-3xl font-serif font-bold">활동 기록</h1>
+        <div>
+          <h1 className="text-3xl font-serif font-bold">활동 기록</h1>
+          {/* 활동 기록은 학생 수 × 활동 수로 자라는 유일한 목록이다. 서버가
+              상한까지만 주므로, 잘렸으면 그 사실과 좁히는 방법을 알린다. */}
+          {!isLoading && data ? (
+            <p className="mt-2 text-sm text-muted-foreground" data-testid="text-record-count">
+              전체 <strong className="text-foreground">{data.total}</strong>건
+              {data.truncated ? (
+                <span className="ml-1 text-amber-700 dark:text-amber-400">
+                  (최근 {data.items.length}건만 표시 — 위 필터로 좁혀 주세요)
+                </span>
+              ) : null}
+            </p>
+          ) : null}
+        </div>
         <Button onClick={openNew}>+ 새 기록</Button>
       </div>
 
