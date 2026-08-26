@@ -10,10 +10,12 @@ import { BrandMark } from "@/components/BrandMark";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { motion, useReducedMotion } from "framer-motion";
 import { isActive } from "./nav-active";
+import { useDocumentTitle } from "@/lib/document-title";
 
 export function EvaluatorLayout({ children }: { children: ReactNode }) {
   const [location, setLocation] = useLocation();
   const reduce = useReducedMotion();
+  useDocumentTitle("평가");
   const queryClient = useQueryClient();
   const { data: me, isLoading, isError } = useAdminMe({
     query: { retry: false, queryKey: getAdminMeQueryKey() },

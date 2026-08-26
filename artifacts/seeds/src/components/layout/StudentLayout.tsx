@@ -10,6 +10,7 @@ import { BrandMark } from "@/components/BrandMark";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { motion, useReducedMotion } from "framer-motion";
 import { isActive } from "./nav-active";
+import { useDocumentTitle } from "@/lib/document-title";
 
 /** 데스크톱 헤더와 모바일 드로어가 같은 목록을 쓴다 — 갈라지면 폰에서만
  *  빠지는 메뉴가 생긴다. */
@@ -33,6 +34,9 @@ const STUDENT_NAV = [
 export function StudentLayout({ children }: { children: ReactNode }) {
   const [location, setLocation] = useLocation();
   const reduce = useReducedMotion();
+  // 네비 라벨을 그대로 제목에 쓴다. 상세 화면처럼 네비에 없는 경로는
+  // 영역 이름으로 떨어진다 — "Seeds" 하나보다는 어디인지 알 수 있다.
+  useDocumentTitle(STUDENT_NAV.find((i) => isActive(location, i.href))?.label ?? "학생");
   const queryClient = useQueryClient();
   const { data: me, isLoading, isError } = useAdminMe({
     query: { retry: false, queryKey: getAdminMeQueryKey() },

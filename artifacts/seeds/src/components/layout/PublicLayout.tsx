@@ -7,6 +7,7 @@ import { Magnetic } from "@/lib/motion";
 import { BrandMark } from "@/components/BrandMark";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CursorGlow } from "@/components/CursorGlow";
+import { useDocumentTitle } from "@/lib/document-title";
 import { useAdminMe, getAdminMeQueryKey } from "@workspace/api-client-react";
 import { effectiveRoles, pickRedirectFor } from "./RoleSwitcher";
 
@@ -46,6 +47,9 @@ export function PublicLayout({ children }: { children: ReactNode }) {
     { label: "모집", href: "/recruit" },
     { label: "FAQ", href: "/faq" },
   ];
+
+  // 홈은 접미어만 남긴다 — "Seeds · Seeds" 가 되지 않게.
+  useDocumentTitle(navItems.find((i) => i.href === location)?.label ?? null);
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background text-foreground">

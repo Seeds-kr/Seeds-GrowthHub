@@ -13,10 +13,11 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { RoleSwitcher, effectiveRoles, pickRedirectFor } from "./RoleSwitcher";
-import { visibleNavSections, type NavSection } from "@/lib/admin-nav";
+import { ADMIN_NAV_SECTIONS, visibleNavSections, type NavSection } from "@/lib/admin-nav";
 import { motion, useReducedMotion } from "framer-motion";
 import { BrandMark } from "@/components/BrandMark";
 import { isActive } from "./nav-active";
+import { useDocumentTitle } from "@/lib/document-title";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 function sectionHasActive(section: NavSection, currentPath: string): boolean {
@@ -147,6 +148,13 @@ function SidebarContent({
 export function AdminLayout({ children }: { children: ReactNode }) {
   const [location, setLocation] = useLocation();
   const reduce = useReducedMotion();
+  // 사이드바 라벨을 그대로 제목에 쓴다. 섹션이 여럿이라 평탄화해서 찾는다.
+  // 상세 화면처럼 네비에 없는 경로는 "운영" 으로 떨어진다.
+  useDocumentTitle(
+    ADMIN_NAV_SECTIONS.flatMap((sec: NavSection) => sec.items).find((i) =>
+      isActive(location, i.href),
+    )?.label ?? "운영",
+  );
   const queryClient = useQueryClient();
   const { data: admin, isLoading, isError } = useAdminMe({
     query: { retry: false, queryKey: getAdminMeQueryKey() },
