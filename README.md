@@ -17,7 +17,7 @@ Scope:
 - **API contract**: OpenAPI 3.1 → orval React Query hooks + Zod (`lib/api-spec`, `lib/api-client-react`, `lib/api-zod`)
 - **Auth**: HMAC-signed session cookie (`seeds_admin`, no DB session table)
 
-`ops/../seeds-preview/router.mjs`(`127.0.0.1:8088`)가 `/api/*` 는 API 서버(`:8087`)로,
+`ops/router.mjs`(`127.0.0.1:8088`)가 `/api/*` 는 API 서버(`:8087`)로,
 나머지는 `artifacts/seeds/dist/public` 의 정적 파일로 보낸다. 공개 주소
 `seeds.harvester.kr` 는 Cloudflare 터널로만 나간다 — 서비스 포트는 전부 루프백이다.
 
