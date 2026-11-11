@@ -16,7 +16,13 @@ import { chromium } from "playwright";
  * Credentials come from the environment so this file carries none.
  */
 
-const BASE = (process.env.BASE_URL ?? "http://127.0.0.1:8088").replace(/\/$/, "");
+// 다른 두 스위트(stories·routes)와 ops/verify.sh 는 `E2E_BASE_URL` 을 쓴다.
+// 여기만 `BASE_URL` 을 읽어서, verify.sh 가 공개 주소를 정해 줘도 이 파일만
+// 늘 로컬 라우터로 갔다(2026-11-11 발견 — 라우터가 꺼진 곳에서 돌리면 연결
+// 거부로 죽었다). `E2E_BASE_URL` 을 먼저 보고, 옛 이름도 계속 받는다.
+const BASE = (
+  process.env.E2E_BASE_URL ?? process.env.BASE_URL ?? "http://127.0.0.1:8088"
+).replace(/\/$/, "");
 const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL ?? "";
 const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD ?? "";
 const STUDENT_EMAIL = process.env.E2E_STUDENT_EMAIL ?? "";
