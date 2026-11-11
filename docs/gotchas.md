@@ -25,7 +25,7 @@
 진입점은 **`ops/verify.sh`** 다. 그게 두 가지를 세팅한다.
 
 ```
-E2E_BASE_URL=https://seeds.harvester.kr      # 없으면 http://127.0.0.1:8088
+E2E_BASE_URL=http://localhost:8088           # 스크립트 기본값은 http://127.0.0.1:8088
 E2E_ADMIN_EMAIL / _PASSWORD                  # ADMIN_EMAIL 에서 매핑. env 파일엔 없다
 ```
 
@@ -33,6 +33,14 @@ E2E_ADMIN_EMAIL / _PASSWORD                  # ADMIN_EMAIL 에서 매핑. env �
 **`E2E_ADMIN_*` 은 없다.** 그래서 직접 돌리면 운영진 스토리 11개가 통째로
 BLOCK 되고, 평문 `127.0.0.1` 로는 세션 쿠키가 안 실려 일부 학생 스토리가
 401 로 떨어진다. **제품은 멀쩡한데 회귀처럼 보인다.**
+
+**`localhost` 와 `127.0.0.1` 은 같은 곳이 아니다 — 쿠키에겐.** 운영 API 는 세션
+쿠키에 `Secure` 를 붙인다. 화면(Chromium)은 둘 다 안전한 출처로 보고 쿠키를
+싣지만, 스토리가 API 를 직접 부르는 `p.request.fetch` 는 Playwright 자체 네트워크
+스택이라 `https:` 이거나 호스트 이름이 `localhost`·`*.localhost` 일 때만 `Secure`
+쿠키를 보낸다(playwright-core 1.62.1 `isLocalHostname`). 그래서 `127.0.0.1` 로
+돌리면 화면 스토리는 통과하고 O11 같은 API 스토리만 401 BLOCK 이 된다.
+`ops/verify.sh` 가 `localhost` 를 쓰는 이유다(2026-11-11 확인).
 
 2026-08-19 에 이걸로 세 번 헛짚었다. BLOCK 문구가 "계정 미설정 **또는** 로그인
 실패" 라 로그인 실패 쪽으로만 읽었고, 그 앞에 속도 제한에 걸린 적이 있어서

@@ -15,7 +15,7 @@
 
 ```bash
 pnpm --filter @workspace/e2e exec playwright install chromium   # 최초 1회
-BASE_URL=http://127.0.0.1:8088 pnpm --filter @workspace/e2e run verify
+E2E_BASE_URL=http://localhost:8088 pnpm --filter @workspace/e2e run verify
 ```
 
 Playwright는 **자체 Chromium을 내려받는다.** 배포판 브라우저에 의존하지 않으므로
