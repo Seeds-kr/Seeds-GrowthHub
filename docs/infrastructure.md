@@ -3,31 +3,80 @@
 이 문서는 **프리뷰 환경**을 다룬다. 프로덕션이 아니고, 데이터도 손으로 심은 것이 섞여 있다.
 다만 "재부팅하면 사라지는" 상태는 벗어났다.
 
+**2026-11-04 부터 송도서버에서 돈다.** 그전(2026-07-30~11-04)에는 메인 서버에서 돌았고,
+이 문서도 그 기준으로 적혀 있었다. 2026-11-11 에 송도서버 실측으로 다시 썼다.
+서버 접속 방법은 레포 밖 운영 안내에 있다(이 레포는 공개다).
+
 ```
-인터넷 ── Cloudflare 터널 ──> router(127.0.0.1:8088) ──/api──> api-server(127.0.0.1:8087)
+인터넷 ── Cloudflare ── 공용 터널 ──> router(127.0.0.1:8088) ──/api──> api-server(127.0.0.1:8087)
                                           └──────────────────> seeds/dist/public (SPA)
                                                                         │
                                                     seeds_growthhub_pg (127.0.0.1:5434)
 ```
 
-전부 `127.0.0.1` 에만 바인딩한다. 이 머신은 공인 IP 가 NIC 직결이라 `0.0.0.0` 은 곧 인터넷
-공개이고, 그러면 Cloudflare 를 우회해 API·DB 를 직접 때릴 수 있다.
+- **router** 는 `ops/router.mjs` 다. 유닛은 `~/seeds-preview/router.mjs` 를 실행하는데, 그건
+  레포 파일로 가는 심볼릭 링크다. 고친 뒤에는 `seeds-router` 를 재시작해야 반영된다.
+- **터널** 은 Seeds 전용이 아니다. 송도서버의 다른 서비스와 같이 쓰는 공용 cloudflared 가
+  `seeds.harvester.kr` 를 router 로 보낸다. 그래서 Seeds 쪽에는 터널 유닛이 없다.
+  메인 서버 시절의 Seeds 전용 터널(`seeds-preview`)은 Cloudflare 계정에 꺼진 채 남아 있다.
+- 전부 `127.0.0.1` 에만 바인딩한다. 송도서버는 사설 IP 뒤에 있지만, `0.0.0.0` 으로 열면
+  같은 망에서 Cloudflare 를 우회해 API·DB 를 직접 때릴 수 있다. 바깥 노출은 터널만 한다.
+
+### 공개 경로는 느리다
+
+Cloudflare 가 이 서버(그리고 메인 서버)를 **LAX(로스앤젤레스) 가장자리**로 보낸다.
+2026-11-11 실측으로 압축된 JS 번들(363KB) 하나가 6~20초, 첫 화면이 4~11초로 회마다 흔들렸다.
+그래서 브라우저 검증은 공개 주소가 아니라 같은 기계의 `localhost:8088` 로 돌린다(`ops/verify.sh`).
+실제 사용자가 어느 가장자리로 붙는지는 재지 않았다.
 
 ## systemd 유닛
+
+설치본은 `/etc/systemd/system/`, 사본은 레포 `ops/systemd/` 에 있다. 2026-11-11 에 13개 전부
+같은 것을 확인했다. **유닛을 고치면 양쪽을 같이 고친다** — 사본이 설치본보다 낡아 있던 적이 있다.
 
 | 유닛 | 하는 일 |
 |---|---|
 | `seeds-db.service` | Postgres 컨테이너를 올린다 (`oneshot` + `RemainAfterExit`) |
 | `seeds-api.service` | api-server. DB 준비 전이면 죽고 `Restart=always` 로 다시 붙는다 |
-| `seeds-router.service` | 정적 파일 + `/api` 프록시 |
-| `seeds-tunnel.service` | cloudflared |
-| `seeds-backup.timer` | 매일 04:30 DB 덤프 (`Persistent=true` 라 꺼져 있던 동안 것도 따라잡는다) |
-| `seeds-verify.timer` | 매일 05:10 전 검증 3종 (`ops/verify.sh`). 백업 뒤에 돌린다 — 검증이 데이터를 만들므로 백업이 먼저여야 백업본이 주행 잔여물로 지저분해지지 않는다 |
+| `seeds-router.service` | 정적 파일 + `/api` 프록시 (`ops/router.mjs`) |
+| `seeds-backup.timer` | 매일 04:30(최대 5분 지연) DB 덤프 (`Persistent=true` 라 꺼져 있던 동안 것도 따라잡는다) |
+| `seeds-verify.timer` | 매일 05:10(최대 10분 지연) 전 검증 (`ops/verify.sh`). 백업 뒤에 돌린다 — 검증이 데이터를 만들므로 백업이 먼저여야 백업본이 주행 잔여물로 지저분해지지 않는다 |
+| `seeds-restore-check.timer` | 일요일 06:00 복원 검증 (`ops/verify-restore.sh`, 아래) |
+| `seeds-cron-daily.timer` | 매일 09:00 운영진 알림 다이제스트 (아래) |
+| `seeds-cron-weekly.timer` | 월요일 09:30 멘토 상태체크 넛지 (아래) |
 
 ```bash
-sudo systemctl status seeds-db seeds-api seeds-router seeds-tunnel
+sudo systemctl status seeds-db seeds-api seeds-router
+systemctl list-timers 'seeds-*'
 journalctl -u seeds-api -n 50
 ```
+
+로그는 journal 이 아니라 `~/seeds-preview/` 의 `api.log`·`router.log`·`backup.log`·`verify.log`·
+`restore-check.log` 에 쌓인다.
+
+### 검증 결과는 `verify.log` 의 `결과:` 줄로 본다
+
+**2026-11-05~11-11 검증이 매일 실패했는데 systemd 는 매번 성공으로 기록했다.** 송도서버에
+브라우저가 없었고, `verify.sh` 가 실패해도 종료코드 0 을 돌려줬다. 둘 다 2026-11-11 에 고쳤고
+(PR #57), 송도서버에서 직접 돌려 33/33 통과·종료코드 0 을 확인했다. 이제 실패하면 유닛이
+실패로 남는다.
+
+다만 **실패를 누군가에게 알리는 경로는 아직 없다.** 아래 1분 점검도 검증 결과는 보지 않는다.
+
+### 1분 점검
+
+송도서버 공용 점검(`~/apps/_ops/health.py`, cron 매분)이 `checks.d/seeds.conf` 의 네 가지를 본다.
+
+| 점검 | 정상 |
+|---|---|
+| `pg` | `seeds_growthhub_pg` 에 접속된다 |
+| `http` router | `127.0.0.1:8088/` 이 200 |
+| `http` api | `127.0.0.1:8087/` 이 404 (살아 있으면 404 다 — 루트 라우트가 없다) |
+| `backup` | `growthhub-*.sql.gz*` 가 26시간 안에 생겼다 |
+
+전부 로컬이다. **공개 주소가 끊긴 것은 여기서 안 잡힌다** — 그건 매일 검증의 「공개 주소」
+단계만 본다. 점검 결과는 상태가 바뀔 때 Discord 로 가게 돼 있지만, 송도서버에
+`discord.env` 가 없어 **지금은 아무 데도 안 간다**(2026-11-11 확인).
 
 ### 왜 도커 restart 정책만으로 부족한가
 
@@ -36,33 +85,38 @@ journalctl -u seeds-api -n 50
 `docker kill` 후 `restartCount=0` 으로 죽어 있는 걸 확인했다. 그 상태로 재부팅하면 DB 만
 안 올라온다. `seeds-db.service` 가 부팅 때 한 번 더 `docker start` 를 해서 이 구멍을 막는다.
 
-> 실제 재부팅으로는 검증하지 않았다. 도커 데몬을 재시작하면 이 머신의 다른 프로젝트
-> 컨테이너(lala_postgres 등)가 함께 내려가기 때문이다. 대신 컨테이너를 정지시킨 뒤
-> `systemctl restart seeds-db` 로 다시 올라오는 것까지 확인했다.
+> 메인 서버에서는 2026-08-10 재부팅 때 전부 저절로 올라오는 것을 확인했다.
+> **송도서버에서는 아직 재부팅을 겪지 않았다** — 기계는 2026-11-03, Seeds 서비스는
+> 2026-11-04 이전 때 뜬 그대로다(2026-11-11 기준).
 
 ## 데이터
 
 - 볼륨: `seeds_growthhub_pgdata` (명명 볼륨)
   - 원래는 이름 없는 볼륨이었다. `docker volume prune` 한 번에 사라지는 자리이고,
     무엇이 들어 있는지 아무도 알 수 없다. 백업으로 복원을 검증한 뒤 옮겼다.
-- 백업: `/home/harvester/seeds-preview/backups/growthhub-<날짜>.sql.gz` (600, 30일 보관)
+- 업로드 파일: `UPLOAD_DIR`(서버 디스크). 붙임(`routes/attachments.ts`)과 프로필 사진
+  (`routes/profile-photo.ts`)이 여기 저장된다.
+- 백업: `~/seeds-preview/backups/` (600, 30일 보관, 최소 3개는 남긴다)
+  - `growthhub-<시각>.sql.gz` — 평문 덤프
+  - `growthhub-<시각>.sql.gz.gpg` — 같은 덤프의 암호화본
+  - `growthhub-<시각>-uploads.tar.gz` — 업로드 파일
   - `backup.sh` 는 `.part` 로 받아 gzip 무결성과 최소 크기를 확인한 뒤에만 정식 이름을 준다.
     끊긴 덤프가 "성공한 백업" 으로 남지 않게 하려는 것이다.
-  - 보관 기간이 지나도 최소 3개는 남긴다.
+  - `~/seeds-preview/backup.sh` 는 레포 `ops/backup.sh` 로 가는 심볼릭 링크다.
 
-암호화본(`.sql.gz.gpg`)도 같이 만든다. 대칭키이고 패스프레이즈는
-`~/.secrets/seeds-backup-passphrase` (600). **복호화가 실제로 되는지 확인한 뒤에만**
-정식 이름을 준다 — 풀 수 없는 암호문은 백업이 아니라 그냥 쓰레기다.
+암호화본은 대칭키이고 패스프레이즈는 `~/.secrets/seeds-backup-passphrase` (600).
+**복호화가 실제로 되는지 확인한 뒤에만** 정식 이름을 준다 — 풀 수 없는 암호문은 백업이
+아니라 그냥 쓰레기다.
 
 > 패스프레이즈를 잃으면 암호화본도 같이 잃는다. 평문 `.sql.gz` 를 함께 남기는 이유다
 > (하나는 빠른 복원용, 하나는 내보낼 때를 위한 것).
 
 ```bash
 # 수동 백업
-/home/harvester/seeds-preview/backup.sh
+~/seeds-preview/backup.sh
 
 # 복원 (반드시 사본에 먼저 해 보고 옮길 것)
-zcat backups/growthhub-<날짜>.sql.gz | docker exec -i seeds_growthhub_pg psql -U growthhub -d growthhub
+zcat backups/growthhub-<시각>.sql.gz | docker exec -i seeds_growthhub_pg psql -U growthhub -d growthhub
 
 # 백업이 정말 복원되는지 확인 (라이브를 건드리지 않는다)
 ops/verify-restore.sh
@@ -100,21 +154,29 @@ ops/verify-restore.sh
 근사값이라 대조에 못 쓴다.
 
 라이브를 건드리지 않는다. 사본 DB 를 만들어 거기에 복원하고 끝나면 지우므로 아무 때나
-돌려도 된다. `seeds-restore-check.timer` 가 **일요일 06:00** 에 돌린다(백업 04:30·검증
-05:15 이 끝난 뒤). 매일이 아닌 이유는 사본 DB 를 두 개 만들었다 지우므로 백업보다 무겁고,
+돌려도 된다. 매일이 아닌 이유는 사본 DB 를 두 개 만들었다 지우므로 백업보다 무겁고,
 "복원이 되는가" 는 매일 바뀌는 성질이 아니기 때문이다.
 
 첫 실측(2026-08-20): 43개 테이블 행수 완전 일치 · 암호화본 복호화 성공 · 업로드 파일
 바이트까지 동일.
 
-### 옛 컨테이너를 남겨 둔 이유
+### 두 번째 사본 — 지금은 메인 서버, 곧 사라진다
 
-`growthhub_pg_OLD_20260804` (정지 상태)가 이름 없는 옛 볼륨을 붙들고 있다. 새 볼륨이
-멀쩡한 걸 며칠 지켜본 뒤 지우면 된다. 지울 때는 볼륨까지 같이 지워야 디스크가 돈다:
+송도서버도 디스크가 하나다(512GB 하나). 기계 안 이중화는 안 된다.
 
-```bash
-docker rm -v growthhub_pg_OLD_20260804
-```
+지금은 **메인 서버가 매일 05:30 백업 폴더를 통째로 당겨 간다**(`rsync`, 지우지 않음).
+그래서 두 기계에 사본이 있다. 다만 메인 서버를 없애는 계획이 있다(2026-11-11). 그러면
+이 사본도 같이 사라지므로, **메인 서버를 내리기 전에 새 보관 위치를 정해야 한다.**
+
+| 사고 유형 | 송도서버 백업만으로 막히나 |
+|---|---|
+| 실수로 지움 · 잘못된 마이그레이션 · 컨테이너 날림 | **막힌다** (가장 흔한 경우) |
+| 디스크·VM 사망 | 안 막힘 |
+| 랜섬웨어 | 안 막힘 (로컬 백업도 같이 암호화된다) |
+
+메인 서버에서 2026-07-30 에 Elasticsearch 랜섬 사고가 있었다. 랜섬웨어는 가정이 아니라
+한 번 겪은 일이다. 새 위치가 남의 손에 있는 곳(클라우드 등)이라면 **암호화본(`.gpg`)만**
+올린다. 평문과 업로드 tar 는 우리 기계 밖으로 내보내지 않는다.
 
 ## 스키마 마이그레이션
 
@@ -128,20 +190,23 @@ pnpm run migrate    # 반영
 pnpm run check      # 마이그레이션끼리 충돌하는지
 ```
 
-현재 DB 는 `push` 로 만들어져 이력이 없었으므로 `0000` 을 "적용됨" 으로 기록해 베이스라인을
+처음 DB 는 `push` 로 만들어져 이력이 없었으므로 `0000` 을 "적용됨" 으로 기록해 베이스라인을
 잡았다(`drizzle.__drizzle_migrations`). 사본에 먼저 적용해 `migrate` 가 아무것도 건드리지
 않고 데이터도 그대로인 것을 확인한 뒤 실제 DB 에 넣었다.
 
-## 지금 DB 에 든 것
+## 지금 DB 에 든 것 (2026-11-11)
 
-프리뷰 DB 에는 **실제 자료와 테스트 픽스처가 섞여 있다.**
+프리뷰 DB 에는 **실제 자료와 테스트 자료가 섞여 있다.**
 
 | | |
 |---|---|
-| 실제 | 멘토 프로필 9명(공개 사이트가 쓴다), 운영 계정 `admin@seeds.local` |
-| 픽스처 | 계정 11개(`smoke-*` `legacy-*` `*-z@` 등), 주행이 만든 지원서·공지·과제·회고·상태체크 |
+| 실제 | 공개 멘토 프로필 9명(공개 사이트 `/people` 가 쓴다) |
+| 테스트 | 기수 1개(`Smoke Cohort 1`), 비공개 학생 프로필 2개, 검증 주행이 만든 지원서·공지·과제·회고 등 |
+| 활성 계정 4개 | 운영진 2(부트스트랩 어드민·재무 확인용), 멘토 1, 학생 1 — 손으로 둘러보기·매일 검증용 |
+| 비활성 계정 5개 | 예전 검증 계정. `isActive=false` 라 로그인되지 않는다 |
 
-유저 스토리(`e2e/stories.mjs`)는 돌릴 때마다 자료를 새로 만든다. 그냥 두면 계속 쌓인다.
+계정과 비밀번호는 `~/.secrets/seeds-preview.env` 에만 있다. 유저 스토리(`e2e/stories.mjs`)는
+돌릴 때마다 자료를 새로 만든다. 그냥 두면 계속 쌓인다.
 
 **실제 기수를 받기 시작하기 전에** 한 번 정리한다:
 
@@ -149,38 +214,13 @@ pnpm run check      # 마이그레이션끼리 충돌하는지
 ops/reset-test-data.sh     # 무엇이 지워지는지 보여주고 확인을 받은 뒤, 백업하고 지운다
 ```
 
-사본에 먼저 적용해 검증했다 — 계정 12개 → `admin@seeds.local` 하나, 멘토 프로필 9명과
-기수는 그대로 남는다. 지금 프리뷰에는 **일부러 돌리지 않았다**: 테스트 계정을 지우면
-유저 스토리의 멘토·학생·평가위원 축이 통째로 BLOCK 이 된다.
-
-## 아직 안 된 것
-
-- **실제 재부팅 검증** (위 사유)
-- **백업의 외부 보관** — 판단해서 미뤘다. 빠뜨린 것이 아니다.
-
-  이 머신은 물리 디스크가 **1개**(NVMe 2TB)라 기계 안 이중화가 불가능하다. 밖으로
-  내보내야 하는데, 그럴 만한가를 따져 보면:
-
-  | 사고 유형 | 로컬 백업으로 막히나 |
-  |---|---|
-  | 실수로 지움 · 잘못된 마이그레이션 · 컨테이너 날림 | **막힌다** (가장 흔한 경우) |
-  | 디스크 사망 | 안 막힘 |
-  | 랜섬웨어 | 안 막힘 (로컬 백업도 같이 암호화된다) |
-
-  가장 자주 일어나는 쪽은 이미 커버된다. 그리고 지금 DB 는 대부분 테스트 자료라
-  잃어도 손해가 작다.
-
-  다만 **이 서버에서 2026-07-30 에 Elasticsearch 랜섬 사고가 있었다**(개인 메모리
-  `server-exposure-and-wan-guard`). 랜섬웨어는 가정이 아니라 한 번 겪은 일이다.
-  실제 학생 지원서를 받기 시작하면 그때는 외부 사본이 필요하다.
-
-  준비는 해 뒀다: 백업이 이미 GPG 대칭키로 암호화된 사본을 같이 만든다. 목적지만
-  정하면 그대로 올리면 되고, 어디에 두든 내용은 읽히지 않는다. USB 에 주기적으로
-  복사하는 정도로도 충분하다.
+사본에 먼저 적용해 검증했다. 지금 프리뷰에는 **일부러 돌리지 않았다** — 테스트 계정을
+지우면 매일 검증의 멘토·학생 스토리가 로그인 실패로 통째로 BLOCK 된다. 정리한 뒤에는
+`~/.secrets/seeds-preview.env` 의 `E2E_MENTOR_*`·`E2E_STUDENT_*` 를 남은 계정으로 바꿔야 한다.
 
 ## 알림 다이제스트 타이머 (2026-08-11 추가)
 
-`POST /internal/cron/*` 는 **부르는 주체가 없으면 아무 일도 안 한다.** 알림 계층
+`POST /api/internal/cron/*` 는 **부르는 주체가 없으면 아무 일도 안 한다.** 알림 계층
 (ADR-007: Discord 웹훅 + 인앱 배지)은 만들어져 배선까지 돼 있었는데, 두
 다이제스트를 호출할 스케줄이 없어서 영영 안 나갈 상태였다.
 
@@ -193,12 +233,13 @@ ops/reset-test-data.sh     # 무엇이 지워지는지 보여주고 확인을 �
 `CRON_SECRET` 이나 Discord 웹훅 URL 이 없는 것은 고장이 아니라 "아직 안 켰다" 이고,
 매일 실패를 쌓을 이유가 없다. 설정이 있는데 실패하면 종료 코드를 남긴다.
 
-켜려면 `~/.secrets/seeds-preview.env` 에 셋을 넣는다.
+지금은 **웹훅 하나**(`SEEDS_DISCORD_WEBHOOK_URL`)로 켜져 있다. 운영진용·멘토용 알림이 같은
+채널로 간다. 나누고 싶으면 `SEEDS_DISCORD_OPS_WEBHOOK_URL`·`SEEDS_DISCORD_MENTOR_WEBHOOK_URL`
+을 넣으면 그쪽이 먼저 쓰인다(`artifacts/api-server/src/lib/notify.ts`). 값은
+`~/.secrets/seeds-preview.env` 에 있다.
 
-```
-export CRON_SECRET=...
-export SEEDS_DISCORD_OPS_WEBHOOK_URL=...
-export SEEDS_DISCORD_MENTOR_WEBHOOK_URL=...
-```
+## 아직 안 된 것
 
-웹훅 URL 은 Discord 서버 관리자만 만들 수 있다.
+- **송도서버에서의 재부팅 검증** (위 「왜 도커 restart 정책만으로 부족한가」)
+- **검증·점검 실패 알림** — 실패는 기록되지만 아무에게도 가지 않는다
+- **메인 서버를 대신할 두 번째 백업 위치** (위 「두 번째 사본」)
